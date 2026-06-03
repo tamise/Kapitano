@@ -1,0 +1,65 @@
+/* ============================================================
+   Kapitano — Design tokens : couleurs & typographie
+   ============================================================ */
+
+/* Inter Variable — local */
+@font-face {
+  font-family: 'Inter';
+  src: url('./assets/fonts/Inter-VariableFont.ttf') format('truetype');
+  font-weight: 100 900;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: 'Inter';
+  src: url('./assets/fonts/Inter-Italic-VariableFont.ttf') format('truetype');
+  font-weight: 100 900;
+  font-style: italic;
+  font-display: swap;
+}
+
+:root {
+  /* ── Typographie ───────────────────────────── */
+  --kap-font-ui:         'Inter', system-ui, sans-serif;
+  --kap-font-display:    'Inter', system-ui, sans-serif;
+  --kap-font-display-lg: 'Inter', system-ui, sans-serif;
+  --kap-font-mono:       'Consolas', 'Roboto Mono', ui-monospace, monospace;
+
+  /* ── Couleur primaire (violet Kapitano) ─────── */
+  --kap-primary:         #7E41A3;
+  --kap-primary-dark:    #632F84;
+  --kap-primary-soft:    #EDE5F4;
+
+  /* ── Backgrounds ────────────────────────────── */
+  --kap-primary-bg:      #F4F5F9;
+
+  /* ── Texte ──────────────────────────────────── */
+  --kap-fg-1:            #1A1523;
+  --kap-fg-2:            #3D3550;
+  --kap-fg-3:            #7B6E8F;
+  --kap-fg-dark:         #2D2440;
+  --kap-fg-muted:        #BDB5C8;
+
+  /* ── Bordures & séparateurs ─────────────────── */
+  --kap-border-2:        #D8D4E1;
+  --kap-input-border:    #C8C2D4;
+  --kap-divider:         #EAE7F0;
+
+  /* ── Sémantiques ────────────────────────────── */
+  --kap-success:         #2E7D32;
+  --kap-success-bg:      #E8F5E9;
+  --kap-error:           #C62828;
+  --kap-error-bg:        #FFEBEE;
+  --kap-warning:         #E65100;
+  --kap-warning-bg:      #FFF3E0;
+  --kap-info:            #0277BD;
+  --kap-info-bg:         #E1F2FB;
+  --kap-neutral:         #E0DDE8;
+
+  /* ── Ombres ─────────────────────────────────── */
+  --kap-shadow-card:     0 1px 3px rgba(0,0,0,.07), 0 1px 8px rgba(0,0,0,.04);
+
+  /* ── Courbes d'animation ─────────────────────── */
+  --kap-ease-standard:   cubic-bezier(.4, 0, .2, 1);
+  --kap-ease-decelerate: cubic-bezier(0, 0, .2, 1);
+}

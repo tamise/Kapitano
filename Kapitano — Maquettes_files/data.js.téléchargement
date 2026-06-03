@@ -1,0 +1,439 @@
+// Mock data for the Kapitano dashboard mockups.
+// All names, emails, IDs and addresses are fabricated.
+// Structure follows the production app schemas (resellers, clients, sites, services,
+// catalogues, mobile data subscriptions, trunk SIP, tickets, eligibility lookups).
+
+// ──────────────────────────────────────────────────────────────────
+// SEEDS
+// ──────────────────────────────────────────────────────────────────
+const FIRST = ["Mathis","Anaïs","Lucas","Camille","Théo","Léa","Hugo","Manon","Nathan","Inès","Jules","Sarah","Adrien","Chloé","Quentin","Pauline","Maxime","Élise","Antoine","Margaux","Romain","Clémence","Baptiste","Juliette"];
+const LAST  = ["Bourgoin","Petit","Martin","Dupont","Moreau","Roux","Blanc","Girard","Rousseau","Mercier","Bernard","Gauthier","Faure","Legrand","Noël","Colin","Lambert","Fontaine","Robin","Vidal","Lefebvre","Garnier","Renaud","Caron"];
+const FILIALES = ["Koesio Aquitaine","Koesio Île-de-France","Koesio Bretagne","Koesio Rhône-Alpes","Koesio Méditerranée","Koesio Grand Est","Koesio Pays de la Loire","Koesio Hauts-de-France"];
+const REVENDEURS = [
+  { code: "REV-0142", nom: "Téléconnect SARL",       siren: "812 045 778", commercial: "M. Lambert",   filiale: "Koesio Aquitaine",        ville: "Bordeaux",  contrats: 47 },
+  { code: "REV-0089", nom: "Networx Pro",            siren: "754 902 113", commercial: "Mme Garnier",  filiale: "Koesio Île-de-France",    ville: "Paris",     contrats: 132 },
+  { code: "REV-0203", nom: "Atout Télécom",          siren: "421 887 660", commercial: "M. Renaud",    filiale: "Koesio Rhône-Alpes",      ville: "Lyon",      contrats: 88 },
+  { code: "REV-0211", nom: "Sud-Net Distribution",   siren: "509 312 044", commercial: "Mme Caron",    filiale: "Koesio Méditerranée",     ville: "Marseille", contrats: 64 },
+  { code: "REV-0167", nom: "BretagneCom",            siren: "638 175 990", commercial: "M. Robin",     filiale: "Koesio Bretagne",         ville: "Rennes",    contrats: 39 },
+  { code: "REV-0258", nom: "Connectis Grand Est",    siren: "744 029 318", commercial: "Mme Vidal",    filiale: "Koesio Grand Est",        ville: "Strasbourg",contrats: 51 },
+  { code: "REV-0102", nom: "Loire Networks",         siren: "611 904 277", commercial: "M. Fontaine",  filiale: "Koesio Pays de la Loire", ville: "Nantes",    contrats: 73 },
+  { code: "REV-0290", nom: "NorthCom",               siren: "880 552 144", commercial: "Mme Lefebvre", filiale: "Koesio Hauts-de-France",  ville: "Lille",     contrats: 28 },
+  { code: "REV-0314", nom: "Pyrénées Télécom",       siren: "402 778 651", commercial: "M. Lambert",   filiale: "Koesio Aquitaine",        ville: "Pau",       contrats: 17 },
+  { code: "REV-0327", nom: "Capitale Réseaux",       siren: "517 008 442", commercial: "Mme Garnier",  filiale: "Koesio Île-de-France",    ville: "Versailles",contrats: 96 },
+];
+
+const CLIENT_NAMES = [
+  "Cabinet Mercier & Associés","Boulangerie Dupuis","Logitrans Express","Pharmacie de la Gare",
+  "Studio Aurore","Atelier Métal Bleu","Cuisines Vallée","ImmoConcept",
+  "Garage Saint-Michel","SCI Les Pléiades","Hôtel Beauséjour","Clinique vétérinaire Lavoisier",
+  "Optique Vision Plus","Boucherie Charcuterie Lemoine","Maison Verte Paysagiste","Cabinet Notarial Vasseur",
+  "Domaine de Belair","SARL Briques & Bâtiments","Restaurant Le Glacier","Crèche les Lutins",
+];
+
+const SITES_LABELS = ["Siège","Agence","Boutique","Entrepôt","Bureaux","Showroom","Atelier","Dépôt"];
+const VILLES = ["Bordeaux","Paris","Lyon","Marseille","Rennes","Strasbourg","Nantes","Lille","Toulouse","Nice","Montpellier","Saint-Étienne","Reims","Dijon","Angers","Le Mans","Tours","Pau","Versailles","Le Havre"];
+
+const STATUTS_USER = [
+  { label: "Actif",     color: "#2E7D32" },
+  { label: "Actif",     color: "#2E7D32" },
+  { label: "Désactivé", color: "#616161" },
+  { label: "Bloqué",    color: "#D32F2F" },
+  { label: "En attente",color: "#ED6C02" },
+];
+
+function rng(seed) { let s = seed >>> 0; return () => (s = (s * 1664525 + 1013904223) >>> 0) / 0xffffffff; }
+const _r = rng(7);
+const pick = (a) => a[Math.floor(_r() * a.length)];
+const pad = (n, w = 2) => String(n).padStart(w, "0");
+
+// ──────────────────────────────────────────────────────────────────
+// UTILISATEURS
+// ──────────────────────────────────────────────────────────────────
+const USERS = Array.from({ length: 32 }).map((_, i) => {
+  const f = pick(FIRST), l = pick(LAST);
+  return {
+    id: 100000 + i,
+    prenom: f,
+    nom: l.toUpperCase(),
+    email: `${f.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g,"").replace(/[^a-z]/g,"")}.${l.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g,"")}@koesio.com`,
+    type: pick(["INTERNE","INTERNE","EXTERNE","REVENDEUR","REVENDEUR","INTERNE"]),
+    filiale: pick(FILIALES),
+    statut: STATUTS_USER[i % STATUTS_USER.length],
+    dateCreation: `${pad(1+(i%28))}/${pad(1+(i%9))}/2025 - ${pad(8+(i%10))}:${pad(10+i*2%50)}:${pad(15+i%40)}`,
+    dateModification: `${pad(1+(i%28))}/${pad(1+(i%9))}/2025 - ${pad(8+(i%10))}:${pad(10+i*2%50)}:${pad(15+i%40)}`,
+    role: pick(["Administrateur","Opérateur","Lecture seule","Support N1","Support N2","Manager"]),
+  };
+});
+
+// ──────────────────────────────────────────────────────────────────
+// LOGS (request log)
+// ──────────────────────────────────────────────────────────────────
+const URIS = [
+  { uri: "/api/v1/subscribers/mobile",       type: "subscriber"   },
+  { uri: "/api/v1/orders/trunk-sip",         type: "order"        },
+  { uri: "/api/v1/eligibility/lookup",       type: "eligibility"  },
+  { uri: "/api/v1/resellers/list",           type: "reseller"     },
+  { uri: "/api/v1/clients/create",           type: "client"       },
+  { uri: "/api/v1/sites/find",               type: "site"         },
+  { uri: "/api/v1/tickets/create",           type: "ticket"       },
+  { uri: "/api/v1/address-improver/address", type: "address"      },
+  { uri: "/api/v1/voice/spaces",             type: "voice-space"  },
+  { uri: "/api/v1/portability/numbers",      type: "portability"  },
+];
+const METHODES = ["GET","GET","POST","POST","PATCH","DELETE"];
+const STATUTS_HTTP = [
+  { code: 200, kind: "success" },{ code: 200, kind: "success" },{ code: 201, kind: "success" },
+  { code: 204, kind: "success" },{ code: 301, kind: "warning" },{ code: 400, kind: "error"   },
+  { code: 404, kind: "error"   },{ code: 500, kind: "error"   },
+];
+
+const LOGS = Array.from({ length: 22 }).map((_, i) => {
+  const u = URIS[Math.floor(_r() * URIS.length)];
+  const m = METHODES[Math.floor(_r() * METHODES.length)];
+  const s = STATUTS_HTTP[Math.floor(_r() * STATUTS_HTTP.length)];
+  return {
+    id: 192249 - i,
+    uri: u.uri, methode: m, statut: s, type: u.type,
+    description: s.kind === "success"
+      ? `La ressource ${u.uri.split("/").pop()} a été ${m === "POST" ? "créée" : m === "PATCH" ? "mise à jour" : m === "DELETE" ? "supprimée" : "récupérée"}`
+      : `Une erreur est survenue lors du traitement de la requête ${m}`,
+    dateCreation: `${pad(13)}/11/2025 - ${pad(10+(i%6))}:${pad(20+(i*3)%40)}:${pad(10+i%50)}`,
+    duree: `${(20 + Math.floor(_r() * 800))} ms`,
+    user: USERS[i % USERS.length],
+  };
+});
+
+const SAMPLE_PAYLOAD = {
+  autocompleteAddress: {
+    type: "Feature",
+    geometry: { type: "Point", coordinates: [-0.528474, 45.852102] },
+    properties: {
+      label: "22 Avenue de Saint Jean d'Angely 17770 Saint-Hilaire-de-Villefranche",
+      score: 0.789797486631016,
+      housenumber: "22",
+      id: "17344_0063_00022",
+      city: "Saint-Hilaire-de-Villefranche",
+      citycode: "17344",
+      postcode: "17770",
+      context: "17, Charente-Maritime, Nouvelle-Aquitaine",
+    },
+  },
+};
+
+// ──────────────────────────────────────────────────────────────────
+// CLIENTS / SITES / SERVICES / CATALOGUE
+// ──────────────────────────────────────────────────────────────────
+const CLIENTS = CLIENT_NAMES.flatMap((nom, i) => ({
+  id: `CLI-${pad(1000 + i, 5)}`,
+  nom,
+  siret: `${pad(100 + i * 7, 9)} ${pad(1 + i % 90, 5)}`,
+  revendeur: REVENDEURS[i % REVENDEURS.length].nom,
+  ville: VILLES[i % VILLES.length],
+  sites: 1 + (i % 5),
+  services: 2 + ((i * 3) % 18),
+  statut: i % 8 === 7 ? { label: "Suspendu", color: "#D32F2F" } : { label: "Actif", color: "#2E7D32" },
+  dateCreation: `${pad(1+(i%28))}/${pad(1+(i%12))}/2024`,
+}));
+
+const SITES = Array.from({ length: 24 }).map((_, i) => {
+  const c = CLIENTS[i % CLIENTS.length];
+  return {
+    id: `SITE-${pad(2000 + i, 5)}`,
+    label: `${SITES_LABELS[i % SITES_LABELS.length]} ${VILLES[i % VILLES.length]}`,
+    client: c.nom,
+    adresse: `${1 + i} ${pick(["rue","avenue","place","boulevard"])} ${pick(["du Général Leclerc","de la République","Victor Hugo","Pasteur","Carnot","Jean Jaurès","Gambetta","de la Liberté"])}`,
+    cp: `${pad(1000 + i * 437 % 95000, 5)}`,
+    ville: VILLES[i % VILLES.length],
+    services: 1 + (i % 6),
+    technicien: pick(["M. Lambert","Mme Caron","M. Renaud","Mme Garnier","M. Robin"]),
+    statut: i % 11 === 10 ? { label: "Inactif", color: "#616161" } : { label: "Actif", color: "#2E7D32" },
+  };
+});
+
+const SERVICES = Array.from({ length: 18 }).map((_, i) => {
+  const c = CLIENTS[i % CLIENTS.length];
+  const types = ["Mobile Data","Trunk SIP","Lien d'accès FTTH","Lien d'accès SDSL","Voix fixe","Numéro SDA","Hébergement Cloud","Wifi managé"];
+  return {
+    id: `SVC-${pad(3000 + i, 5)}`,
+    type: types[i % types.length],
+    client: c.nom,
+    site: `${SITES_LABELS[i % SITES_LABELS.length]} ${VILLES[i % VILLES.length]}`,
+    reference: `KP-${pad(50000 + i * 13, 6)}`,
+    debit: pick(["100 Mb/s","1 Gb/s","20 Mb/s","500 Mb/s","2 Gb/s","—"]),
+    statut: i % 9 === 8 ? { label: "Résilié", color: "#D32F2F" } : i % 7 === 6 ? { label: "En cours", color: "#ED6C02" } : { label: "Actif", color: "#2E7D32" },
+    dateActivation: `${pad(1+(i%28))}/${pad(1+(i%12))}/2024`,
+  };
+});
+
+const CATALOGUE = [
+  { ref: "MOB-50",     famille: "Mobile",        sousFamille: "Forfaits data",  designation: "Forfait Mobile 50 Go",     prix: "12,90 €",  duree: "24 mois", actif: true  },
+  { ref: "MOB-100",    famille: "Mobile",        sousFamille: "Forfaits data",  designation: "Forfait Mobile 100 Go",    prix: "18,90 €",  duree: "24 mois", actif: true  },
+  { ref: "MOB-UNLIM",  famille: "Mobile",        sousFamille: "Forfaits data",  designation: "Forfait Mobile Illimité",  prix: "29,90 €",  duree: "24 mois", actif: true  },
+  { ref: "VOIX-TRK-S", famille: "Voix fixe",     sousFamille: "Trunk SIP",      designation: "Trunk SIP 4 canaux",       prix: "39,00 €",  duree: "36 mois", actif: true  },
+  { ref: "VOIX-TRK-M", famille: "Voix fixe",     sousFamille: "Trunk SIP",      designation: "Trunk SIP 8 canaux",       prix: "59,00 €",  duree: "36 mois", actif: true  },
+  { ref: "VOIX-TRK-L", famille: "Voix fixe",     sousFamille: "Trunk SIP",      designation: "Trunk SIP 16 canaux",      prix: "99,00 €",  duree: "36 mois", actif: false },
+  { ref: "LIEN-FTTH-1",famille: "Lien d'accès",  sousFamille: "FTTH",           designation: "Fibre FTTH 1 Gb/s",        prix: "89,00 €",  duree: "36 mois", actif: true  },
+  { ref: "LIEN-FTTH-2",famille: "Lien d'accès",  sousFamille: "FTTH",           designation: "Fibre FTTH 2 Gb/s SLA",    prix: "149,00 €", duree: "36 mois", actif: true  },
+  { ref: "LIEN-SDSL",  famille: "Lien d'accès",  sousFamille: "SDSL",           designation: "SDSL 8 Mb/s symétrique",   prix: "129,00 €", duree: "36 mois", actif: false },
+  { ref: "SVC-WIFI",   famille: "Services",      sousFamille: "Wifi managé",    designation: "Wifi managé (par borne)",  prix: "9,90 €",   duree: "12 mois", actif: true  },
+  { ref: "SVC-CLOUD",  famille: "Services",      sousFamille: "Cloud",          designation: "VM 4 vCPU / 8 Go",         prix: "49,00 €",  duree: "12 mois", actif: true  },
+  { ref: "SVC-SDA",    famille: "Voix fixe",     sousFamille: "Numéros",        designation: "Numéro SDA fixe national", prix: "1,50 €",   duree: "—",       actif: true  },
+];
+
+// ──────────────────────────────────────────────────────────────────
+// MOBILES — Abonnements + Commandes
+// ──────────────────────────────────────────────────────────────────
+const FORFAITS = ["Mobile 50 Go","Mobile 100 Go","Mobile Illimité","Data Pro 20 Go","Data Pro 100 Go"];
+const SUBSCRIBERS = Array.from({ length: 18 }).map((_, i) => {
+  const c = CLIENTS[i % CLIENTS.length];
+  const consoPct = (i * 13 + 7) % 95;
+  return {
+    id: `ABO-${pad(8000 + i, 5)}`,
+    msisdn: `+33 6 ${pad(10 + (i*7) % 89)} ${pad(20 + (i*3) % 79)} ${pad(30 + (i*11) % 69)} ${pad(40 + (i*5) % 59)}`,
+    iccid: `8933 0123 4567 ${pad(8900 + i, 4)}`,
+    client: c.nom,
+    site: `${SITES_LABELS[i % SITES_LABELS.length]} ${VILLES[i % VILLES.length]}`,
+    forfait: FORFAITS[i % FORFAITS.length],
+    conso: `${consoPct} %`,
+    consoVal: consoPct,
+    activation: `${pad(1+(i%28))}/${pad(1+(i%12))}/2025`,
+    statut: i % 13 === 12 ? { label: "Suspendu", color: "#D32F2F" }
+          : i % 7  === 6  ? { label: "Désactivé", color: "#616161" }
+          :                  { label: "Actif",    color: "#2E7D32" },
+    porteur: pick(["Orange","SFR","Bouygues","Free"]),
+  };
+});
+
+const MOBILE_ORDERS = Array.from({ length: 14 }).map((_, i) => {
+  const c = CLIENTS[i % CLIENTS.length];
+  return {
+    id: `CMD-MOB-${pad(2025000 + i, 7)}`,
+    client: c.nom,
+    revendeur: REVENDEURS[i % REVENDEURS.length].nom,
+    forfait: FORFAITS[i % FORFAITS.length],
+    quantite: 1 + ((i * 3) % 15),
+    statut: i % 5 === 0 ? { label: "Livrée",    color: "#2E7D32" }
+          : i % 5 === 1 ? { label: "En cours",  color: "#ED6C02" }
+          : i % 5 === 2 ? { label: "En attente",color: "#0288D1" }
+          : i % 5 === 3 ? { label: "Annulée",   color: "#D32F2F" }
+          :               { label: "Brouillon", color: "#616161" },
+    dateCommande: `${pad(1+(i%28))}/${pad(1+(i%12))}/2025`,
+    dateLivraison: i % 4 === 0 ? `${pad(2+(i%26))}/${pad(2+(i%11))}/2025` : "—",
+    montant: `${(35 + (i * 17) % 800).toFixed(2)} €`.replace(".", ","),
+  };
+});
+
+// ──────────────────────────────────────────────────────────────────
+// LIENS D'ACCÈS
+// ──────────────────────────────────────────────────────────────────
+const ACCESS_LINKS = Array.from({ length: 16 }).map((_, i) => {
+  const c = CLIENTS[i % CLIENTS.length];
+  return {
+    id: `LIN-${pad(7000 + i, 5)}`,
+    reference: `KP-LIN-${pad(50000 + i, 6)}`,
+    client: c.nom,
+    site: `${SITES_LABELS[i % SITES_LABELS.length]} ${VILLES[i % VILLES.length]}`,
+    technologie: pick(["FTTH","FTTO","SDSL","ADSL","4G FWA","5G FWA"]),
+    debit: pick(["100 Mb/s","1 Gb/s","2 Gb/s","20 Mb/s","500 Mb/s","2 Mb/s"]),
+    operateur: pick(["Orange","SFR","Free Pro","Bouygues","Covage","Axione"]),
+    statut: i % 11 === 10 ? { label: "En coupure", color: "#D32F2F" }
+          : i % 7  === 6  ? { label: "Provisioning", color: "#ED6C02" }
+          :                  { label: "En service", color: "#2E7D32" },
+    activation: `${pad(1+(i%28))}/${pad(1+(i%12))}/2025`,
+  };
+});
+
+const ACCESS_ORDERS = Array.from({ length: 12 }).map((_, i) => {
+  const c = CLIENTS[i % CLIENTS.length];
+  return {
+    id: `CMD-LIN-${pad(2025100 + i, 7)}`,
+    client: c.nom,
+    site: `${SITES_LABELS[i % SITES_LABELS.length]} ${VILLES[i % VILLES.length]}`,
+    technologie: pick(["FTTH","FTTO","SDSL","4G FWA"]),
+    statut: i % 4 === 0 ? { label: "Livrée",     color: "#2E7D32" }
+          : i % 4 === 1 ? { label: "Étude",      color: "#0288D1" }
+          : i % 4 === 2 ? { label: "Production", color: "#ED6C02" }
+          :               { label: "Bloquée",    color: "#D32F2F" },
+    dateCommande: `${pad(1+(i%28))}/${pad(1+(i%12))}/2025`,
+    rdv: i % 3 === 0 ? `${pad(2+(i%26))}/${pad(2+(i%11))}/2025` : "—",
+  };
+});
+
+// ──────────────────────────────────────────────────────────────────
+// VOIX FIXE — Espaces, Trunk SIP, Portabilité, Numéros
+// ──────────────────────────────────────────────────────────────────
+const VOICE_SPACES = Array.from({ length: 12 }).map((_, i) => {
+  const c = CLIENTS[i % CLIENTS.length];
+  return {
+    id: `VOX-${pad(4000 + i, 5)}`,
+    nom: `Espace voix ${c.nom}`,
+    client: c.nom,
+    canaux: pick([4, 4, 8, 8, 16, 32]),
+    sda: 1 + ((i * 7) % 25),
+    plage: `+33 ${pad(1 + i % 5)} ${pad(20 + i)} ${pad(40 + i)} 00 → ${pad(40 + i)} 99`,
+    statut: i % 9 === 8 ? { label: "Migration", color: "#ED6C02" } : { label: "Actif", color: "#2E7D32" },
+  };
+});
+
+const TRUNK_SIP = Array.from({ length: 14 }).map((_, i) => {
+  const c = CLIENTS[i % CLIENTS.length];
+  return {
+    id: `TRK-${pad(5000 + i, 5)}`,
+    client: c.nom,
+    canaux: pick([4, 8, 8, 16, 32]),
+    realm: `sip-${pad(1+i)}.kapitano.koesio.network`,
+    sda: 1 + ((i * 5) % 30),
+    statut: i % 13 === 12 ? { label: "Hors service", color: "#D32F2F" }
+          : i % 11 === 10 ? { label: "Provisioning", color: "#ED6C02" }
+          :                  { label: "En service",  color: "#2E7D32" },
+    activation: `${pad(1+(i%28))}/${pad(1+(i%12))}/2025`,
+  };
+});
+
+const TRUNK_ORDERS = Array.from({ length: 10 }).map((_, i) => {
+  const c = CLIENTS[i % CLIENTS.length];
+  return {
+    id: `CMD-TRK-${pad(2025200 + i, 7)}`,
+    client: c.nom,
+    canaux: pick([4, 8, 16, 32]),
+    statut: i % 5 === 0 ? { label: "Livrée",     color: "#2E7D32" }
+          : i % 5 === 1 ? { label: "Production", color: "#ED6C02" }
+          : i % 5 === 2 ? { label: "Étude",      color: "#0288D1" }
+          : i % 5 === 3 ? { label: "Annulée",    color: "#D32F2F" }
+          :               { label: "Brouillon",  color: "#616161" },
+    dateCommande: `${pad(1+(i%28))}/${pad(1+(i%12))}/2025`,
+  };
+});
+
+const PORTABILITES = Array.from({ length: 12 }).map((_, i) => {
+  const c = CLIENTS[i % CLIENTS.length];
+  return {
+    id: `PORT-${pad(6000 + i, 5)}`,
+    numero: `+33 ${pad(1 + i % 5)} ${pad(20 + i)} ${pad(40 + i)} ${pad(60 + i % 30)} ${pad(80 + i % 20)}`,
+    client: c.nom,
+    operateurSource: pick(["Orange","SFR","Bouygues","Free Pro","Coriolis"]),
+    rio: `1A${pad(100 + i * 7, 4)}-XYZ`,
+    statut: i % 4 === 0 ? { label: "Portée",      color: "#2E7D32" }
+          : i % 4 === 1 ? { label: "Date confirmée", color: "#0288D1" }
+          : i % 4 === 2 ? { label: "En cours",    color: "#ED6C02" }
+          :               { label: "Rejetée",     color: "#D32F2F" },
+    datePortage: `${pad(15+(i%14))}/${pad(2+(i%10))}/2025`,
+  };
+});
+
+const NUMBERS = Array.from({ length: 16 }).map((_, i) => {
+  const c = CLIENTS[i % CLIENTS.length];
+  return {
+    id: `NUM-${pad(7000 + i, 5)}`,
+    numero: `+33 ${pad(1 + i % 5)} ${pad(20 + i)} ${pad(40 + i)} ${pad(60 + i % 30)} ${pad(80 + i % 20)}`,
+    client: c.nom,
+    type: pick(["SDA","Standard","Pilote","SVI"]),
+    affectation: pick(["Trunk SIP","Espace voix","Mobile","—"]),
+    operateur: pick(["Koesio","Orange","Coriolis"]),
+    statut: i % 7 === 6 ? { label: "Libre", color: "#0288D1" } : { label: "Affecté", color: "#2E7D32" },
+  };
+});
+
+// ──────────────────────────────────────────────────────────────────
+// COMMANDES — Suivi global + Reporting
+// ──────────────────────────────────────────────────────────────────
+const ORDERS = Array.from({ length: 18 }).map((_, i) => {
+  const c = CLIENTS[i % CLIENTS.length];
+  return {
+    id: `CMD-${pad(2025000 + i, 7)}`,
+    client: c.nom,
+    type: pick(["Mobile Data","Trunk SIP","Lien d'accès","Voix fixe","Numéro SDA"]),
+    quantite: 1 + ((i * 3) % 12),
+    revendeur: REVENDEURS[i % REVENDEURS.length].nom,
+    montant: `${(50 + (i * 23) % 1800).toFixed(2)} €`.replace(".", ","),
+    statut: i % 6 === 0 ? { label: "Livrée",     color: "#2E7D32" }
+          : i % 6 === 1 ? { label: "En cours",   color: "#ED6C02" }
+          : i % 6 === 2 ? { label: "En attente", color: "#0288D1" }
+          : i % 6 === 3 ? { label: "Annulée",    color: "#D32F2F" }
+          : i % 6 === 4 ? { label: "Brouillon",  color: "#616161" }
+          :               { label: "Livrée",     color: "#2E7D32" },
+    dateCreation: `${pad(1+(i%28))}/${pad(1+(i%12))}/2025`,
+  };
+});
+
+const REPORTING_KPIS = [
+  { label: "Commandes ce mois",  value: "342",     trend: "+12 %", up: true,  desc: "vs. mois précédent" },
+  { label: "Taux de livraison",  value: "94,3 %",  trend: "+1,8 pt", up: true,desc: "objectif 92 %" },
+  { label: "Délai moyen",        value: "8,4 j",   trend: "–0,6 j", up: true, desc: "commande → livraison" },
+  { label: "Annulations",        value: "21",      trend: "+4",    up: false,desc: "≈ 6 % du volume" },
+];
+
+// ──────────────────────────────────────────────────────────────────
+// TECHNIQUE — Tickets, Configurations, Supervision
+// ──────────────────────────────────────────────────────────────────
+const TICKETS = Array.from({ length: 18 }).map((_, i) => {
+  const c = CLIENTS[i % CLIENTS.length];
+  const sev = ["Critique","Majeure","Mineure","Information"][i % 4];
+  return {
+    id: `TKT-${pad(11000 + i, 5)}`,
+    sujet: pick([
+      "Coupure totale fibre",
+      "Latence anormale sur Trunk SIP",
+      "Demande de SDA supplémentaire",
+      "Migration carte SIM",
+      "Reconfiguration VLAN",
+      "Panne wifi atelier",
+      "Trafic mobile bloqué",
+      "Demande d'éligibilité",
+      "Désactivation utilisateur",
+      "Remplacement routeur",
+    ]),
+    client: c.nom,
+    severite: sev,
+    severiteColor: sev === "Critique" ? "#D32F2F" : sev === "Majeure" ? "#ED6C02" : sev === "Mineure" ? "#0288D1" : "#616161",
+    affecte: pick(["M. Lambert","Mme Caron","M. Renaud","Mme Garnier","M. Robin","Mme Vidal","—"]),
+    statut: i % 5 === 0 ? { label: "Ouvert",     color: "#D32F2F" }
+          : i % 5 === 1 ? { label: "En cours",   color: "#ED6C02" }
+          : i % 5 === 2 ? { label: "En attente", color: "#0288D1" }
+          : i % 5 === 3 ? { label: "Résolu",     color: "#2E7D32" }
+          :               { label: "Fermé",      color: "#616161" },
+    dateCreation: `${pad(1+(i%28))}/${pad(1+(i%12))}/2025 - ${pad(8+i%10)}:${pad(20+(i*3)%40)}`,
+    sla: pick(["4 h","8 h","24 h","48 h","—"]),
+  };
+});
+
+const EQUIPMENTS = Array.from({ length: 14 }).map((_, i) => {
+  const c = CLIENTS[i % CLIENTS.length];
+  return {
+    id: `EQP-${pad(13000 + i, 5)}`,
+    nom: pick(["Routeur Cisco ISR","Switch HP","Borne wifi","Box Pro","Firewall Fortinet","ONT","IPBX"]) + ` #${1+i}`,
+    client: c.nom,
+    site: `${SITES_LABELS[i % SITES_LABELS.length]} ${VILLES[i % VILLES.length]}`,
+    ip: `10.${pad(1+i)}.${pad(10+i*3 % 250)}.${pad(1+i*7 % 250)}`,
+    firmware: `v${pad(1+i%9)}.${pad(2+i%9)}.${pad(0+i%30)}`,
+    etat: i % 11 === 10 ? { label: "Hors ligne", color: "#D32F2F" }
+        : i % 7  === 6  ? { label: "Alerte",     color: "#ED6C02" }
+        :                  { label: "En ligne",   color: "#2E7D32" },
+    uptime: `${(80 + Math.floor(_r() * 20))} j`,
+  };
+});
+
+// ──────────────────────────────────────────────────────────────────
+// ELIGIBILITÉ
+// ──────────────────────────────────────────────────────────────────
+const ELIGIBILITY_RESULTS = [
+  { tech: "Fibre FTTH",   operateur: "Orange",   debitMax: "1 Gb/s",  delai: "10-15 j",  prixIndic: "59,00 €",  eligible: true },
+  { tech: "Fibre FTTH",   operateur: "SFR",      debitMax: "2 Gb/s",  delai: "12 j",     prixIndic: "62,00 €",  eligible: true },
+  { tech: "Fibre FTTO",   operateur: "Koesio",   debitMax: "1 Gb/s SLA", delai: "30-45 j", prixIndic: "189,00 €", eligible: true },
+  { tech: "SDSL",         operateur: "Orange",   debitMax: "8 Mb/s",  delai: "21 j",     prixIndic: "129,00 €", eligible: true },
+  { tech: "ADSL",         operateur: "—",        debitMax: "12 Mb/s", delai: "—",        prixIndic: "—",         eligible: false },
+  { tech: "4G FWA",       operateur: "Bouygues", debitMax: "200 Mb/s",delai: "5 j",      prixIndic: "49,00 €",  eligible: true },
+  { tech: "5G FWA",       operateur: "Orange",   debitMax: "1 Gb/s",  delai: "7 j",      prixIndic: "69,00 €",  eligible: true },
+];
+
+Object.assign(window, {
+  USERS, LOGS, SAMPLE_PAYLOAD,
+  REVENDEURS, CLIENTS, SITES, SERVICES, CATALOGUE,
+  SUBSCRIBERS, MOBILE_ORDERS,
+  ACCESS_LINKS, ACCESS_ORDERS,
+  VOICE_SPACES, TRUNK_SIP, TRUNK_ORDERS, PORTABILITES, NUMBERS,
+  ORDERS, REPORTING_KPIS,
+  TICKETS, EQUIPMENTS,
+  ELIGIBILITY_RESULTS,
+  STATUTS_HTTP,
+});

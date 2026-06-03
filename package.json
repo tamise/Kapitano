@@ -1,0 +1,8 @@
+{
+  "name": "kapitano",
+  "version": "1.0.0",
+  "description": "Kapitano — Prototype maquettes",
+  "scripts": {
+    "start": "npx serve ."
+  }
+}
