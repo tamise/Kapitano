@@ -45,7 +45,7 @@ button { font-family: inherit; }
 /* ============================================================
    Shell layout
    ============================================================ */
-.kap-shell { display: flex; min-height: 100vh; }
+.kap-shell { display: flex; height: 100vh; overflow: hidden; }
 .kap-sidebar {
   width: 240px;
   flex: 0 0 240px;
@@ -188,14 +188,14 @@ button { font-family: inherit; }
 /* ============================================================
    Main area + topbar
    ============================================================ */
-.kap-main { flex: 1; display: flex; flex-direction: column; min-width: 0; }
+.kap-main { flex: 1; display: flex; flex-direction: column; min-width: 0; overflow: hidden; }
 .kap-topbar {
   margin: 15px 15px 0;
   height: 52px;
   background: #fff;
   border-radius: 10px 10px 0 0;
   box-shadow: none;
-  border: 1px solid rgba(0,0,0,.08);
+  border: none;
   border-bottom: 1px solid var(--kap-divider);
   display: flex;
   align-items: center;
@@ -236,6 +236,8 @@ button { font-family: inherit; }
   display: flex;
   flex-direction: column;
   gap: 16px;
+  overflow: hidden;
+  min-height: 0;
 }
 
 /* Fusion topbar ↔ PageHead (screens avec actions) */
@@ -394,7 +396,26 @@ button { font-family: inherit; }
 /* ============================================================
    Tables
    ============================================================ */
-.kap-table-wrap { overflow: auto; }
+
+/* Card contenant un tableau : flex colonne, grandit pour remplir le canvas */
+.kap-canvas > .kap-card:has(.kap-table-wrap) {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-height: 0;
+}
+
+/* Le tableau scroll, header sticky, pagination toujours visible */
+.kap-table-wrap {
+  overflow-y: auto;
+  overflow-x: auto;
+  flex: 1;
+  min-height: 0;
+}
+
+/* Toolbar et pagination ne rétrécissent pas */
+.kap-toolbar      { flex-shrink: 0; }
+.kap-pagination   { flex-shrink: 0; }
 .kap-table { width: 100%; border-collapse: collapse; }
 .kap-table th, .kap-table td {
   text-align: left;

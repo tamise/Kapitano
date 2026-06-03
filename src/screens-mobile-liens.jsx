@@ -21,6 +21,8 @@ function MobilesScreen({ initialSub = "abonnements", onOpenDetail }) {
 
 function MobileSubsTab({ onOpenDetail }) {
   const [sortBy, setSortBy] = useStateMb(null);
+  const [page, setPage] = useStateMb(1);
+  const totalPages = Math.max(1, Math.ceil(SUBSCRIBERS.length / 15));
   const setTopbarActions = React.useContext(TopbarActionsContext);
   React.useEffect(() => {
     setTopbarActions(
@@ -67,7 +69,7 @@ function MobileSubsTab({ onOpenDetail }) {
             </tr>
           </thead>
           <tbody>
-            {SUBSCRIBERS.slice(0, 12).map(s => (
+            {SUBSCRIBERS.slice((page - 1) * 15, page * 15).map(s => (
               <tr key={s.id} className="is-clickable" onClick={() => onOpenDetail({ kind: "subscriber", data: s })}>
                 <td onClick={(e) => e.stopPropagation()}><Checkbox /></td>
                 <td className="mono" style={{ fontWeight: 600 }}>{s.msisdn}</td>
@@ -90,12 +92,14 @@ function MobileSubsTab({ onOpenDetail }) {
           </tbody>
         </table>
       </TableBox>
-      <Pagination page={1} totalPages={2} onChange={() => {}} totalItems={SUBSCRIBERS.length} perPage={12} />
+      <Pagination page={page} totalPages={totalPages} onChange={setPage} totalItems={SUBSCRIBERS.length} perPage={15} />
     </>
   );
 }
 
 function MobileOrdersTab({ onOpenDetail }) {
+  const [page, setPage] = useStateMb(1);
+  const totalPages = Math.max(1, Math.ceil(MOBILE_ORDERS.length / 15));
   return (
     <>
       <Toolbar>
@@ -123,7 +127,7 @@ function MobileOrdersTab({ onOpenDetail }) {
             </tr>
           </thead>
           <tbody>
-            {MOBILE_ORDERS.map(o => (
+            {MOBILE_ORDERS.slice((page - 1) * 15, page * 15).map(o => (
               <tr key={o.id} className="is-clickable" onClick={() => onOpenDetail({ kind: "mob-order", data: o })}>
                 <td className="mono" style={{ fontWeight: 600 }}>{o.id}</td>
                 <td>{o.client}</td>
@@ -140,7 +144,7 @@ function MobileOrdersTab({ onOpenDetail }) {
           </tbody>
         </table>
       </TableBox>
-      <Pagination page={1} totalPages={2} onChange={() => {}} totalItems={MOBILE_ORDERS.length} perPage={MOBILE_ORDERS.length} />
+      <Pagination page={page} totalPages={totalPages} onChange={setPage} totalItems={MOBILE_ORDERS.length} perPage={15} />
     </>
   );
 }
@@ -274,6 +278,8 @@ function LinksScreen({ initialSub = "abonnements", onOpenDetail }) {
 }
 
 function AccessSubsTab({ onOpenDetail }) {
+  const [page, setPage] = useStateMb(1);
+  const totalPages = Math.max(1, Math.ceil(ACCESS_LINKS.length / 15));
   return (
     <>
       <Toolbar>
@@ -303,7 +309,7 @@ function AccessSubsTab({ onOpenDetail }) {
             </tr>
           </thead>
           <tbody>
-            {ACCESS_LINKS.slice(0, 12).map(l => (
+            {ACCESS_LINKS.slice((page - 1) * 15, page * 15).map(l => (
               <tr key={l.id} className="is-clickable" onClick={() => onOpenDetail({ kind: "access", data: l })}>
                 <td onClick={(e) => e.stopPropagation()}><Checkbox /></td>
                 <td className="mono" style={{ fontWeight: 600 }}>{l.reference}</td>
@@ -323,12 +329,14 @@ function AccessSubsTab({ onOpenDetail }) {
           </tbody>
         </table>
       </TableBox>
-      <Pagination page={1} totalPages={2} onChange={() => {}} totalItems={ACCESS_LINKS.length} perPage={12} />
+      <Pagination page={page} totalPages={totalPages} onChange={setPage} totalItems={ACCESS_LINKS.length} perPage={15} />
     </>
   );
 }
 
 function AccessOrdersTab({ onOpenDetail }) {
+  const [page, setPage] = useStateMb(1);
+  const totalPages = Math.max(1, Math.ceil(ACCESS_ORDERS.length / 15));
   return (
     <>
       <Toolbar>
@@ -353,7 +361,7 @@ function AccessOrdersTab({ onOpenDetail }) {
             </tr>
           </thead>
           <tbody>
-            {ACCESS_ORDERS.map(o => (
+            {ACCESS_ORDERS.slice((page - 1) * 15, page * 15).map(o => (
               <tr key={o.id} className="is-clickable" onClick={() => onOpenDetail({ kind: "access-order", data: o })}>
                 <td className="mono" style={{ fontWeight: 600 }}>{o.id}</td>
                 <td>{o.client}</td>
@@ -370,6 +378,7 @@ function AccessOrdersTab({ onOpenDetail }) {
           </tbody>
         </table>
       </TableBox>
+      <Pagination page={page} totalPages={totalPages} onChange={setPage} totalItems={ACCESS_ORDERS.length} perPage={15} />
     </>
   );
 }

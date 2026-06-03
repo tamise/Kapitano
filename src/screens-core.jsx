@@ -123,7 +123,8 @@ function UsersScreen({ initialTab = "liste", onOpenLog, onOpenUser }) {
   const [logDate, setLogDate] = useStateScA(null); // { debut, fin }
   const [logStatut, setLogStatut] = useStateScA([]);
   const [logRessources, setLogRessources] = useStateScA([]);
-  const perPage = 10;
+  const perPage = 15;
+  const [logPage, setLogPage] = useStateScA(1);
 
   const filtered = useMemoScA(() => {
     const n = q.trim().toLowerCase();
@@ -131,6 +132,8 @@ function UsersScreen({ initialTab = "liste", onOpenLog, onOpenUser }) {
   }, [q]);
   const totalPages = Math.max(1, Math.ceil(filtered.length / perPage));
   const view = filtered.slice((page - 1) * perPage, page * perPage);
+  const logTotalPages = Math.max(1, Math.ceil(LOGS.length / 15));
+  const logView = LOGS.slice((logPage - 1) * 15, logPage * 15);
 
   const isLogs = initialTab === "logs";
 
@@ -228,7 +231,7 @@ function UsersScreen({ initialTab = "liste", onOpenLog, onOpenUser }) {
                   </tr>
                 </thead>
                 <tbody>
-                  {LOGS.slice(0, 12).map(l => (
+                  {logView.map(l => (
                     <tr key={l.id}>
                       <td className="mono muted">{l.id}</td>
                       <td className="muted">{l.dateCreation}</td>
@@ -244,7 +247,7 @@ function UsersScreen({ initialTab = "liste", onOpenLog, onOpenUser }) {
                 </tbody>
               </table>
             </TableBox>
-            <Pagination page={1} totalPages={4} onChange={() => {}} totalItems={LOGS.length} perPage={12} />
+            <Pagination page={logPage} totalPages={logTotalPages} onChange={setLogPage} totalItems={LOGS.length} perPage={15} />
           </>
         )}
       </div>

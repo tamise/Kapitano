@@ -49,6 +49,8 @@ function refSubtitle(sub) {
 // ────────────────────────────────────────────────────────────────
 function RevendeursTab({ onOpenDetail }) {
   const [sortBy, setSortBy] = React.useState(null);
+  const [page, setPage] = React.useState(1);
+  const totalPages = Math.max(1, Math.ceil(REVENDEURS.length / 15));
 
   return (
     <>
@@ -78,7 +80,7 @@ function RevendeursTab({ onOpenDetail }) {
             </tr>
           </thead>
           <tbody>
-            {REVENDEURS.map(r => (
+            {REVENDEURS.slice((page - 1) * 15, page * 15).map(r => (
               <tr key={r.code} className="is-clickable" onClick={() => onOpenDetail({ kind: "revendeur", data: r })}>
                 <td style={{ fontWeight: 600 }}>{r.nom}</td>
                 <td className="muted">{r.codeRegion}</td>
@@ -90,7 +92,7 @@ function RevendeursTab({ onOpenDetail }) {
           </tbody>
         </table>
       </TableBox>
-      <Pagination page={1} totalPages={1} onChange={() => {}} totalItems={REVENDEURS.length} perPage={REVENDEURS.length} />
+      <Pagination page={page} totalPages={totalPages} onChange={setPage} totalItems={REVENDEURS.length} perPage={15} />
     </>
   );
 }
@@ -99,6 +101,8 @@ function RevendeursTab({ onOpenDetail }) {
 function ClientsTab({ onOpenDetail }) {
   const [sortBy, setSortBy] = React.useState(null);
   const [revendeurFilter, setRevendeurFilter] = React.useState(null);
+  const [page, setPage] = React.useState(1);
+  const totalPages = Math.max(1, Math.ceil(CLIENTS.length / 15));
 
   const setTopbarActions = React.useContext(TopbarActionsContext);
   React.useEffect(() => {
@@ -137,7 +141,7 @@ function ClientsTab({ onOpenDetail }) {
             </tr>
           </thead>
           <tbody>
-            {CLIENTS.slice(0, 14).map(c => (
+            {CLIENTS.slice((page - 1) * 15, page * 15).map(c => (
               <tr key={c.id} className="is-clickable" onClick={() => onOpenDetail({ kind: "client", data: c })}>
                 <td style={{ fontWeight: 600 }}>{c.nom}</td>
                 <td className="mono muted">{c.codeArtis}</td>
@@ -151,7 +155,7 @@ function ClientsTab({ onOpenDetail }) {
           </tbody>
         </table>
       </TableBox>
-      <Pagination page={1} totalPages={2} onChange={() => {}} totalItems={CLIENTS.length} perPage={14} />
+      <Pagination page={page} totalPages={totalPages} onChange={setPage} totalItems={CLIENTS.length} perPage={15} />
     </>
   );
 }
@@ -161,6 +165,8 @@ function SitesTab({ onOpenDetail }) {
   const [sortBy, setSortBy] = React.useState(null);
   const [revendeurFilter, setRevendeurFilter] = React.useState(null);
   const [clientFilter, setClientFilter] = React.useState(null);
+  const [page, setPage] = React.useState(1);
+  const totalPages = Math.max(1, Math.ceil(SITES.length / 15));
 
   const setTopbarActions = React.useContext(TopbarActionsContext);
   React.useEffect(() => {
@@ -202,7 +208,7 @@ function SitesTab({ onOpenDetail }) {
             </tr>
           </thead>
           <tbody>
-            {SITES.slice(0, 12).map(s => (
+            {SITES.slice((page - 1) * 15, page * 15).map(s => (
               <tr key={s.id} className="is-clickable" onClick={() => onOpenDetail({ kind: "site", data: s })}>
                 <td className="mono muted">{s.id}</td>
                 <td style={{ fontWeight: 600 }}>{s.label}</td>
@@ -218,7 +224,7 @@ function SitesTab({ onOpenDetail }) {
           </tbody>
         </table>
       </TableBox>
-      <Pagination page={1} totalPages={2} onChange={() => {}} totalItems={SITES.length} perPage={12} />
+      <Pagination page={page} totalPages={totalPages} onChange={setPage} totalItems={SITES.length} perPage={15} />
     </>
   );
 }
@@ -227,35 +233,64 @@ function SitesTab({ onOpenDetail }) {
 function HebergementsTab({ onOpenDetail }) {
   const [sortBy, setSortBy] = React.useState(null);
 
-  function handleSort(val) {
-    setSortBy(val === "Réinitialiser le tri" ? null : val);
-  }
+  const HEB_OPTIONS = ["Loadbalancing Apache [VM000000000283__057069]","3CX [VM000000000465__063026]","3CX [PX000000001086__101029]","3CX [VM000000001205__066339]","3CX [PX000000003526__J10022]","3CX [PX000000003641__NM300256]","3CX [PX000000003644__NM300256]","3CX 16AS [PX000000000745__901457]","SRV-RDS4 [VM000000000039__006669]","VDOM [VDOM0000000141__046376]","VDOM [VDOM0000000303__102191]","VDOM [VDOM0000001087__101029]","VDOM [VDOM0000003642__NM300256]","VDOM [VDOM0000003645__NM300256]","VDOM [VDOM0000003734__032605_8]","VDOM [VDOM0000003940__KNO444]","VLAN Client 3CX [LAN00000000302__102191]","VLAN Client DC [LAN00000000139__046376]","VLAN Client DC [LAN00000000157__035414]","VLAN Client DC [LAN00000000282__057069]","VLAN Client DC [LAN00000001085__101029]","VLAN Client DC [LAN00000003640__NM300256]","VLAN Client DC [LAN00000003643__NM300256]","VLAN Client DC [LAN00000003938__KNO444]","VM-01 [VM000000000140__046376]","site internet [VM000000003939__KNO444]","100 POUR CENT NOUS - 3CX [VM000000000110__057846]","1NCENTIVA - VDOM [VDOM0000001283__066459]","22.1 CONSULTING - EVA1 [VM000000000614__045703]","22.1 CONSULTING - PFSENSE [VM000000000107__045703]","22.1 CONSULTING - SRVAPP [VM000000000597__045703]","22.1 CONSULTING - SRVDC [VM000000000615__045703]","22.1 CONSULTING - SRVRDS01 [VM000000000617__045703]","22.1 CONSULTING - SRVRDS02 [VM000000000616__045703]","22.1 CONSULTING - SRVRDS03 [VM000000001465__05006409]","22.1 CONSULTING - VLAN Client DC [LAN00000000107__045703]","2M ASSOCIES - 3CX [PX000000001255__902045]","2MG - VDOM [VDOM0000001058__14999000]","4S - VDOM [VDOM0000000056__058902]","72-74 RUE ROYALE - 3CX [PX000000003629__1004846]","98 DELMAS - 3CX [PX000000001044__55036378]","98 DELMAS - VLAN Client DC [LAN00000001043__55036378]","A D A P E I - AVAYA HEBERGEE [VM000000003704__020707]","A D A P E I - HEBERGEMENT FIREWALL [VM000000003547__020707]","A I S M T 04 - 3cx [VM000000000289__14997148]","A VOTRE SERVICE - 3CX [PX000000003910__CPO20023]","A VOTRE SERVICE - 3CX [PX000000003911__CPO20023]","A VOTRE SERVICE - 3CX [PX000000003922__CPO20023]","A VOTRE SERVICE - 3CX [PX000000003924__CPO20023]","AAD 07 - Colocation Client DC [COL00000001181__011496]"];
+  const HEB_REF_TECH = {
+    "VM000000000465__063026": "vm-1839767",
+    "PX000000001086__101029": "PX-125",
+    "VM000000001205__066339": "vm-571320",
+    "PX000000003526__J10022": "PX-268",
+    "PX000000000745__901457": "vm-450422",
+    "VM000000000039__006669": "vm-326952",
+    "VM000000000110__057846": "vm-1697596",
+    "VM000000000614__045703": "vm-55107",
+    "VM000000000107__045703": "vm-458870",
+    "VM000000000597__045703": "vm-56786",
+    "VM000000000615__045703": "vm-56785",
+    "VM000000000617__045703": "vm-43042",
+    "VM000000000616__045703": "vm-43041",
+    "VM000000001465__05006409": "vm-252568",
+    "PX000000001255__902045": "PX-207",
+    "PX000000003629__1004846": "PX-294",
+    "PX000000001044__55036378": "px-116",
+    "VM000000003704__020707": "vm-717882",
+    "VM000000003547__020707": "vm-23279",
+  };
+  const HEBERGEMENTS = HEB_OPTIONS.map((opt, i) => {
+    const match = opt.match(/^(.+?)\s*\[(.+)\]$/);
+    const nom = match ? match[1].trim() : opt;
+    const code = match ? match[2].trim() : "";
+    const type = code.replace(/[0-9_].*/, "");
+    const s = SITES[i % SITES.length];
+    return {
+      id: `HEB-${String(2000 + i).padStart(5, "0")}`,
+      nom,
+      code,
+      refTechnique: HEB_REF_TECH[code] || "",
+      type,
+      client: s.client,
+      revendeur: s.revendeur,
+      statut: s.statut,
+    };
+  });
 
-  const HEBERGEMENTS = SITES.map((s, i) => ({
-    id: `HEB-${String(2000 + i).padStart(5, "0")}`,
-    libelle: `Hébergement ${s.label}`,
-    site: s.label,
-    client: s.client,
-    adresse: s.adresse,
-    cp: s.cp,
-    ville: s.ville,
-    technicien: s.technicien,
-    statut: s.statut,
-  }));
+  const [page, setPage] = React.useState(1);
+  const totalPages = Math.max(1, Math.ceil(HEBERGEMENTS.length / 15));
 
   return (
     <>
       <Toolbar>
-        <Select
+        <RadioDropdown
           placeholder="Trier"
-          options={["Libellé", "Site", "Client", "Adresse", "Réinitialiser le tri"]}
+          options={["Nom", "Code", "Réf. Technique", "Type", "Usage"]}
           value={sortBy}
-          onChange={handleSort}
+          onChange={setSortBy}
           width={130}
+          showSearch={false}
+          showRadio={false}
         />
-        <Input placeholder="Recherche par libellé, site, ville…" width={360} />
-        <Select placeholder="Client" options={CLIENTS.slice(0, 10).map(c => c.nom)} width={220} />
-        <Select placeholder="Revendeur" options={REVENDEURS.map(r => r.nom)} width={220} />
+        <Input placeholder="Rechercher par nom, Client, Code ou Réf. technique" width={360} />
+        <RadioDropdown placeholder="Revendeur" options={["2IT SOLUTIONS","ABC TELECOMS","ADV","AXIUM SOLUTIONS","CIS VALLEY","GROUPE TELECOMS DE L'OUEST GTO","IPNEOS","KOESIO AQUITAINE","KOESIO AURA INFO (VD)","KOESIO AURA INFO (VDI)","KOESIO AURA TELECOM","KOESIO AUSTRALIA","KOESIO CENTRE EST","KOESIO CORPORATE IT","KOESIO EST","KOESIO GRAND EST","KOESIO IDF","KOESIO MANAGED SERVICES","KOESIO MEDITERRANNEE","KOESIO NETWORKS","KOESIO NORD OUEST","KOESIO OCCITANIE","KOESIO OCCITANIE BPA","KOESIO OUEST","KOESIO PACA","KOESIO PACA TELECOMS","KOESIO SUD ALLIANCE","KOESIO SUISSE","ONE OPERATEUR","Production","S-WAN IP"]} value={null} onChange={() => {}} width={180} />
+        <RadioDropdown placeholder="Client" options={CLIENT_NAMES} value={null} onChange={() => {}} width={170} />
         <div className="grow" />
         <Button variant="tertiary" icon="refresh-cw">Réinitialiser</Button>
       </Toolbar>
@@ -263,39 +298,36 @@ function HebergementsTab({ onOpenDetail }) {
         <table className="kap-table">
           <thead>
             <tr>
-              <th style={{ width: 40 }}><Checkbox /></th>
-              <th>ID</th>
-              <th><SortHeader active dir="asc">Libellé</SortHeader></th>
-              <th>Site</th>
+              <th><SortHeader active dir="asc">Nom</SortHeader></th>
+              <th>Code</th>
+              <th>Réf. Technique</th>
+              <th>Type</th>
               <th>Client</th>
-              <th>Adresse</th>
-              <th>CP</th>
-              <th>Ville</th>
-              <th>Technicien</th>
+              <th>Revendeur</th>
               <th>Statut</th>
               <th style={{ width: 60 }}></th>
             </tr>
           </thead>
           <tbody>
-            {HEBERGEMENTS.slice(0, 12).map(h => (
+            {HEBERGEMENTS.slice((page - 1) * 15, page * 15).map(h => (
               <tr key={h.id} className="is-clickable" onClick={() => onOpenDetail({ kind: "hebergement", data: h })}>
-                <td onClick={(e) => e.stopPropagation()}><Checkbox /></td>
-                <td className="mono">{h.id}</td>
-                <td style={{ fontWeight: 600 }}>{h.libelle}</td>
-                <td className="muted">{h.site}</td>
+                <td style={{ fontWeight: 600 }}>{h.nom}</td>
+                <td className="mono muted">{h.code}</td>
+                <td className="mono muted">{h.refTechnique}</td>
+                <td className="muted">{h.type}</td>
                 <td className="muted">{h.client}</td>
-                <td>{h.adresse}</td>
-                <td className="mono">{h.cp}</td>
-                <td>{h.ville}</td>
-                <td className="muted">{h.technicien}</td>
-                <td><DotStatus color={h.statut.color} label={h.statut.label} /></td>
-                <td><IconButton icon="more-vertical" /></td>
+                <td className="muted">{h.revendeur}</td>
+                <td>{h.statut.label === "Actif"
+                  ? <Tooltip text="Actif"><Icon name="check-circle-2" size={18} style={{ color: "#2E7D32" }} /></Tooltip>
+                  : <Tooltip text="Inactif"><Icon name="x-circle" size={18} style={{ color: "#D32F2F" }} /></Tooltip>}
+                </td>
+                <td><Tooltip text="Consulter les services" placement="top-end"><IconButton icon="list-alt" /></Tooltip></td>
               </tr>
             ))}
           </tbody>
         </table>
       </TableBox>
-      <Pagination page={1} totalPages={2} onChange={() => {}} totalItems={HEBERGEMENTS.length} perPage={12} />
+      <Pagination page={page} totalPages={totalPages} onChange={setPage} totalItems={HEBERGEMENTS.length} perPage={15} />
     </>
   );
 }
@@ -304,6 +336,8 @@ function HebergementsTab({ onOpenDetail }) {
 function ServicesTab({ onOpenDetail }) {
   const [sortBy, setSortBy] = React.useState(null);
   const [statutFilter, setStatutFilter] = React.useState([]);
+  const [page, setPage] = React.useState(1);
+  const totalPages = Math.max(1, Math.ceil(SERVICES.length / 15));
 
   return (
     <>
@@ -343,7 +377,7 @@ function ServicesTab({ onOpenDetail }) {
             </tr>
           </thead>
           <tbody>
-            {SERVICES.map(s => (
+            {SERVICES.slice((page - 1) * 15, page * 15).map(s => (
               <tr key={s.id} className="is-clickable" onClick={() => onOpenDetail({ kind: "service", data: s })}>
                 <td style={{ fontWeight: 600 }}>{s.type}</td>
                 <td className="muted">{s.quantite}</td>
@@ -366,7 +400,7 @@ function ServicesTab({ onOpenDetail }) {
           </tbody>
         </table>
       </TableBox>
-      <Pagination page={1} totalPages={2} onChange={() => {}} totalItems={SERVICES.length} perPage={SERVICES.length} />
+      <Pagination page={page} totalPages={totalPages} onChange={setPage} totalItems={SERVICES.length} perPage={15} />
     </>
   );
 }
@@ -374,24 +408,24 @@ function ServicesTab({ onOpenDetail }) {
 // ────────────────────────────────────────────────────────────────
 function CataloguesTab({ onOpenDetail }) {
   const [sortBy, setSortBy] = React.useState(null);
-
-  function handleSort(val) {
-    setSortBy(val === "Réinitialiser le tri" ? null : val);
-  }
+  const [page, setPage] = React.useState(1);
+  const totalPages = Math.max(1, Math.ceil(CATALOGUE.length / 15));
 
   return (
     <>
       <Toolbar>
-        <Select
+        <RadioDropdown
           placeholder="Trier"
-          options={["Référence", "Désignation", "Famille", "Prix HT", "Réinitialiser le tri"]}
+          options={["Libellé"]}
           value={sortBy}
-          onChange={handleSort}
+          onChange={setSortBy}
           width={130}
+          showSearch={false}
+          showRadio={false}
         />
-        <Input placeholder="Recherche par référence, désignation…" width={360} />
-        <Select placeholder="Famille" options={["Mobile","Voix fixe","Lien d'accès","Services"]} width={160} />
-        <Select placeholder="Sous-famille" options={["Forfaits data","Trunk SIP","FTTH","Cloud","Numéros"]} width={180} />
+        <Input placeholder="Rechercher par famille, sous-famille, libellé, Réf." width={360} />
+        <RadioDropdown placeholder="Famille" options={["Centrex","Cinet","Colocation","Connectivité","Cvoice","Cvpn","Détail matériel centrex","Hébergement","Lien ADSL","Lien FON","Lien FTTE","Lien FTTH","Lien FTTO","Lien SDSL","Mobile","Option centrex","Option Cinet","Option Cvoice","Option lien","Option routeur","Option VM","Parefeu","Passerelle","Portabilité","Routeur","SDA IP","SDA RNIS","Service VOIP","Services SAAS","Stochage","VGA","VM"]} value={null} onChange={() => {}} width={160} />
+        <RadioDropdown placeholder="Sous-famille" options={["ADSL Orange","Centrex Enove","Centrex Enreah","Centrex Unyc","Cinet","Colocation","Connectivité","CROSS-CONNECT","Cvpn","Détail matériel centrex","FON Koesio","FORTIGATE","FTTE Axione","FTTE Covage","FTTE Orange LAN","FTTE Orange O2E","FTTE SIEA","FTTH Axione","FTTH Bouygues","FTTH Covage","FTTH Orange","FTTH SFR","FTTH SIEA","FTTO Axione","FTTO Bouygues","FTTO Covage","FTTO IELO","FTTO Koesio","FTTO Orange C2E","FTTO Orange CELAN","FTTO SFR","Hébergement","Mobile Koesio","Option Centrex Enove","Option Centrex Enreach","Option Centrex Unyc","Option Cvoice","Option lien","Option routeur","Option VM","Passerelle","Portabilité Alphalink","Portabilité Koesio","Portabilité Unyc","Routeur","SDA IP","SDA RNIS","SDSL Orange C2E","SDSL Orange CELAN","Service VOIP","Services SAAS","Stockage","Trunk SIP Alphlink","Trunk SIP Cvoice","VDOM FORTINET","VGA Sewan","VL PROXMOX","VM VMWARE"]} value={null} onChange={() => {}} width={180} />
         <div className="grow" />
         <Button variant="tertiary" icon="refresh-cw">Réinitialiser</Button>
       </Toolbar>
@@ -399,35 +433,35 @@ function CataloguesTab({ onOpenDetail }) {
         <table className="kap-table">
           <thead>
             <tr>
-              <th>Référence</th>
+              <th>Réf.</th>
+              <th><SortHeader active dir="asc">Libellé</SortHeader></th>
               <th>Famille</th>
               <th>Sous-famille</th>
-              <th><SortHeader active dir="asc">Désignation</SortHeader></th>
-              <th style={{ textAlign: "right" }}>Prix HT</th>
-              <th>Engagement</th>
-              <th>Statut</th>
+              <th>Fournisseur</th>
+              <th>Type</th>
+              <th style={{ textAlign: "right" }}>Prix d'achat</th>
+              <th style={{ textAlign: "right" }}>Prix public</th>
               <th style={{ width: 60 }}></th>
             </tr>
           </thead>
           <tbody>
-            {CATALOGUE.map(c => (
+            {CATALOGUE.slice((page - 1) * 15, page * 15).map(c => (
               <tr key={c.ref} className="is-clickable" onClick={() => onOpenDetail({ kind: "catalogue", data: c })}>
-                <td className="mono" style={{ fontWeight: 600 }}>{c.ref}</td>
+                <td className="mono muted">{c.ref}</td>
+                <td style={{ fontWeight: 600 }}>{c.designation}</td>
                 <td>{c.famille}</td>
                 <td className="muted">{c.sousFamille}</td>
-                <td>{c.designation}</td>
-                <td style={{ textAlign: "right", fontWeight: 600 }}>{c.prix}</td>
-                <td className="muted">{c.duree}</td>
-                <td>{c.actif
-                  ? <span className="kap-pill kap-pill--soft" style={{ "--bg": "#E6F2E7", "--fg": "var(--kap-success)" }}>Actif</span>
-                  : <span className="kap-pill kap-pill--soft" style={{ "--bg": "#F2F2F2", "--fg": "var(--kap-fg-3)" }}>Inactif</span>}
-                </td>
+                <td className="muted">{c.fournisseur}</td>
+                <td className="muted">{c.type}</td>
+                <td style={{ textAlign: "right" }} className="muted">{c.prixAchat}</td>
+                <td style={{ textAlign: "right", fontWeight: 600 }}>{c.prixPublic}</td>
                 <td><IconButton icon="more-vertical" /></td>
               </tr>
             ))}
           </tbody>
         </table>
       </TableBox>
+      <Pagination page={page} totalPages={totalPages} onChange={setPage} totalItems={CATALOGUE.length} perPage={15} />
     </>
   );
 }

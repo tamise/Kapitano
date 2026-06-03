@@ -252,18 +252,18 @@ const SERVICES = Array.from({ length: 18 }).map((_, i) => {
 });
 
 const CATALOGUE = [
-  { ref: "MOB-50",     famille: "Mobile",        sousFamille: "Forfaits data",  designation: "Forfait Mobile 50 Go",     prix: "12,90 €",  duree: "24 mois", actif: true  },
-  { ref: "MOB-100",    famille: "Mobile",        sousFamille: "Forfaits data",  designation: "Forfait Mobile 100 Go",    prix: "18,90 €",  duree: "24 mois", actif: true  },
-  { ref: "MOB-UNLIM",  famille: "Mobile",        sousFamille: "Forfaits data",  designation: "Forfait Mobile Illimité",  prix: "29,90 €",  duree: "24 mois", actif: true  },
-  { ref: "VOIX-TRK-S", famille: "Voix fixe",     sousFamille: "Trunk SIP",      designation: "Trunk SIP 4 canaux",       prix: "39,00 €",  duree: "36 mois", actif: true  },
-  { ref: "VOIX-TRK-M", famille: "Voix fixe",     sousFamille: "Trunk SIP",      designation: "Trunk SIP 8 canaux",       prix: "59,00 €",  duree: "36 mois", actif: true  },
-  { ref: "VOIX-TRK-L", famille: "Voix fixe",     sousFamille: "Trunk SIP",      designation: "Trunk SIP 16 canaux",      prix: "99,00 €",  duree: "36 mois", actif: false },
-  { ref: "LIEN-FTTH-1",famille: "Lien d'accès",  sousFamille: "FTTH",           designation: "Fibre FTTH 1 Gb/s",        prix: "89,00 €",  duree: "36 mois", actif: true  },
-  { ref: "LIEN-FTTH-2",famille: "Lien d'accès",  sousFamille: "FTTH",           designation: "Fibre FTTH 2 Gb/s SLA",    prix: "149,00 €", duree: "36 mois", actif: true  },
-  { ref: "LIEN-SDSL",  famille: "Lien d'accès",  sousFamille: "SDSL",           designation: "SDSL 8 Mb/s symétrique",   prix: "129,00 €", duree: "36 mois", actif: false },
-  { ref: "SVC-WIFI",   famille: "Services",      sousFamille: "Wifi managé",    designation: "Wifi managé (par borne)",  prix: "9,90 €",   duree: "12 mois", actif: true  },
-  { ref: "SVC-CLOUD",  famille: "Services",      sousFamille: "Cloud",          designation: "VM 4 vCPU / 8 Go",         prix: "49,00 €",  duree: "12 mois", actif: true  },
-  { ref: "SVC-SDA",    famille: "Voix fixe",     sousFamille: "Numéros",        designation: "Numéro SDA fixe national", prix: "1,50 €",   duree: "—",       actif: true  },
+  { ref: "1042",  famille: "Mobile",        sousFamille: "Forfaits data",  designation: "Forfait Mobile 50 Go",     fournisseur: "Orange",    type: "Abonnement", prixAchat: "9,90 €",   prixPublic: "12,90 €",  duree: "24 mois", actif: true  },
+  { ref: "1078",  famille: "Mobile",        sousFamille: "Forfaits data",  designation: "Forfait Mobile 100 Go",    fournisseur: "SFR",       type: "Abonnement", prixAchat: "14,00 €",  prixPublic: "18,90 €",  duree: "24 mois", actif: true  },
+  { ref: "1093",  famille: "Mobile",        sousFamille: "Forfaits data",  designation: "Forfait Mobile Illimité",  fournisseur: "Bouygues",  type: "Abonnement", prixAchat: "22,00 €",  prixPublic: "29,90 €",  duree: "24 mois", actif: true  },
+  { ref: "2210",  famille: "Cvoice",        sousFamille: "Trunk SIP",      designation: "Trunk SIP 4 canaux",       fournisseur: "Koesio",    type: "Abonnement", prixAchat: "29,00 €",  prixPublic: "39,00 €",  duree: "36 mois", actif: true  },
+  { ref: "14307", famille: "Cvoice",        sousFamille: "Trunk SIP",      designation: "Trunk SIP 8 canaux",       fournisseur: "Koesio",    type: "FAS",        prixAchat: "45,00 €",  prixPublic: "59,00 €",  duree: "36 mois", actif: true  },
+  { ref: "2318",  famille: "Cvoice",        sousFamille: "Trunk SIP",      designation: "Trunk SIP 16 canaux",      fournisseur: "Koesio",    type: "Abonnement", prixAchat: "75,00 €",  prixPublic: "99,00 €",  duree: "36 mois", actif: false },
+  { ref: "3041",  famille: "Lien FTTH",     sousFamille: "FTTH Orange",    designation: "Fibre FTTH 1 Gb/s",        fournisseur: "Orange",    type: "Abonnement", prixAchat: "65,00 €",  prixPublic: "89,00 €",  duree: "36 mois", actif: true  },
+  { ref: "3055",  famille: "Lien FTTH",     sousFamille: "FTTH Orange",    designation: "Fibre FTTH 2 Gb/s SLA",    fournisseur: "Orange",    type: "Abonnement", prixAchat: "110,00 €", prixPublic: "149,00 €", duree: "36 mois", actif: true  },
+  { ref: "30812", famille: "Lien SDSL",     sousFamille: "SDSL Orange C2E",designation: "SDSL 8 Mb/s symétrique",   fournisseur: "SFR",       type: "FAS",        prixAchat: "95,00 €",  prixPublic: "129,00 €", duree: "36 mois", actif: false },
+  { ref: "4120",  famille: "Services SAAS", sousFamille: "Wifi managé",    designation: "Wifi managé (par borne)",  fournisseur: "Koesio",    type: "Abonnement", prixAchat: "7,00 €",   prixPublic: "9,90 €",   duree: "12 mois", actif: true  },
+  { ref: "4253",  famille: "VM",            sousFamille: "VL PROXMOX",     designation: "VM 4 vCPU / 8 Go",         fournisseur: "Koesio",    type: "Abonnement", prixAchat: "35,00 €",  prixPublic: "49,00 €",  duree: "12 mois", actif: true  },
+  { ref: "5007",  famille: "SDA IP",        sousFamille: "SDA IP",         designation: "Numéro SDA fixe national", fournisseur: "Koesio",    type: "Abonnement", prixAchat: "0,80 €",   prixPublic: "1,50 €",   duree: "—",       actif: true  },
 ];
 
 // ──────────────────────────────────────────────────────────────────

@@ -22,6 +22,8 @@ function VoixScreen({ initialSub = "espaces", onOpenDetail }) {
 }
 
 function EspacesTab({ onOpenDetail }) {
+  const [page, setPage] = useStateVx(1);
+  const totalPages = Math.max(1, Math.ceil(VOICE_SPACES.length / 15));
   return (
     <>
       <Toolbar>
@@ -45,7 +47,7 @@ function EspacesTab({ onOpenDetail }) {
             </tr>
           </thead>
           <tbody>
-            {VOICE_SPACES.map(v => (
+            {VOICE_SPACES.slice((page - 1) * 15, page * 15).map(v => (
               <tr key={v.id} className="is-clickable" onClick={() => onOpenDetail({ kind: "voice-space", data: v })}>
                 <td className="mono">{v.id}</td>
                 <td style={{ fontWeight: 600 }}>{v.nom}</td>
@@ -60,11 +62,14 @@ function EspacesTab({ onOpenDetail }) {
           </tbody>
         </table>
       </TableBox>
+      <Pagination page={page} totalPages={totalPages} onChange={setPage} totalItems={VOICE_SPACES.length} perPage={15} />
     </>
   );
 }
 
 function TrunkTab({ onOpenDetail }) {
+  const [page, setPage] = useStateVx(1);
+  const totalPages = Math.max(1, Math.ceil(TRUNK_SIP.length / 15));
   return (
     <>
       <Toolbar>
@@ -89,7 +94,7 @@ function TrunkTab({ onOpenDetail }) {
             </tr>
           </thead>
           <tbody>
-            {TRUNK_SIP.map(t => (
+            {TRUNK_SIP.slice((page - 1) * 15, page * 15).map(t => (
               <tr key={t.id} className="is-clickable" onClick={() => onOpenDetail({ kind: "trunk", data: t })}>
                 <td className="mono">{t.id}</td>
                 <td style={{ fontWeight: 600 }}>{t.client}</td>
@@ -104,11 +109,14 @@ function TrunkTab({ onOpenDetail }) {
           </tbody>
         </table>
       </TableBox>
+      <Pagination page={page} totalPages={totalPages} onChange={setPage} totalItems={TRUNK_SIP.length} perPage={15} />
     </>
   );
 }
 
 function TrunkOrdersTab({ onOpenDetail }) {
+  const [page, setPage] = useStateVx(1);
+  const totalPages = Math.max(1, Math.ceil(TRUNK_ORDERS.length / 15));
   return (
     <>
       <Toolbar>
@@ -130,7 +138,7 @@ function TrunkOrdersTab({ onOpenDetail }) {
             </tr>
           </thead>
           <tbody>
-            {TRUNK_ORDERS.map(o => (
+            {TRUNK_ORDERS.slice((page - 1) * 15, page * 15).map(o => (
               <tr key={o.id} className="is-clickable" onClick={() => onOpenDetail({ kind: "trunk-order", data: o })}>
                 <td className="mono" style={{ fontWeight: 600 }}>{o.id}</td>
                 <td>{o.client}</td>
@@ -143,11 +151,14 @@ function TrunkOrdersTab({ onOpenDetail }) {
           </tbody>
         </table>
       </TableBox>
+      <Pagination page={page} totalPages={totalPages} onChange={setPage} totalItems={TRUNK_ORDERS.length} perPage={15} />
     </>
   );
 }
 
 function PortabiliteTab({ onOpenDetail }) {
+  const [page, setPage] = useStateVx(1);
+  const totalPages = Math.max(1, Math.ceil(PORTABILITES.length / 15));
   return (
     <>
       <Toolbar>
@@ -173,7 +184,7 @@ function PortabiliteTab({ onOpenDetail }) {
             </tr>
           </thead>
           <tbody>
-            {PORTABILITES.map(p => (
+            {PORTABILITES.slice((page - 1) * 15, page * 15).map(p => (
               <tr key={p.id} className="is-clickable" onClick={() => onOpenDetail({ kind: "portabilite", data: p })}>
                 <td className="mono">{p.id}</td>
                 <td className="mono" style={{ fontWeight: 600 }}>{p.numero}</td>
@@ -188,11 +199,14 @@ function PortabiliteTab({ onOpenDetail }) {
           </tbody>
         </table>
       </TableBox>
+      <Pagination page={page} totalPages={totalPages} onChange={setPage} totalItems={PORTABILITES.length} perPage={15} />
     </>
   );
 }
 
 function NumbersTab({ onOpenDetail, variant }) {
+  const [page, setPage] = useStateVx(1);
+  const totalPages = Math.max(1, Math.ceil(NUMBERS.length / 15));
   return (
     <>
       <Toolbar>
@@ -217,7 +231,7 @@ function NumbersTab({ onOpenDetail, variant }) {
             </tr>
           </thead>
           <tbody>
-            {NUMBERS.map(n => (
+            {NUMBERS.slice((page - 1) * 15, page * 15).map(n => (
               <tr key={n.id} className="is-clickable" onClick={() => onOpenDetail({ kind: "number", data: n })}>
                 <td className="mono" style={{ fontWeight: 600 }}>{n.numero}</td>
                 <td className="muted">{variant === "revendeurs" ? REVENDEURS[NUMBERS.indexOf(n) % REVENDEURS.length].nom : n.client}</td>
@@ -231,6 +245,7 @@ function NumbersTab({ onOpenDetail, variant }) {
           </tbody>
         </table>
       </TableBox>
+      <Pagination page={page} totalPages={totalPages} onChange={setPage} totalItems={NUMBERS.length} perPage={15} />
     </>
   );
 }

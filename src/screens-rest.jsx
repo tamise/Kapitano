@@ -23,6 +23,8 @@ function CommandesScreen({ initialSub = "suivi", onOpenDetail }) {
 }
 
 function OrdersTab({ onOpenDetail }) {
+  const [page, setPage] = useStateCt(1);
+  const totalPages = Math.max(1, Math.ceil(ORDERS.length / 15));
   return (
     <>
       <Toolbar>
@@ -51,7 +53,7 @@ function OrdersTab({ onOpenDetail }) {
             </tr>
           </thead>
           <tbody>
-            {ORDERS.slice(0, 14).map(o => (
+            {ORDERS.slice((page - 1) * 15, page * 15).map(o => (
               <tr key={o.id} className="is-clickable" onClick={() => onOpenDetail({ kind: "order", data: o })}>
                 <td onClick={(e) => e.stopPropagation()}><Checkbox /></td>
                 <td className="mono" style={{ fontWeight: 600 }}>{o.id}</td>
@@ -70,7 +72,7 @@ function OrdersTab({ onOpenDetail }) {
           </tbody>
         </table>
       </TableBox>
-      <Pagination page={1} totalPages={2} onChange={() => {}} totalItems={ORDERS.length} perPage={14} />
+      <Pagination page={page} totalPages={totalPages} onChange={setPage} totalItems={ORDERS.length} perPage={15} />
     </>
   );
 }
@@ -160,6 +162,8 @@ function TechniqueScreen({ initialSub = "tickets", onOpenDetail }) {
 }
 
 function TicketsTab({ onOpenDetail }) {
+  const [page, setPage] = useStateCt(1);
+  const totalPages = Math.max(1, Math.ceil(TICKETS.length / 15));
   return (
     <>
       <Toolbar>
@@ -188,7 +192,7 @@ function TicketsTab({ onOpenDetail }) {
             </tr>
           </thead>
           <tbody>
-            {TICKETS.slice(0, 12).map(t => (
+            {TICKETS.slice((page - 1) * 15, page * 15).map(t => (
               <tr key={t.id} className="is-clickable" onClick={() => onOpenDetail({ kind: "ticket", data: t })}>
                 <td onClick={(e) => e.stopPropagation()}><Checkbox /></td>
                 <td className="mono" style={{ fontWeight: 600 }}>{t.id}</td>
@@ -205,12 +209,14 @@ function TicketsTab({ onOpenDetail }) {
           </tbody>
         </table>
       </TableBox>
-      <Pagination page={1} totalPages={2} onChange={() => {}} totalItems={TICKETS.length} perPage={12} />
+      <Pagination page={page} totalPages={totalPages} onChange={setPage} totalItems={TICKETS.length} perPage={15} />
     </>
   );
 }
 
 function ConfigurationsTab({ onOpenDetail }) {
+  const [page, setPage] = useStateCt(1);
+  const totalPages = Math.max(1, Math.ceil(EQUIPMENTS.length / 15));
   return (
     <>
       <Toolbar>
@@ -235,7 +241,7 @@ function ConfigurationsTab({ onOpenDetail }) {
             </tr>
           </thead>
           <tbody>
-            {EQUIPMENTS.map(e => (
+            {EQUIPMENTS.slice((page - 1) * 15, page * 15).map(e => (
               <tr key={e.id} className="is-clickable" onClick={() => onOpenDetail({ kind: "equipment", data: e })}>
                 <td className="mono">{e.id}</td>
                 <td style={{ fontWeight: 600 }}>{e.nom}</td>
@@ -250,11 +256,14 @@ function ConfigurationsTab({ onOpenDetail }) {
           </tbody>
         </table>
       </TableBox>
+      <Pagination page={page} totalPages={totalPages} onChange={setPage} totalItems={EQUIPMENTS.length} perPage={15} />
     </>
   );
 }
 
 function SupervisionTab({ onOpenDetail }) {
+  const [page, setPage] = useStateCt(1);
+  const totalPages = Math.max(1, Math.ceil(EQUIPMENTS.length / 15));
   const KPIS_SUP = [
     { label: "Équipements supervisés", value: "1 247", trend: "+18", up: true, desc: "ce mois" },
     { label: "Taux de disponibilité",  value: "99,6 %", trend: "+0,2 pt", up: true, desc: "SLA 99,5 %" },
@@ -286,7 +295,7 @@ function SupervisionTab({ onOpenDetail }) {
               </tr>
             </thead>
             <tbody>
-              {EQUIPMENTS.map(e => (
+              {EQUIPMENTS.slice((page - 1) * 15, page * 15).map(e => (
                 <tr key={e.id} className="is-clickable" onClick={() => onOpenDetail({ kind: "equipment", data: e })}>
                   <td className="mono">{e.id}</td>
                   <td style={{ fontWeight: 600 }}>{e.nom}</td>
@@ -301,6 +310,7 @@ function SupervisionTab({ onOpenDetail }) {
             </tbody>
           </table>
         </TableBox>
+        <Pagination page={page} totalPages={totalPages} onChange={setPage} totalItems={EQUIPMENTS.length} perPage={15} />
       </div>
     </div>
   );
