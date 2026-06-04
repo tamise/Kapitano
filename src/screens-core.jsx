@@ -78,7 +78,7 @@ function HomeScreen({ onNavigate }) {
           { key: "mobiles", sub: "commandes",   label: "Commande mobile", desc: "Suivez et gérez les commandes mobiles" },
         ]} />
         <SectionCard icon="wifi" title="Liens d'accès" count={2} onSelect={(it) => onNavigate(it.key, it.sub)} items={[
-          { key: "liens", sub: "abonnements", label: "Abonnements", desc: "Consultez et gérez les abonnements mobile data" },
+          { key: "liens", sub: "abonnements", label: "Abonnements mobile data", desc: "Consultez et gérez les abonnements mobile data" },
           { key: "liens", sub: "commandes",   label: "Commandes",   desc: "Suivez et gérez les commandes mobiles data" },
         ]} />
         <SectionCard icon="phone-call" title="Voix fixe" count={6} onSelect={(it) => onNavigate(it.key, it.sub)} items={[

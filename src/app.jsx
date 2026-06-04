@@ -106,8 +106,8 @@ function subLabel(screen, sub) {
   const map = {
     utilisateurs: { liste: "Liste", logs: "Logs d'activité" },
     referentiel:  { revendeurs: "Revendeurs", clients: "Clients", sites: "Sites", services: "Services", hebergements: "Hébergements", catalogues: "Catalogue" },
-    mobiles:      { abonnements: "Abonnements", commandes: "Commande mobile" },
-    liens:        { abonnements: "Abonnements", commandes: "Commandes" },
+    mobiles:      { abonnements: "Abonnements", commandes: "Commande mobile", dispatcher: "Dispatcher", "cartes-sim": "Cartes SIM", "gestionnaires-flottes": "Gestionnaires de flottes" },
+    liens:        { abonnements: "Abonnements mobile data", commandes: "Commandes mobile data", seuils: "Seuils de consommation" },
     voix:         { espaces: "Espaces voix", trunk: "Trunk SIP", "trunk-cmd": "Commandes Trunk SIP", portabilite: "Portabilité", numeros: "Numéros clients", "numeros-rev": "Numéros revendeurs" },
     commandes:    { suivi: "Suivi de commandes", reporting: "Reporting" },
     technique:    { tickets: "Tickets", configurations: "Configurations", supervision: "Supervision" },

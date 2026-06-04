@@ -313,7 +313,7 @@ const MOBILE_ORDERS = Array.from({ length: 14 }).map((_, i) => {
     numero: `+33 6 ${pad(10 + (i*7) % 89)} ${pad(20 + (i*3) % 79)} ${pad(30 + (i*11) % 69)} ${pad(40 + (i*5) % 59)}`,
     type: MOB_TYPES[i % MOB_TYPES.length],
     iccid: `8933 0123 4567 ${pad(9100 + i, 4)}`,
-    portabilite: typeCmd === "Portabilité sortante" ? "Oui" : "Non",
+    portabilite: typeCmd === "Portabilité sortante" ? `${pad(1+(i%28))}/${pad(1+(i%12))}/2025` : "Non",
     etatCommande: ETAT_COMMANDES[i % ETAT_COMMANDES.length],
     quantite: 1 + ((i * 3) % 15),
     statut: i % 5 === 0 ? { label: "Livrée",    color: "#2E7D32" }
@@ -330,13 +330,22 @@ const MOBILE_ORDERS = Array.from({ length: 14 }).map((_, i) => {
 // ──────────────────────────────────────────────────────────────────
 // LIENS D'ACCÈS
 // ──────────────────────────────────────────────────────────────────
+const OFFRES_LIA = ["Mobile 50 Go","Mobile 100 Go","Mobile Illimité","Data Pro 20 Go","Data Pro 100 Go"];
+const NOMS_LIEN = ["Lien principal","Lien backup","Lien siège","Lien agence","Lien entrepôt","Lien boutique","VPN principal","Accès Cloud","Lien MPLS","Accès Internet"];
 const ACCESS_LINKS = Array.from({ length: 16 }).map((_, i) => {
   const c = CLIENTS[i % CLIENTS.length];
   return {
     id: `LIN-${pad(7000 + i, 5)}`,
     reference: `KP-LIN-${pad(50000 + i, 6)}`,
     client: c.nom,
+    revendeur: c.revendeur,
     site: `${SITES_LABELS[i % SITES_LABELS.length]} ${VILLES[i % VILLES.length]}`,
+    numero: `+33 6 ${pad(10 + (i*7) % 89)} ${pad(20 + (i*3) % 79)} ${pad(30 + (i*11) % 69)} ${pad(40 + (i*5) % 59)}`,
+    iccid: `8933 0123 4567 ${pad(9200 + i, 4)}`,
+    nomLien: NOMS_LIEN[i % NOMS_LIEN.length],
+    offre: OFFRES_LIA[i % OFFRES_LIA.length],
+    etatAbo: ETAT_ABO[i % ETAT_ABO.length],
+    etatProd: ETAT_PROD[i % ETAT_PROD.length],
     technologie: pick(["FTTH","FTTO","SDSL","ADSL","4G FWA","5G FWA"]),
     debit: pick(["100 Mb/s","1 Gb/s","2 Gb/s","20 Mb/s","500 Mb/s","2 Mb/s"]),
     operateur: pick(["Orange","SFR","Free Pro","Bouygues","Covage","Axione"]),
@@ -349,9 +358,17 @@ const ACCESS_LINKS = Array.from({ length: 16 }).map((_, i) => {
 
 const ACCESS_ORDERS = Array.from({ length: 12 }).map((_, i) => {
   const c = CLIENTS[i % CLIENTS.length];
+  const typeCmd = TYPE_COMMANDES[i % TYPE_COMMANDES.length];
   return {
     id: `CMD-LIN-${pad(2025100 + i, 7)}`,
+    ref: `${pad(20000 + i * 41, 5)}`,
     client: c.nom,
+    revendeur: c.revendeur,
+    typeCommande: typeCmd,
+    forfait: OFFRES_LIA[i % OFFRES_LIA.length],
+    iccid: `8933 0123 4567 ${pad(9300 + i, 4)}`,
+    numero: `+33 6 ${pad(10 + (i*7) % 89)} ${pad(20 + (i*3) % 79)} ${pad(30 + (i*11) % 69)} ${pad(40 + (i*5) % 59)}`,
+    etatCommande: ETAT_COMMANDES[i % ETAT_COMMANDES.length],
     site: `${SITES_LABELS[i % SITES_LABELS.length]} ${VILLES[i % VILLES.length]}`,
     technologie: pick(["FTTH","FTTO","SDSL","4G FWA"]),
     statut: i % 4 === 0 ? { label: "Livrée",     color: "#2E7D32" }

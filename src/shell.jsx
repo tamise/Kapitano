@@ -18,10 +18,14 @@ const NAV = [
   { key: "mobiles",      label: "Mobiles",       icon: "smartphone", subs: [
     { key: "abonnements", label: "Abonnements" },
     { key: "commandes",   label: "Commande mobile" },
+    { key: "dispatcher",  label: "Dispatcher" },
+    { key: "cartes-sim",  label: "Cartes SIM" },
+    { key: "gestionnaires-flottes", label: "Gestionnaires de flottes" },
   ]},
   { key: "liens",        label: "Liens d'accès", icon: "wifi",       subs: [
-    { key: "abonnements", label: "Abonnements" },
-    { key: "commandes",   label: "Commandes" },
+    { key: "abonnements", label: "Abonnements mobile data" },
+    { key: "commandes",   label: "Commandes mobile data" },
+    { key: "seuils",      label: "Seuils de consommation" },
   ]},
   { key: "voix",         label: "Voix fixe",     icon: "phone_in_talk", subs: [
     { key: "espaces",     label: "Espaces voix" },
