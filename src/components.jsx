@@ -157,9 +157,7 @@ function RadioDropdown({ placeholder, options, value, onChange, width = 220, sho
     onChange(cur.includes(o) ? cur.filter(x => x !== o) : [...cur, o]);
   }
 
-  const displayLabel = multiSelect
-    ? (selected.length === 0 ? placeholder : selected.length === 1 ? selected[0] : `${selected.length} sélectionnés`)
-    : (value || placeholder);
+  const count = (showRadio || multiSelect) ? (multiSelect ? selected.length : (value ? 1 : 0)) : 0;
 
   return (
     <div ref={ref} style={{ position: "relative", display: "inline-block" }}>
@@ -168,8 +166,17 @@ function RadioDropdown({ placeholder, options, value, onChange, width = 220, sho
         style={{ width, cursor: "pointer", userSelect: "none" }}
         onClick={() => setOpen(o => !o)}
       >
-        <span style={{ flex: 1, color: (multiSelect ? selected.length > 0 : value) ? "var(--kap-fg-dark)" : "var(--kap-fg-3)", fontSize: 13, fontFamily: "var(--kap-font-ui)" }}>
-          {displayLabel}
+        <span style={{ flex: 1, display: "flex", alignItems: "center", gap: 6, color: "var(--kap-fg-3)", fontSize: 13, fontFamily: "var(--kap-font-ui)" }}>
+          {placeholder}
+          {count > 0 && (
+            <span style={{
+              display: "inline-flex", alignItems: "center", justifyContent: "center",
+              background: "var(--kap-primary)", color: "#fff",
+              borderRadius: 99, fontSize: 11, fontWeight: 700,
+              minWidth: 18, height: 18, padding: "0 5px",
+              lineHeight: 1,
+            }}>{count}</span>
+          )}
         </span>
         <Icon name="chevron-down" size={16} style={{ marginRight: -4 }} />
       </span>

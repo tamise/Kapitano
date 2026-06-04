@@ -21,6 +21,10 @@ function MobilesScreen({ initialSub = "abonnements", onOpenDetail }) {
 
 function MobileSubsTab({ onOpenDetail }) {
   const [sortBy, setSortBy] = useStateMb(null);
+  const [revendeurFilter, setRevendeurFilter] = useStateMb(null);
+  const [clientFilter, setClientFilter] = useStateMb(null);
+  const [etatAboFilter, setEtatAboFilter] = useStateMb([]);
+  const [etatProdFilter, setEtatProdFilter] = useStateMb([]);
   const [page, setPage] = useStateMb(1);
   const totalPages = Math.max(1, Math.ceil(SUBSCRIBERS.length / 15));
   const setTopbarActions = React.useContext(TopbarActionsContext);
@@ -31,61 +35,56 @@ function MobileSubsTab({ onOpenDetail }) {
     return () => setTopbarActions(null);
   }, []);
 
-  function handleSort(val) {
-    setSortBy(val === "Réinitialiser le tri" ? null : val);
-  }
-
   return (
     <>
       <Toolbar>
-        <Select
+        <RadioDropdown
           placeholder="Trier"
-          options={["Revendeur", "Client", "Numéro mobile", "Forfait", "Etat abo.", "Etat prod.", "Réinitialiser le tri"]}
+          options={["Revendeur", "Client", "Numéro mobile", "Forfait", "Etat abo.", "Etat prod."]}
           value={sortBy}
-          onChange={handleSort}
-          width={160}
+          onChange={setSortBy}
+          width={130}
+          showSearch={false}
+          showRadio={false}
         />
-        <Input placeholder="Recherche par MSISDN, ICCID, client…" width={360} />
-        <Select placeholder="Revendeur" options={REVENDEURS.map(r => r.nom)} width={190} />
-        <Select placeholder="Client" options={CLIENT_NAMES} width={210} />
-        <Select placeholder="Etat abo." options={["Actif","Suspendu","Désactivé"]} width={140} />
-        <Select placeholder="Etat prod." options={["En service","Provisioning","En coupure"]} width={150} />
+        <Input placeholder="Rechercher par client, numéro, ICCID, Forfait" width={360} />
+        <RadioDropdown placeholder="Revendeur" options={["2IT SOLUTIONS","ABC TELECOMS","ADV","AXIUM SOLUTIONS","CIS VALLEY","GROUPE TELECOMS DE L'OUEST GTO","IPNEOS","KOESIO AQUITAINE","KOESIO AURA INFO (VD)","KOESIO AURA INFO (VDI)","KOESIO AURA TELECOM","KOESIO AUSTRALIA","KOESIO CENTRE EST","KOESIO CORPORATE IT","KOESIO EST","KOESIO GRAND EST","KOESIO IDF","KOESIO MANAGED SERVICES","KOESIO MEDITERRANNEE","KOESIO NETWORKS","KOESIO NORD OUEST","KOESIO OCCITANIE","KOESIO OCCITANIE BPA","KOESIO OUEST","KOESIO PACA","KOESIO PACA TELECOMS","KOESIO SUD ALLIANCE","KOESIO SUISSE","ONE OPERATEUR","Production","S-WAN IP"]} value={revendeurFilter} onChange={setRevendeurFilter} width={180} />
+        <RadioDropdown placeholder="Client" options={CLIENT_NAMES} value={clientFilter} onChange={setClientFilter} width={170} />
+        <RadioDropdown placeholder="Etat abo." options={["Actif","Inactif","À activer","En cours d'activation","En cours de désactivation"]} value={etatAboFilter} onChange={setEtatAboFilter} width={150} showSearch={false} multiSelect={true} />
+        <RadioDropdown placeholder="Etat prod." options={["Commandé","Création en cours","Actif","Résilié"]} value={etatProdFilter} onChange={setEtatProdFilter} width={150} showSearch={false} multiSelect={true} />
       </Toolbar>
       <TableBox>
         <table className="kap-table">
           <thead>
             <tr>
-              <th style={{ width: 40 }}><Checkbox /></th>
-              <th><SortHeader active dir="asc">MSISDN</SortHeader></th>
-              <th>ICCID</th>
+              <th>Revendeur</th>
               <th>Client</th>
-              <th>Site</th>
+              <th><SortHeader active dir="asc">Numéro mobile</SortHeader></th>
+              <th>Type</th>
+              <th>ICCID</th>
+              <th>Utilisateur</th>
               <th>Forfait</th>
-              <th>Porteur</th>
-              <th style={{ minWidth: 160 }}>Consommation</th>
-              <th>Activation</th>
-              <th>Statut</th>
+              <th>Etat abo.</th>
+              <th>Etat prod.</th>
               <th style={{ width: 60 }}></th>
             </tr>
           </thead>
           <tbody>
             {SUBSCRIBERS.slice((page - 1) * 15, page * 15).map(s => (
               <tr key={s.id} className="is-clickable" onClick={() => onOpenDetail({ kind: "subscriber", data: s })}>
-                <td onClick={(e) => e.stopPropagation()}><Checkbox /></td>
-                <td className="mono" style={{ fontWeight: 600 }}>{s.msisdn}</td>
-                <td className="mono muted">{s.iccid}</td>
+                <td className="muted">{s.revendeur}</td>
                 <td className="muted">{s.client}</td>
-                <td className="muted">{s.site}</td>
+                <td className="mono" style={{ fontWeight: 600 }}>{s.msisdn}</td>
+                <td>{
+                  s.type === "SIM"  ? <Tooltip text="SIM"><Icon name="sim_card" size={18} style={{ color: "var(--kap-fg-3)" }} /></Tooltip> :
+                  s.type === "eSIM" ? <Tooltip text="eSIM"><Icon name="qr_code" size={18} style={{ color: "var(--kap-fg-3)" }} /></Tooltip> :
+                  <span className="muted">{s.type}</span>
+                }</td>
+                <td className="mono muted">{s.iccid}</td>
+                <td className="muted">{s.utilisateur}</td>
                 <td>{s.forfait}</td>
-                <td>{s.porteur}</td>
-                <td>
-                  <div style={{ display: "flex", alignItems: "center", gap: 10, minWidth: 140 }}>
-                    <ProgressBar value={s.consoVal} />
-                    <span style={{ fontFamily: "var(--kap-font-mono)", fontSize: 12, color: "var(--kap-fg-3)", minWidth: 38, textAlign: "right" }}>{s.conso}</span>
-                  </div>
-                </td>
-                <td className="muted">{s.activation}</td>
-                <td><DotStatus color={s.statut.color} label={s.statut.label} /></td>
+                <td><DotStatus color={s.etatAbo === "Actif" ? "#2E7D32" : s.etatAbo === "Inactif" ? "#616161" : s.etatAbo === "À activer" ? "#ED6C02" : s.etatAbo === "En cours d'activation" ? "#1976D2" : "#9C27B0"} label={s.etatAbo} /></td>
+                <td><DotStatus color={s.etatProd === "Actif" ? "#2E7D32" : s.etatProd === "Résilié" ? "#D32F2F" : s.etatProd === "Commandé" ? "#ED6C02" : "#1976D2"} label={s.etatProd} /></td>
                 <td><IconButton icon="more-vertical" /></td>
               </tr>
             ))}
@@ -98,46 +97,72 @@ function MobileSubsTab({ onOpenDetail }) {
 }
 
 function MobileOrdersTab({ onOpenDetail }) {
+  const [sortBy, setSortBy] = useStateMb(null);
+  const [revendeurFilter, setRevendeurFilter] = useStateMb(null);
+  const [clientFilter, setClientFilter] = useStateMb(null);
+  const [typeFilter, setTypeFilter] = useStateMb([]);
+  const [portabiliteFilter, setPortabiliteFilter] = useStateMb(null);
+  const [etatFilter, setEtatFilter] = useStateMb([]);
   const [page, setPage] = useStateMb(1);
+  const setTopbarActions = React.useContext(TopbarActionsContext);
+  React.useEffect(() => {
+    setTopbarActions(<><Button variant="primary" icon="plus">Nouvelle commande</Button><Button variant="primary" icon="cloud-upload">Import en masse</Button><a href="https://xenomcloud.sharepoint.com/:p:/r/sites/NET_Networks-Dokumentation/_layouts/15/doc2.aspx?sourcedoc=%7B622B2A6B-3281-4C99-BFF6-73DF287B0C9D%7D&file=KAPITANO%20-%20Mobile%20-%20Gestion%20des%20commandes%20et%20abonnements.pptx&action=edit&mobileredirect=true" target="_blank" rel="noreferrer" className="kap-btn kap-btn--primary" style={{ color: "#fff" }}>?</a></>);
+    return () => setTopbarActions(null);
+  }, []);
   const totalPages = Math.max(1, Math.ceil(MOBILE_ORDERS.length / 15));
   return (
     <>
       <Toolbar>
-        <Input placeholder="Recherche par numéro de commande, client…" width={360} />
-        <Select placeholder="Statut" options={["Brouillon","En attente","En cours","Livrée","Annulée"]} width={150} icon="circle" />
-        <Select placeholder="Forfait" options={["Mobile 50 Go","Mobile 100 Go","Mobile Illimité","Data Pro 20 Go"]} width={180} icon="package" />
+        <RadioDropdown
+          placeholder="Trier"
+          options={["Date","Réf","Revendeur","Client","Type de commande","Forfait","Type de SIM","ICCID","Date de portabilité","Etat commande"]}
+          value={sortBy}
+          onChange={setSortBy}
+          width={130}
+          showSearch={false}
+          showRadio={false}
+        />
+        <Input placeholder="Rechercher par Réf, Client, Numéro, ICCID, Forfait" width={360} />
+        <RadioDropdown placeholder="Revendeur" options={["2IT SOLUTIONS","ABC TELECOMS","ADV","AXIUM SOLUTIONS","CIS VALLEY","GROUPE TELECOMS DE L'OUEST GTO","IPNEOS","KOESIO AQUITAINE","KOESIO AURA INFO (VD)","KOESIO AURA INFO (VDI)","KOESIO AURA TELECOM","KOESIO AUSTRALIA","KOESIO CENTRE EST","KOESIO CORPORATE IT","KOESIO EST","KOESIO GRAND EST","KOESIO IDF","KOESIO MANAGED SERVICES","KOESIO MEDITERRANNEE","KOESIO NETWORKS","KOESIO NORD OUEST","KOESIO OCCITANIE","KOESIO OCCITANIE BPA","KOESIO OUEST","KOESIO PACA","KOESIO PACA TELECOMS","KOESIO SUD ALLIANCE","KOESIO SUISSE","ONE OPERATEUR","Production","S-WAN IP"]} value={revendeurFilter} onChange={setRevendeurFilter} width={180} />
+        <RadioDropdown placeholder="Client" options={CLIENT_NAMES} value={clientFilter} onChange={setClientFilter} width={160} />
+        <RadioDropdown placeholder="Type commande" options={["Création","Modification","Résiliation","Portabilité sortante"]} value={typeFilter} onChange={setTypeFilter} width={170} showSearch={false} multiSelect={true} />
+        <RadioDropdown placeholder="Portabilité" options={["Oui","Non"]} value={portabiliteFilter} onChange={setPortabiliteFilter} width={140} showSearch={false} />
+        <RadioDropdown placeholder="Etat commande" options={["En brouillon","Programmée","Crée","Annulation en cours","Annulée","En cours","En cours (erreur)","Incident en cours","En attente","Terminée avec succès","Terminée avec erreur"]} value={etatFilter} onChange={setEtatFilter} width={160} showSearch={false} multiSelect={true} />
         <div className="grow" />
-        <Button variant="tertiary" icon="filter">Filtres</Button>
-        <Button variant="primary" icon="plus">Nouvelle commande</Button>
+        <Button variant="tertiary" icon="refresh-cw">Réinitialiser</Button>
       </Toolbar>
       <TableBox>
         <table className="kap-table">
           <thead>
             <tr>
-              <th>N° commande</th>
-              <th>Client</th>
-              <th>Forfait</th>
-              <th style={{ textAlign: "right" }}>Qté</th>
+              <th>Réf</th>
+              <th>Date</th>
               <th>Revendeur</th>
-              <th>Date commande</th>
-              <th>Livraison</th>
-              <th style={{ textAlign: "right" }}>Montant</th>
-              <th>Statut</th>
+              <th>Client</th>
+              <th>Type commande</th>
+              <th>Forfait</th>
+              <th>Numéro</th>
+              <th>Type</th>
+              <th>ICCID</th>
+              <th>Portabilité</th>
+              <th>Etat commande</th>
               <th style={{ width: 60 }}></th>
             </tr>
           </thead>
           <tbody>
             {MOBILE_ORDERS.slice((page - 1) * 15, page * 15).map(o => (
               <tr key={o.id} className="is-clickable" onClick={() => onOpenDetail({ kind: "mob-order", data: o })}>
-                <td className="mono" style={{ fontWeight: 600 }}>{o.id}</td>
-                <td>{o.client}</td>
-                <td>{o.forfait}</td>
-                <td style={{ textAlign: "right", fontWeight: 600 }}>{o.quantite}</td>
-                <td className="muted">{o.revendeur}</td>
+                <td className="mono muted">{o.ref}</td>
                 <td className="muted">{o.dateCommande}</td>
-                <td className="muted">{o.dateLivraison}</td>
-                <td style={{ textAlign: "right", fontWeight: 600 }}>{o.montant}</td>
-                <td><DotStatus color={o.statut.color} label={o.statut.label} /></td>
+                <td className="muted">{o.revendeur}</td>
+                <td>{o.client}</td>
+                <td className="muted">{o.typeCommande}</td>
+                <td className="muted">{o.forfait}</td>
+                <td className="mono muted">{o.numero}</td>
+                <td>{o.type === "SIM" ? <Tooltip text="SIM"><Icon name="sim_card" size={18} style={{ color: "var(--kap-fg-3)" }} /></Tooltip> : <Tooltip text="eSIM"><Icon name="qr_code" size={18} style={{ color: "var(--kap-fg-3)" }} /></Tooltip>}</td>
+                <td className="mono muted">{o.iccid}</td>
+                <td className="muted">{o.portabilite}</td>
+                <td><DotStatus color={o.etatCommande === "Terminée avec succès" ? "#2E7D32" : o.etatCommande === "Annulée" || o.etatCommande === "Terminée avec erreur" || o.etatCommande === "En cours (erreur)" ? "#D32F2F" : o.etatCommande === "En cours" || o.etatCommande === "Crée" ? "#ED6C02" : o.etatCommande === "En attente" ? "#0288D1" : "#616161"} label={o.etatCommande} /></td>
                 <td><IconButton icon="more-vertical" /></td>
               </tr>
             ))}

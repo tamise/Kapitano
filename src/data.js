@@ -270,6 +270,9 @@ const CATALOGUE = [
 // MOBILES — Abonnements + Commandes
 // ──────────────────────────────────────────────────────────────────
 const FORFAITS = ["Mobile 50 Go","Mobile 100 Go","Mobile Illimité","Data Pro 20 Go","Data Pro 100 Go"];
+const ETAT_ABO  = ["Actif","Actif","Actif","Inactif","À activer","En cours d'activation","En cours de désactivation"];
+const ETAT_PROD = ["Actif","Actif","Commandé","Création en cours","Résilié"];
+const MOB_TYPES = ["SIM","SIM","SIM","eSIM","SIM"];
 const SUBSCRIBERS = Array.from({ length: 18 }).map((_, i) => {
   const c = CLIENTS[i % CLIENTS.length];
   const consoPct = (i * 13 + 7) % 95;
@@ -278,8 +281,13 @@ const SUBSCRIBERS = Array.from({ length: 18 }).map((_, i) => {
     msisdn: `+33 6 ${pad(10 + (i*7) % 89)} ${pad(20 + (i*3) % 79)} ${pad(30 + (i*11) % 69)} ${pad(40 + (i*5) % 59)}`,
     iccid: `8933 0123 4567 ${pad(8900 + i, 4)}`,
     client: c.nom,
+    revendeur: c.revendeur,
+    utilisateur: `${pick(FIRST)} ${pick(LAST).toUpperCase()}`,
+    type: MOB_TYPES[i % MOB_TYPES.length],
     site: `${SITES_LABELS[i % SITES_LABELS.length]} ${VILLES[i % VILLES.length]}`,
     forfait: FORFAITS[i % FORFAITS.length],
+    etatAbo: ETAT_ABO[i % ETAT_ABO.length],
+    etatProd: ETAT_PROD[i % ETAT_PROD.length],
     conso: `${consoPct} %`,
     consoVal: consoPct,
     activation: `${pad(1+(i%28))}/${pad(1+(i%12))}/2025`,
@@ -290,13 +298,23 @@ const SUBSCRIBERS = Array.from({ length: 18 }).map((_, i) => {
   };
 });
 
+const TYPE_COMMANDES = ["Création","Création","Modification","Résiliation","Portabilité sortante"];
+const ETAT_COMMANDES = ["En brouillon","Programmée","Crée","En cours","En attente","Terminée avec succès","Annulée","En cours (erreur)","Terminée avec erreur"];
 const MOBILE_ORDERS = Array.from({ length: 14 }).map((_, i) => {
   const c = CLIENTS[i % CLIENTS.length];
+  const typeCmd = TYPE_COMMANDES[i % TYPE_COMMANDES.length];
   return {
     id: `CMD-MOB-${pad(2025000 + i, 7)}`,
+    ref: `${pad(10000 + i * 37, 5)}`,
     client: c.nom,
     revendeur: REVENDEURS[i % REVENDEURS.length].nom,
+    typeCommande: typeCmd,
     forfait: FORFAITS[i % FORFAITS.length],
+    numero: `+33 6 ${pad(10 + (i*7) % 89)} ${pad(20 + (i*3) % 79)} ${pad(30 + (i*11) % 69)} ${pad(40 + (i*5) % 59)}`,
+    type: MOB_TYPES[i % MOB_TYPES.length],
+    iccid: `8933 0123 4567 ${pad(9100 + i, 4)}`,
+    portabilite: typeCmd === "Portabilité sortante" ? "Oui" : "Non",
+    etatCommande: ETAT_COMMANDES[i % ETAT_COMMANDES.length],
     quantite: 1 + ((i * 3) % 15),
     statut: i % 5 === 0 ? { label: "Livrée",    color: "#2E7D32" }
           : i % 5 === 1 ? { label: "En cours",  color: "#ED6C02" }
