@@ -77,7 +77,8 @@ function App() {
     case "voix":         body = <VoixScreen      initialSub={sub || "espaces"}     onOpenDetail={setDetail} />; break;
     case "commandes":    body = <CommandesScreen initialSub={sub || "suivi"}       onOpenDetail={setDetail} />; break;
     case "technique":    body = <TechniqueScreen initialSub={sub || "tickets"}     onOpenDetail={setDetail} />; break;
-    case "eligibilite":  body = <EligibiliteScreen />; break;
+    case "administration": body = <AdminScreen initialSub={sub || "questionnaire"} />; break;
+    case "eligibilite":    body = <EligibiliteScreen initialSub={sub || "carte"} />; break;
     case "profil":       body = <ProfilScreen />; break;
     default:             body = <HomeScreen onNavigate={navigate} />;
   }
@@ -91,6 +92,7 @@ function App() {
         breadcrumb={subCrumb}
         collapsed={collapsed}
         onToggleCollapse={() => setTweak("sidebarCollapsed", !collapsed)}
+        onLogout={() => setLoggedIn(false)}
       >
         {body}
       </Shell>
@@ -108,9 +110,9 @@ function subLabel(screen, sub) {
     referentiel:  { revendeurs: "Revendeurs", clients: "Clients", sites: "Sites", services: "Services", hebergements: "Hébergements", catalogues: "Catalogue" },
     mobiles:      { abonnements: "Abonnements", commandes: "Commande mobile", dispatcher: "Dispatcher", "cartes-sim": "Cartes SIM", "gestionnaires-flottes": "Gestionnaires de flottes" },
     liens:        { abonnements: "Abonnements mobile data", commandes: "Commandes mobile data", seuils: "Seuils de consommation" },
-    voix:         { espaces: "Espaces voix", trunk: "Trunk SIP", "trunk-cmd": "Commandes Trunk SIP", portabilite: "Portabilité", numeros: "Numéros clients", "numeros-rev": "Numéros revendeurs" },
+    voix:         { espaces: "Espaces voix", trunk: "Trunk SIP & Centrex", "trunk-cmd": "Commandes Trunk SIP", portabilite: "Portabilité", "info-numero": "Informations de numéro", "numeros-rev": "Numéros revendeurs", numeros: "Numéros clients" },
     commandes:    { suivi: "Suivi de commandes", reporting: "Reporting" },
-    technique:    { tickets: "Tickets", configurations: "Configurations", supervision: "Supervision" },
+    technique:    { tickets: "Tickets", "tickets-archives": "Tickets archivés", configurations: "Configurations", supervision: "Supervision" },
   };
   return (map[screen] && map[screen][sub]) || sub;
 }

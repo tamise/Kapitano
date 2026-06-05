@@ -83,7 +83,7 @@ function HomeScreen({ onNavigate }) {
         ]} />
         <SectionCard icon="phone-call" title="Voix fixe" count={6} onSelect={(it) => onNavigate(it.key, it.sub)} items={[
           { key: "voix", sub: "espaces",     label: "Espaces voix",        desc: "Consultez et gérez les espaces voix" },
-          { key: "voix", sub: "trunk",       label: "Trunk SIP",           desc: "Consultez et gérez les abonnements Trunk SIP" },
+          { key: "voix", sub: "trunk",       label: "Trunk SIP & Centrex",  desc: "Consultez et gérez les abonnements Trunk SIP & Centrex" },
           { key: "voix", sub: "trunk-cmd",   label: "Commandes Trunk SIP", desc: "Suivez et gérez les commandes Trunk SIP" },
           { key: "voix", sub: "portabilite", label: "Portabilité",         desc: "Consultez et gérez la portabilité" },
           { key: "voix", sub: "numeros",     label: "Numéros clients",     desc: "Consultez la liste des numéros fixes du client" },
@@ -152,7 +152,7 @@ function UsersScreen({ initialTab = "liste", onOpenLog, onOpenUser }) {
         {!isLogs && (
           <>
             <Toolbar>
-              <RadioDropdown placeholder="Trier" options={["Nom","Prénom","E-mail","Type","Statut","Rôle"]} value={sortBy} onChange={setSortBy} width={130} showSearch={false} showRadio={false} />
+              <RadioDropdown placeholder="Trier" options={["Nom","Prénom","E-mail","Type","Statut","Rôle"]} value={sortBy} onChange={setSortBy} width={100} showSearch={false} showRadio={false} />
               <Input placeholder="Recherche par nom, prénom, e-mail" value={q} onChange={(v) => { setQ(v); setPage(1); }} width={360} />
               <RadioDropdown
                 placeholder="Revendeur"
@@ -205,7 +205,7 @@ function UsersScreen({ initialTab = "liste", onOpenLog, onOpenUser }) {
         {isLogs && (
           <>
             <Toolbar>
-              <RadioDropdown placeholder="Trier" options={["Date","Nom de l'utilisateur","Revendeur de l'utilisateur","Statut","Ressources","Durée"]} value={logSortBy} onChange={setLogSortBy} width={130} showSearch={false} showRadio={false} />
+              <RadioDropdown placeholder="Trier" options={["Date","Nom de l'utilisateur","Revendeur de l'utilisateur","Statut","Ressources","Durée"]} value={logSortBy} onChange={setLogSortBy} width={100} showSearch={false} showRadio={false} />
               <Input icon="search" placeholder="Statut, Email, Nom et Prénom" width={360} />
               <RadioDropdown placeholder="Revendeur" options={["2IT SOLUTIONS","ABC TELECOMS","ADV","AXIUM SOLUTIONS","CIS VALLEY","GROUPE TELECOMS DE L'OUEST GTO","IPNEOS","KOESIO AQUITAINE","KOESIO AURA INFO (VD)","KOESIO AURA INFO (VDI)","KOESIO AURA TELECOM","KOESIO AUSTRALIA","KOESIO CENTRE EST","KOESIO CORPORATE IT","KOESIO EST","KOESIO GRAND EST","KOESIO IDF","KOESIO MANAGED SERVICES","KOESIO MEDITERRANNEE","KOESIO NETWORKS","KOESIO NORD OUEST","KOESIO OCCITANIE","KOESIO OCCITANIE BPA","KOESIO OUEST","KOESIO PACA","KOESIO PACA TELECOMS","KOESIO SUD ALLIANCE","KOESIO SUISSE","ONE OPERATEUR","Production","S-WAN IP"]} value={logRevendeur} onChange={setLogRevendeur} width={170} />
               <RadioDropdown placeholder="Client" options={CLIENT_NAMES} value={logClient} onChange={setLogClient} width={160} />

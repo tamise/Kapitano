@@ -119,9 +119,9 @@ function Input({ icon = "search", placeholder, value, onChange, style, width = 3
   );
 }
 
-function Select({ icon, value, onChange, options, placeholder, width = 200 }) {
+function Select({ icon, value, onChange, options, placeholder, width }) {
   return (
-    <span className="kap-input-wrap" style={{ width }}>
+    <span className="kap-input-wrap" style={{ width: width || "auto" }}>
       {icon && <Icon name={icon} size={18} />}
       <select value={value ?? ""} onChange={(e) => onChange && onChange(e.target.value)}>
         {placeholder && <option value="">{placeholder}</option>}
@@ -163,7 +163,7 @@ function RadioDropdown({ placeholder, options, value, onChange, width = 220, sho
     <div ref={ref} style={{ position: "relative", display: "inline-block" }}>
       <span
         className="kap-input-wrap"
-        style={{ width, cursor: "pointer", userSelect: "none" }}
+        style={{ width: "auto", cursor: "pointer", userSelect: "none" }}
         onClick={() => setOpen(o => !o)}
       >
         <span style={{ flex: 1, display: "flex", alignItems: "center", gap: 6, color: "var(--kap-fg-3)", fontSize: 13, fontFamily: "var(--kap-font-ui)" }}>
@@ -256,11 +256,33 @@ function DotStatus({ color, label }) {
 }
 
 // Date range dropdown (début / fin au format JJ/MM/AAAA)
-function DateRangeDropdown({ placeholder = "Date", value, onChange, width = 160 }) {
+function DateRangeDropdown({ placeholder = "Date", value, onChange, width = 160, showQuickFilters = false }) {
   const [open, setOpen] = useStateC(false);
   const [debut, setDebut] = useStateC(value ? value.debut : "");
   const [fin, setFin] = useStateC(value ? value.fin : "");
   const ref = React.useRef(null);
+
+  function fmtDate(d) {
+    return `${String(d.getDate()).padStart(2,"0")}/${String(d.getMonth()+1).padStart(2,"0")}/${d.getFullYear()}`;
+  }
+  function applyQuick(type) {
+    const today = new Date();
+    let d, f;
+    if (type === "jour") {
+      d = fmtDate(today); f = fmtDate(today);
+    } else if (type === "semaine") {
+      const mon = new Date(today); mon.setDate(today.getDate() - ((today.getDay()+6)%7));
+      const sun = new Date(mon); sun.setDate(mon.getDate() + 6);
+      d = fmtDate(mon); f = fmtDate(sun);
+    } else {
+      const first = new Date(today.getFullYear(), today.getMonth(), 1);
+      const last  = new Date(today.getFullYear(), today.getMonth()+1, 0);
+      d = fmtDate(first); f = fmtDate(last);
+    }
+    setDebut(d); setFin(f);
+    onChange({ debut: d, fin: f });
+    setOpen(false);
+  }
 
   useEffectC(() => {
     if (!open) return;
@@ -305,6 +327,13 @@ function DateRangeDropdown({ placeholder = "Date", value, onChange, width = 160 
           boxShadow: "0 8px 24px rgba(0,0,0,0.12)", zIndex: 200,
           padding: "12px 14px", display: "flex", flexDirection: "column", gap: 10,
         }}>
+          {showQuickFilters && (
+            <div style={{ display: "flex", gap: 6, borderBottom: "1px solid var(--kap-border-1)", paddingBottom: 10 }}>
+              <Button variant="secondary" onClick={() => applyQuick("jour")}>Jour</Button>
+              <Button variant="secondary" onClick={() => applyQuick("semaine")}>Semaine</Button>
+              <Button variant="secondary" onClick={() => applyQuick("mois")}>Mois</Button>
+            </div>
+          )}
           <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
             <label style={{ fontSize: 11, fontFamily: "var(--kap-font-ui)", color: "var(--kap-fg-3)", fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.05em" }}>Date de début</label>
             <span className="kap-input-wrap" style={{ width: "100%" }}>
@@ -327,8 +356,8 @@ function DateRangeDropdown({ placeholder = "Date", value, onChange, width = 160 
   );
 }
 
-// Tooltip au survol — placement: "top" (défaut) | "top-start" | "top-end"
-function Tooltip({ text, children, placement = "top" }) {
+// Tooltip au survol — placement: "top" (défaut) | "top-start" | "top-end" | light: fond blanc texte noir
+function Tooltip({ text, children, placement = "top", light = false }) {
   const [visible, setVisible] = useStateC(false);
   const posStyle = placement === "top-end"
     ? { bottom: "calc(100% + 6px)", right: 0 }
@@ -344,7 +373,8 @@ function Tooltip({ text, children, placement = "top" }) {
       {visible && text && (
         <span style={{
           position: "absolute", ...posStyle,
-          background: "#1a1a2e", color: "#fff",
+          background: light ? "#fff" : "#1a1a2e", color: light ? "var(--kap-fg-dark)" : "#fff",
+          border: light ? "1px solid var(--kap-border-2)" : "none",
           padding: "5px 10px", borderRadius: 5,
           fontSize: 12, fontFamily: "var(--kap-font-ui)",
           whiteSpace: "nowrap", pointerEvents: "none", zIndex: 500,

@@ -29,22 +29,32 @@ const NAV = [
   ]},
   { key: "voix",         label: "Voix fixe",     icon: "phone_in_talk", subs: [
     { key: "espaces",     label: "Espaces voix" },
-    { key: "trunk",       label: "Trunk SIP" },
+    { key: "trunk",       label: "Trunk SIP & Centrex" },
     { key: "trunk-cmd",   label: "Commandes Trunk SIP" },
-    { key: "portabilite", label: "Portabilité" },
-    { key: "numeros",     label: "Numéros clients" },
-    { key: "numeros-rev", label: "Numéros revendeurs" },
+    { key: "portabilite",   label: "Portabilité" },
+    { key: "info-numero",   label: "Informations de numéro" },
+    { key: "numeros-rev",   label: "Numéros revendeurs" },
+    { key: "numeros",       label: "Numéros clients" },
   ]},
   { key: "commandes",    label: "Commandes",     icon: "receipt_long", subs: [
     { key: "suivi",     label: "Suivi de commandes" },
     { key: "reporting", label: "Reporting" },
   ]},
   { key: "technique",    label: "Technique",     icon: "build",       subs: [
-    { key: "tickets",        label: "Tickets" },
-    { key: "configurations", label: "Configurations" },
-    { key: "supervision",    label: "Supervision" },
+    { key: "tickets",          label: "Tickets" },
+    { key: "tickets-archives", label: "Tickets archivés" },
+    { key: "configurations",   label: "Configurations" },
+    { key: "supervision",      label: "Supervision" },
   ]},
-  { key: "eligibilite",  label: "Eligibilité",   icon: "place",       subs: [] },
+  { key: "eligibilite",  label: "Eligibilité",   icon: "place",       subs: [
+    { key: "carte",   label: "Carte" },
+    { key: "demande", label: "Demande" },
+    { key: "adresse", label: "Adresse" },
+  ]},
+  { key: "administration", label: "Administration", icon: "settings",    subs: [
+    { key: "questionnaire",    label: "Questionnaire" },
+    { key: "regles-service",   label: "Règles de service" },
+  ]},
 ];
 
 const DEFAULT_SUB = {
@@ -70,7 +80,7 @@ const SCREEN_CRUMBS = {
   profil:       [{ label: "Accueil", key: "accueil" }, { label: "Profil & paramètres" }],
 };
 
-function Sidebar({ activeScreen, activeSub, onNavigate, collapsed, onToggle }) {
+function Sidebar({ activeScreen, activeSub, onNavigate, collapsed, onToggle, onLogout }) {
   return (
     <aside className={"kap-sidebar" + (collapsed ? " is-collapsed" : "")}>
       <div className="kap-side-logo" onClick={() => onNavigate("accueil")} style={{ cursor: "pointer" }}>
@@ -127,6 +137,10 @@ function Sidebar({ activeScreen, activeSub, onNavigate, collapsed, onToggle }) {
           <span className="kap-icon material-symbols-outlined" style={{ fontSize: 20, width: 20, height: 20 }}>person</span>
           <span className="kap-side-label">Profil</span>
         </div>
+        <div className="kap-side-item" onClick={onLogout} data-label="Déconnexion">
+          <span className="kap-icon material-symbols-outlined" style={{ fontSize: 20, width: 20, height: 20 }}>logout</span>
+          <span className="kap-side-label">Déconnexion</span>
+        </div>
         <div className="kap-side-item" onClick={onToggle} data-label={collapsed ? "Étendre" : "Réduire"}>
           <span className="kap-icon material-symbols-outlined" style={{ fontSize: 20, width: 20, height: 20 }}>
             {collapsed ? "chevron_right" : "chevron_left"}
@@ -160,7 +174,7 @@ function Topbar({ trail, onNavigate, actions }) {
 
 const TopbarActionsContext = React.createContext(null);
 
-function Shell({ active, activeSub, onNavigate, breadcrumb, collapsed, onToggleCollapse, children }) {
+function Shell({ active, activeSub, onNavigate, breadcrumb, collapsed, onToggleCollapse, onLogout, children }) {
   const [topbarActions, setTopbarActions] = useStateSh(null);
   return (
     <TopbarActionsContext.Provider value={setTopbarActions}>
@@ -171,6 +185,7 @@ function Shell({ active, activeSub, onNavigate, breadcrumb, collapsed, onToggleC
           onNavigate={onNavigate}
           collapsed={collapsed}
           onToggle={onToggleCollapse}
+          onLogout={onLogout}
         />
         <main className="kap-main">
           <Topbar trail={breadcrumb} onNavigate={(key) => onNavigate(key)} actions={topbarActions} />
