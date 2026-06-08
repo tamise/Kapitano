@@ -1,5 +1,11 @@
 @import url("../colors_and_type.css");
 
+@keyframes elig-pulse {
+  0%, 100% { background-color: #e8e8e8; }
+  50%       { background-color: #d0d0d0; }
+}
+.elig-cell-loading { animation: elig-pulse 1.4s ease-in-out infinite; }
+
 * { box-sizing: border-box; }
 html, body, #root {
   margin: 0;
