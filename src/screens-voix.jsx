@@ -24,6 +24,7 @@ function VoixScreen({ initialSub = "espaces", onOpenDetail }) {
 
 function EspacesTab({ onOpenDetail }) {
   const [sortBy, setSortBy] = useStateVx(null);
+  const [sortDir, setSortDir] = useStateVx("asc");
   const [revendeurFilter, setRevendeurFilter] = useStateVx(null);
   const [page, setPage] = useStateVx(1);
   const setTopbarActions = React.useContext(TopbarActionsContext);
@@ -31,11 +32,24 @@ function EspacesTab({ onOpenDetail }) {
     setTopbarActions(<Button variant="primary" icon="plus">Créer un espace voix</Button>);
     return () => setTopbarActions(null);
   }, []);
-  const totalPages = Math.max(1, Math.ceil(VOICE_SPACES.length / 15));
+
+  const espacesFieldMap = { "Date de création": "dateCreation", "ID": "id", "Revendeur": "revendeur", "Client": "client", "Nom client Enove": "nomClientEnove" };
+  function handleSortChange(field, dir) { setSortBy(field); setSortDir(dir); }
+
+  const sorted = React.useMemo(() => {
+    const key = espacesFieldMap[sortBy || "Date de création"];
+    if (!key) return VOICE_SPACES;
+    return [...VOICE_SPACES].sort((a, b) => {
+      const va = a[key] || ""; const vb = b[key] || "";
+      return sortDir === "asc" ? String(va).localeCompare(String(vb)) : String(vb).localeCompare(String(va));
+    });
+  }, [sortBy, sortDir]);
+
+  const totalPages = Math.max(1, Math.ceil(sorted.length / 15));
   return (
     <>
       <Toolbar>
-        <RadioDropdown placeholder="Trier" options={["Date de création","ID","Revendeur","Client","Nom client Enove"]} value={sortBy} onChange={setSortBy} width={100} showSearch={false} showRadio={false} />
+        <RadioDropdown placeholder="Trier" options={["Date de création","ID","Revendeur","Client","Nom client Enove"]} value={sortBy} onChange={setSortBy} onSortChange={handleSortChange} width={100} showSearch={false} showRadio={false} sortMode={true} />
         <Input placeholder="Rechercher par client ou id de production" width={360} />
         <RadioDropdown placeholder="Revendeur" options={["2IT SOLUTIONS","ABC TELECOMS","ADV","AXIUM SOLUTIONS","CIS VALLEY","GROUPE TELECOMS DE L'OUEST GTO","IPNEOS","KOESIO AQUITAINE","KOESIO AURA INFO (VD)","KOESIO AURA INFO (VDI)","KOESIO AURA TELECOM","KOESIO AUSTRALIA","KOESIO CENTRE EST","KOESIO CORPORATE IT","KOESIO EST","KOESIO GRAND EST","KOESIO IDF","KOESIO MANAGED SERVICES","KOESIO MEDITERRANNEE","KOESIO NETWORKS","KOESIO NORD OUEST","KOESIO OCCITANIE","KOESIO OCCITANIE BPA","KOESIO OUEST","KOESIO PACA","KOESIO PACA TELECOMS","KOESIO SUD ALLIANCE","KOESIO SUISSE","ONE OPERATEUR","Production","S-WAN IP"]} value={revendeurFilter} onChange={setRevendeurFilter} width={190} />
         <div className="grow" />
@@ -55,7 +69,7 @@ function EspacesTab({ onOpenDetail }) {
             </tr>
           </thead>
           <tbody>
-            {VOICE_SPACES.slice((page - 1) * 15, page * 15).map(v => (
+            {sorted.slice((page - 1) * 15, page * 15).map(v => (
               <tr key={v.id} className="is-clickable" onClick={() => onOpenDetail({ kind: "voice-space", data: v })}>
                 <td className="muted">{v.dateCreation}</td>
                 <td className="muted">{v.revendeur}</td>
@@ -72,19 +86,38 @@ function EspacesTab({ onOpenDetail }) {
           </tbody>
         </table>
       </TableBox>
-      <Pagination page={page} totalPages={totalPages} onChange={setPage} totalItems={VOICE_SPACES.length} perPage={15} />
+      <Pagination page={page} totalPages={totalPages} onChange={setPage} totalItems={sorted.length} perPage={15} />
     </>
   );
 }
 
 function TrunkTab({ onOpenDetail }) {
   const [sortBy, setSortBy] = useStateVx(null);
+  const [sortDir, setSortDir] = useStateVx("asc");
   const [revendeurFilter, setRevendeurFilter] = useStateVx(null);
   const [clientFilter, setClientFilter] = useStateVx(null);
   const [offreFilter, setOffreFilter] = useStateVx(null);
   const [etatFactuFilter, setEtatFactuFilter] = useStateVx(null);
   const [etatProdFilter, setEtatProdFilter] = useStateVx([]);
   const [page, setPage] = useStateVx(1);
+
+  const trunkFieldMap = { "Revendeur": "revendeur", "Client": "client", "Site": "site", "Offre": "offre", "Canaux": "canaux" };
+  function handleSortChange(field, dir) { setSortBy(field); setSortDir(dir); }
+
+  const sorted = React.useMemo(() => {
+    const key = trunkFieldMap[sortBy || "Revendeur"];
+    if (!key) return TRUNK_SIP;
+    if (sortBy === "Canaux") {
+      return [...TRUNK_SIP].sort((a, b) => {
+        const va = Number(a[key]) || 0; const vb = Number(b[key]) || 0;
+        return sortDir === "asc" ? va - vb : vb - va;
+      });
+    }
+    return [...TRUNK_SIP].sort((a, b) => {
+      const va = a[key] || ""; const vb = b[key] || "";
+      return sortDir === "asc" ? String(va).localeCompare(String(vb)) : String(vb).localeCompare(String(va));
+    });
+  }, [sortBy, sortDir]);
   const setTopbarActions = React.useContext(TopbarActionsContext);
   React.useEffect(() => {
     setTopbarActions(<>
@@ -94,11 +127,11 @@ function TrunkTab({ onOpenDetail }) {
     </>);
     return () => setTopbarActions(null);
   }, []);
-  const totalPages = Math.max(1, Math.ceil(TRUNK_SIP.length / 15));
+  const totalPages = Math.max(1, Math.ceil(sorted.length / 15));
   return (
     <>
       <Toolbar>
-        <RadioDropdown placeholder="Trier" options={["État facturation","Revendeur","Client","Site","Numéro de charge","Offre","Canaux","État prod."]} value={sortBy} onChange={setSortBy} width={100} showSearch={false} showRadio={false} />
+        <RadioDropdown placeholder="Trier" options={["État facturation","Revendeur","Client","Site","Numéro de charge","Offre","Canaux","État prod."]} value={sortBy} onChange={setSortBy} onSortChange={handleSortChange} width={100} showSearch={false} showRadio={false} sortMode={true} />
         <Input placeholder="Rechercher par numéro de charge, client ou offre" width={360} />
         <RadioDropdown placeholder="Revendeur" options={["2IT SOLUTIONS","ABC TELECOMS","ADV","AXIUM SOLUTIONS","CIS VALLEY","GROUPE TELECOMS DE L'OUEST GTO","IPNEOS","KOESIO AQUITAINE","KOESIO AURA INFO (VD)","KOESIO AURA INFO (VDI)","KOESIO AURA TELECOM","KOESIO AUSTRALIA","KOESIO CENTRE EST","KOESIO CORPORATE IT","KOESIO EST","KOESIO GRAND EST","KOESIO IDF","KOESIO MANAGED SERVICES","KOESIO MEDITERRANNEE","KOESIO NETWORKS","KOESIO NORD OUEST","KOESIO OCCITANIE","KOESIO OCCITANIE BPA","KOESIO OUEST","KOESIO PACA","KOESIO PACA TELECOMS","KOESIO SUD ALLIANCE","KOESIO SUISSE","ONE OPERATEUR","Production","S-WAN IP"]} value={revendeurFilter} onChange={setRevendeurFilter} width={180} />
         <RadioDropdown placeholder="Client" options={CLIENT_NAMES} value={clientFilter} onChange={setClientFilter} width={160} />
@@ -124,7 +157,7 @@ function TrunkTab({ onOpenDetail }) {
             </tr>
           </thead>
           <tbody>
-            {TRUNK_SIP.slice((page - 1) * 15, page * 15).map(t => (
+            {sorted.slice((page - 1) * 15, page * 15).map(t => (
               <tr key={t.id} className="is-clickable" onClick={() => onOpenDetail({ kind: "trunk", data: t })}>
                 <td className="muted">{t.revendeur}</td>
                 <td style={{ fontWeight: 600 }}>{t.client}</td>
@@ -150,7 +183,7 @@ function TrunkTab({ onOpenDetail }) {
           </tbody>
         </table>
       </TableBox>
-      <Pagination page={page} totalPages={totalPages} onChange={setPage} totalItems={TRUNK_SIP.length} perPage={15} />
+      <Pagination page={page} totalPages={totalPages} onChange={setPage} totalItems={sorted.length} perPage={15} />
     </>
   );
 }
@@ -176,7 +209,7 @@ function TrunkOrdersTab({ onOpenDetail }) {
   return (
     <>
       <Toolbar>
-        <RadioDropdown placeholder="Trier" options={["Date","Réf","Revendeur","Client","Type commande","Numéro de charge","État commande"]} value={sortBy} onChange={setSortBy} width={100} showSearch={false} showRadio={false} />
+        <RadioDropdown placeholder="Trier" options={["Date","Réf","Revendeur","Client","Type commande","Numéro de charge","État commande"]} value={sortBy} onChange={setSortBy} width={100} showSearch={false} showRadio={false} sortMode={true} />
         <Input placeholder="Rechercher par Réf, client, N° de charge" width={360} />
         <RadioDropdown placeholder="Revendeur" options={["2IT SOLUTIONS","ABC TELECOMS","ADV","AXIUM SOLUTIONS","CIS VALLEY","GROUPE TELECOMS DE L'OUEST GTO","IPNEOS","KOESIO AQUITAINE","KOESIO AURA INFO (VD)","KOESIO AURA INFO (VDI)","KOESIO AURA TELECOM","KOESIO AUSTRALIA","KOESIO CENTRE EST","KOESIO CORPORATE IT","KOESIO EST","KOESIO GRAND EST","KOESIO IDF","KOESIO MANAGED SERVICES","KOESIO MEDITERRANNEE","KOESIO NETWORKS","KOESIO NORD OUEST","KOESIO OCCITANIE","KOESIO OCCITANIE BPA","KOESIO OUEST","KOESIO PACA","KOESIO PACA TELECOMS","KOESIO SUD ALLIANCE","KOESIO SUISSE","ONE OPERATEUR","Production","S-WAN IP"]} value={revendeurFilter} onChange={setRevendeurFilter} width={180} />
         <RadioDropdown placeholder="Client" options={CLIENT_NAMES} value={clientFilter} onChange={setClientFilter} width={160} />
@@ -286,7 +319,7 @@ function PortabiliteTab({ onOpenDetail }) {
   return (
     <>
       <Toolbar>
-        <RadioDropdown placeholder="Trier" options={["Créée le","Réf","Revendeur","Client","Type commande","Date de portabilité","État commande"]} value={sortBy} onChange={setSortBy} width={100} showSearch={false} showRadio={false} />
+        <RadioDropdown placeholder="Trier" options={["Créée le","Réf","Revendeur","Client","Type commande","Date de portabilité","État commande"]} value={sortBy} onChange={setSortBy} width={100} showSearch={false} showRadio={false} sortMode={true} />
         <Input placeholder="Rechercher par Réf, Client ou Numéro" width={360} />
         <DateRangeDropdown placeholder="Date de portabilité" value={dateFilter} onChange={setDateFilter} width={180} showQuickFilters={true} />
         <RadioDropdown placeholder="Revendeur" options={["2IT SOLUTIONS","ABC TELECOMS","ADV","AXIUM SOLUTIONS","CIS VALLEY","GROUPE TELECOMS DE L'OUEST GTO","IPNEOS","KOESIO AQUITAINE","KOESIO AURA INFO (VD)","KOESIO AURA INFO (VDI)","KOESIO AURA TELECOM","KOESIO AUSTRALIA","KOESIO CENTRE EST","KOESIO CORPORATE IT","KOESIO EST","KOESIO GRAND EST","KOESIO IDF","KOESIO MANAGED SERVICES","KOESIO MEDITERRANNEE","KOESIO NETWORKS","KOESIO NORD OUEST","KOESIO OCCITANIE","KOESIO OCCITANIE BPA","KOESIO OUEST","KOESIO PACA","KOESIO PACA TELECOMS","KOESIO SUD ALLIANCE","KOESIO SUISSE","ONE OPERATEUR","Production","S-WAN IP"]} value={revendeurFilter} onChange={setRevendeurFilter} width={180} />
@@ -396,7 +429,7 @@ function NumbersTab({ onOpenDetail, variant }) {
   return (
     <>
       <Toolbar>
-        <RadioDropdown placeholder="Trier" options={["Date de création","Taille de la plage"]} value={sortBy} onChange={setSortBy} width={100} showSearch={false} showRadio={false} />
+        <RadioDropdown placeholder="Trier" options={["Date de création","Taille de la plage"]} value={sortBy} onChange={setSortBy} width={100} showSearch={false} showRadio={false} sortMode={true} />
         <Input placeholder="Rechercher par début de plage" width={360} />
         <RadioDropdown placeholder="Revendeur" options={["2IT SOLUTIONS","ABC TELECOMS","ADV","AXIUM SOLUTIONS","CIS VALLEY","GROUPE TELECOMS DE L'OUEST GTO","IPNEOS","KOESIO AQUITAINE","KOESIO AURA INFO (VD)","KOESIO AURA INFO (VDI)","KOESIO AURA TELECOM","KOESIO AUSTRALIA","KOESIO CENTRE EST","KOESIO CORPORATE IT","KOESIO EST","KOESIO GRAND EST","KOESIO IDF","KOESIO MANAGED SERVICES","KOESIO MEDITERRANNEE","KOESIO NETWORKS","KOESIO NORD OUEST","KOESIO OCCITANIE","KOESIO OCCITANIE BPA","KOESIO OUEST","KOESIO PACA","KOESIO PACA TELECOMS","KOESIO SUD ALLIANCE","KOESIO SUISSE","ONE OPERATEUR","Production","S-WAN IP"]} value={revendeurFilter} onChange={setRevendeurFilter} width={180} />
         {variant === "clients" && <RadioDropdown placeholder="Client" options={CLIENT_NAMES} value={clientFilter} onChange={setClientFilter} width={160} />}

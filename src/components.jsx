@@ -132,10 +132,14 @@ function Select({ icon, value, onChange, options, placeholder, width }) {
   );
 }
 
-function RadioDropdown({ placeholder, options, value, onChange, width = 220, showSearch = true, showRadio = true, multiSelect = false }) {
+function RadioDropdown({ placeholder, options, value, onChange, onSortChange, width = 220, showSearch = true, showRadio = true, multiSelect = false, sortMode = false }) {
   const [open, setOpen] = useStateC(false);
   const [search, setSearch] = useStateC("");
+  const [sortDir, setSortDir] = useStateC("asc");
   const ref = React.useRef(null);
+
+  // En sortMode, la première option est sélectionnée par défaut visuellement
+  const effectiveValue = sortMode && !value ? options[0] : value;
 
   useEffectC(() => {
     if (!open) return;
@@ -158,6 +162,10 @@ function RadioDropdown({ placeholder, options, value, onChange, width = 220, sho
   }
 
   const count = (showRadio || multiSelect) ? (multiSelect ? selected.length : (value ? 1 : 0)) : 0;
+
+  const SortIndicator = () => sortDir === "asc"
+    ? <span style={{ fontSize:11, fontWeight:700, fontFamily:"var(--kap-font-ui)", color:"var(--kap-primary)", letterSpacing:"-0.5px" }}>AZ↑</span>
+    : <span style={{ fontSize:11, fontWeight:700, fontFamily:"var(--kap-font-ui)", color:"var(--kap-primary)", letterSpacing:"-0.5px" }}>ZA↓</span>;
 
   return (
     <div ref={ref} style={{ position: "relative", display: "inline-block" }}>
@@ -205,6 +213,29 @@ function RadioDropdown({ placeholder, options, value, onChange, width = 220, sho
                   <input type="radio" checked={value === o} onChange={() => { onChange(o); setOpen(false); setSearch(""); }} style={{ accentColor: "var(--kap-primary)", cursor: "pointer" }} />
                   {o}
                 </label>
+              ) : sortMode ? (
+                <div key={o} onClick={() => {
+                  if (effectiveValue === o) {
+                    const newDir = sortDir === "asc" ? "desc" : "asc";
+                    setSortDir(newDir);
+                    if (onSortChange) onSortChange(o, newDir);
+                  } else {
+                    onChange(o);
+                    setSortDir("asc");
+                    if (onSortChange) onSortChange(o, "asc");
+                    setOpen(false);
+                  }
+                }} style={{ padding: "7px 14px", cursor: "pointer", fontSize: 13, fontFamily: "var(--kap-font-ui)", color: effectiveValue === o ? "var(--kap-primary)" : "var(--kap-fg-dark)", fontWeight: effectiveValue === o ? 600 : 400, background: effectiveValue === o ? "var(--kap-primary-soft)" : "transparent", display:"flex", alignItems:"center", justifyContent:"space-between" }}>
+                  <span style={{ display:"flex", flexDirection:"column" }}>
+                    {o}
+                    {o === options[0] && <span style={{ fontSize:10, color:"var(--kap-fg-3)", fontWeight:400 }}>(Tri par défaut)</span>}
+                  </span>
+                  {effectiveValue === o && (
+                    sortDir === "asc"
+                      ? <span style={{ fontSize:11, fontWeight:700, color:"var(--kap-primary)" }}>AZ↑</span>
+                      : <span style={{ fontSize:11, fontWeight:700, color:"var(--kap-primary)" }}>ZA↓</span>
+                  )}
+                </div>
               ) : (
                 <div key={o} onClick={() => { onChange(o); setOpen(false); }} style={{ padding: "7px 14px", cursor: "pointer", fontSize: 13, fontFamily: "var(--kap-font-ui)", color: value === o ? "var(--kap-primary)" : "var(--kap-fg-dark)", fontWeight: value === o ? 600 : 400, background: value === o ? "var(--kap-primary-soft)" : "transparent" }}>
                   {o}

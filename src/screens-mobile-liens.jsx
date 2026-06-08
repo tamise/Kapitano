@@ -24,12 +24,26 @@ function MobilesScreen({ initialSub = "abonnements", onOpenDetail }) {
 
 function MobileSubsTab({ onOpenDetail }) {
   const [sortBy, setSortBy] = useStateMb(null);
+  const [sortDir, setSortDir] = useStateMb("asc");
   const [revendeurFilter, setRevendeurFilter] = useStateMb(null);
   const [clientFilter, setClientFilter] = useStateMb(null);
   const [etatAboFilter, setEtatAboFilter] = useStateMb([]);
   const [etatProdFilter, setEtatProdFilter] = useStateMb([]);
   const [page, setPage] = useStateMb(1);
-  const totalPages = Math.max(1, Math.ceil(SUBSCRIBERS.length / 15));
+
+  const subsFieldMap = { "Revendeur": "revendeur", "Client": "client", "Numéro mobile": "msisdn", "Forfait": "forfait" };
+  function handleSortChange(field, dir) { setSortBy(field); setSortDir(dir); }
+
+  const sorted = React.useMemo(() => {
+    const key = subsFieldMap[sortBy || "Revendeur"];
+    if (!key) return SUBSCRIBERS;
+    return [...SUBSCRIBERS].sort((a, b) => {
+      const va = a[key] || ""; const vb = b[key] || "";
+      return sortDir === "asc" ? String(va).localeCompare(String(vb)) : String(vb).localeCompare(String(va));
+    });
+  }, [sortBy, sortDir]);
+
+  const totalPages = Math.max(1, Math.ceil(sorted.length / 15));
   const setTopbarActions = React.useContext(TopbarActionsContext);
   React.useEffect(() => {
     setTopbarActions(
@@ -46,9 +60,11 @@ function MobileSubsTab({ onOpenDetail }) {
           options={["Revendeur", "Client", "Numéro mobile", "Forfait", "Etat abo.", "Etat prod."]}
           value={sortBy}
           onChange={setSortBy}
+          onSortChange={handleSortChange}
           width={130}
           showSearch={false}
           showRadio={false}
+          sortMode={true}
         />
         <Input placeholder="Rechercher par client, numéro, ICCID, Forfait" width={360} />
         <RadioDropdown placeholder="Revendeur" options={["2IT SOLUTIONS","ABC TELECOMS","ADV","AXIUM SOLUTIONS","CIS VALLEY","GROUPE TELECOMS DE L'OUEST GTO","IPNEOS","KOESIO AQUITAINE","KOESIO AURA INFO (VD)","KOESIO AURA INFO (VDI)","KOESIO AURA TELECOM","KOESIO AUSTRALIA","KOESIO CENTRE EST","KOESIO CORPORATE IT","KOESIO EST","KOESIO GRAND EST","KOESIO IDF","KOESIO MANAGED SERVICES","KOESIO MEDITERRANNEE","KOESIO NETWORKS","KOESIO NORD OUEST","KOESIO OCCITANIE","KOESIO OCCITANIE BPA","KOESIO OUEST","KOESIO PACA","KOESIO PACA TELECOMS","KOESIO SUD ALLIANCE","KOESIO SUISSE","ONE OPERATEUR","Production","S-WAN IP"]} value={revendeurFilter} onChange={setRevendeurFilter} width={180} />
@@ -73,7 +89,7 @@ function MobileSubsTab({ onOpenDetail }) {
             </tr>
           </thead>
           <tbody>
-            {SUBSCRIBERS.slice((page - 1) * 15, page * 15).map(s => (
+            {sorted.slice((page - 1) * 15, page * 15).map(s => (
               <tr key={s.id} className="is-clickable" onClick={() => onOpenDetail({ kind: "subscriber", data: s })}>
                 <td className="muted">{s.revendeur}</td>
                 <td className="muted">{s.client}</td>
@@ -94,25 +110,38 @@ function MobileSubsTab({ onOpenDetail }) {
           </tbody>
         </table>
       </TableBox>
-      <Pagination page={page} totalPages={totalPages} onChange={setPage} totalItems={SUBSCRIBERS.length} perPage={15} />
+      <Pagination page={page} totalPages={totalPages} onChange={setPage} totalItems={sorted.length} perPage={15} />
     </>
   );
 }
 
 function MobileOrdersTab({ onOpenDetail }) {
   const [sortBy, setSortBy] = useStateMb(null);
+  const [sortDir, setSortDir] = useStateMb("asc");
   const [revendeurFilter, setRevendeurFilter] = useStateMb(null);
   const [clientFilter, setClientFilter] = useStateMb(null);
   const [typeFilter, setTypeFilter] = useStateMb([]);
   const [portabiliteFilter, setPortabiliteFilter] = useStateMb(null);
   const [etatFilter, setEtatFilter] = useStateMb([]);
   const [page, setPage] = useStateMb(1);
+
+  const mobOrderFieldMap = { "Date": "dateCommande", "Réf": "ref", "Revendeur": "revendeur", "Client": "client" };
+  function handleSortChange(field, dir) { setSortBy(field); setSortDir(dir); }
+
+  const sorted = React.useMemo(() => {
+    const key = mobOrderFieldMap[sortBy || "Date"];
+    if (!key) return MOBILE_ORDERS;
+    return [...MOBILE_ORDERS].sort((a, b) => {
+      const va = a[key] || ""; const vb = b[key] || "";
+      return sortDir === "asc" ? String(va).localeCompare(String(vb)) : String(vb).localeCompare(String(va));
+    });
+  }, [sortBy, sortDir]);
   const setTopbarActions = React.useContext(TopbarActionsContext);
   React.useEffect(() => {
     setTopbarActions(<><Button variant="primary" icon="plus">Nouvelle commande</Button><Button variant="primary" icon="cloud-upload">Import en masse</Button><a href="https://xenomcloud.sharepoint.com/:p:/r/sites/NET_Networks-Dokumentation/_layouts/15/doc2.aspx?sourcedoc=%7B622B2A6B-3281-4C99-BFF6-73DF287B0C9D%7D&file=KAPITANO%20-%20Mobile%20-%20Gestion%20des%20commandes%20et%20abonnements.pptx&action=edit&mobileredirect=true" target="_blank" rel="noreferrer" className="kap-btn kap-btn--primary" style={{ color: "#fff" }}>?</a></>);
     return () => setTopbarActions(null);
   }, []);
-  const totalPages = Math.max(1, Math.ceil(MOBILE_ORDERS.length / 15));
+  const totalPages = Math.max(1, Math.ceil(sorted.length / 15));
   return (
     <>
       <Toolbar>
@@ -121,9 +150,11 @@ function MobileOrdersTab({ onOpenDetail }) {
           options={["Date","Réf","Revendeur","Client","Type de commande","Forfait","Type de SIM","ICCID","Date de portabilité","Etat commande"]}
           value={sortBy}
           onChange={setSortBy}
+          onSortChange={handleSortChange}
           width={130}
           showSearch={false}
           showRadio={false}
+          sortMode={true}
         />
         <Input placeholder="Rechercher par Réf, Client, Numéro, ICCID, Forfait" width={360} />
         <RadioDropdown placeholder="Revendeur" options={["2IT SOLUTIONS","ABC TELECOMS","ADV","AXIUM SOLUTIONS","CIS VALLEY","GROUPE TELECOMS DE L'OUEST GTO","IPNEOS","KOESIO AQUITAINE","KOESIO AURA INFO (VD)","KOESIO AURA INFO (VDI)","KOESIO AURA TELECOM","KOESIO AUSTRALIA","KOESIO CENTRE EST","KOESIO CORPORATE IT","KOESIO EST","KOESIO GRAND EST","KOESIO IDF","KOESIO MANAGED SERVICES","KOESIO MEDITERRANNEE","KOESIO NETWORKS","KOESIO NORD OUEST","KOESIO OCCITANIE","KOESIO OCCITANIE BPA","KOESIO OUEST","KOESIO PACA","KOESIO PACA TELECOMS","KOESIO SUD ALLIANCE","KOESIO SUISSE","ONE OPERATEUR","Production","S-WAN IP"]} value={revendeurFilter} onChange={setRevendeurFilter} width={180} />
@@ -153,7 +184,7 @@ function MobileOrdersTab({ onOpenDetail }) {
             </tr>
           </thead>
           <tbody>
-            {MOBILE_ORDERS.slice((page - 1) * 15, page * 15).map(o => (
+            {sorted.slice((page - 1) * 15, page * 15).map(o => (
               <tr key={o.id} className="is-clickable" onClick={() => onOpenDetail({ kind: "mob-order", data: o })}>
                 <td className="mono muted">{o.ref}</td>
                 <td className="muted">{o.dateCommande}</td>
@@ -184,7 +215,7 @@ function MobileOrdersTab({ onOpenDetail }) {
           </tbody>
         </table>
       </TableBox>
-      <Pagination page={page} totalPages={totalPages} onChange={setPage} totalItems={MOBILE_ORDERS.length} perPage={15} />
+      <Pagination page={page} totalPages={totalPages} onChange={setPage} totalItems={sorted.length} perPage={15} />
     </>
   );
 }
@@ -331,7 +362,7 @@ function DispatcherScreen() {
       <PageHead icon="smartphone" title="Dispatcher" subtitle="Suivez et gérez les commandes SIM en cours de traitement." />
       <div className="kap-card" style={{ overflow: "hidden", display: "flex", flexDirection: "column", flex: 1, minHeight: 0 }}>
         <Toolbar>
-          <RadioDropdown placeholder="Trier" options={["Date de création","Numéro d'affaire","Date étape"]} value={sortBy} onChange={setSortBy} width={100} showSearch={false} showRadio={false} />
+          <RadioDropdown placeholder="Trier" options={["Date de création","Numéro d'affaire","Date étape"]} value={sortBy} onChange={setSortBy} width={100} showSearch={false} showRadio={false} sortMode={true} />
           <Input placeholder="Rechercher par numéro d'affaire ou client" width={360} />
           <RadioDropdown placeholder="Revendeur" options={["2IT SOLUTIONS","ABC TELECOMS","ADV","AXIUM SOLUTIONS","CIS VALLEY","GROUPE TELECOMS DE L'OUEST GTO","IPNEOS","KOESIO AQUITAINE","KOESIO AURA INFO (VD)","KOESIO AURA INFO (VDI)","KOESIO AURA TELECOM","KOESIO AUSTRALIA","KOESIO CENTRE EST","KOESIO CORPORATE IT","KOESIO EST","KOESIO GRAND EST","KOESIO IDF","KOESIO MANAGED SERVICES","KOESIO MEDITERRANNEE","KOESIO NETWORKS","KOESIO NORD OUEST","KOESIO OCCITANIE","KOESIO OCCITANIE BPA","KOESIO OUEST","KOESIO PACA","KOESIO PACA TELECOMS","KOESIO SUD ALLIANCE","KOESIO SUISSE","ONE OPERATEUR","Production","S-WAN IP"]} value={revendeurFilter} onChange={setRevendeurFilter} width={180} />
           <RadioDropdown placeholder="Client" options={CLIENT_NAMES} value={clientFilter} onChange={setClientFilter} width={160} />
@@ -429,7 +460,7 @@ function CartesSIMScreen() {
       <PageHead icon="sim_card" title="Cartes SIM" subtitle="Consultez et gérez le stock de cartes SIM." />
       <div className="kap-card" style={{ overflow: "hidden" }}>
         <Toolbar>
-          <RadioDropdown placeholder="Trier" options={["Date du statut","Revendeur","Opérateur","ICCID","Etat"]} value={sortBy} onChange={setSortBy} width={100} showSearch={false} showRadio={false} />
+          <RadioDropdown placeholder="Trier" options={["Date du statut","Revendeur","Opérateur","ICCID","Etat"]} value={sortBy} onChange={setSortBy} width={100} showSearch={false} showRadio={false} sortMode={true} />
           <Input placeholder="Rechercher par ICCID" width={360} />
           <RadioDropdown placeholder="Revendeur" options={["2IT SOLUTIONS","ABC TELECOMS","ADV","AXIUM SOLUTIONS","CIS VALLEY","GROUPE TELECOMS DE L'OUEST GTO","IPNEOS","KOESIO AQUITAINE","KOESIO AURA INFO (VD)","KOESIO AURA INFO (VDI)","KOESIO AURA TELECOM","KOESIO AUSTRALIA","KOESIO CENTRE EST","KOESIO CORPORATE IT","KOESIO EST","KOESIO GRAND EST","KOESIO IDF","KOESIO MANAGED SERVICES","KOESIO MEDITERRANNEE","KOESIO NETWORKS","KOESIO NORD OUEST","KOESIO OCCITANIE","KOESIO OCCITANIE BPA","KOESIO OUEST","KOESIO PACA","KOESIO PACA TELECOMS","KOESIO SUD ALLIANCE","KOESIO SUISSE","ONE OPERATEUR","Production","S-WAN IP"]} value={revendeurFilter} onChange={setRevendeurFilter} width={200} />
           <RadioDropdown placeholder="Type" options={["SIM","eSIM","SIM 15D"]} value={typeFilter} onChange={setTypeFilter} width={120} showSearch={false} />
@@ -513,7 +544,7 @@ function GestionnairesFlottesScreen() {
       <PageHead icon="smartphone" title="Gestionnaires de flottes" subtitle="Consultez et gérez les gestionnaires de flottes mobiles." />
       <div className="kap-card" style={{ overflow: "hidden" }}>
         <Toolbar>
-          <RadioDropdown placeholder="Trier" options={["Date de création","Actif","Nom","Prénom","Email","Revendeur associé"]} value={sortBy} onChange={setSortBy} width={100} showSearch={false} showRadio={false} />
+          <RadioDropdown placeholder="Trier" options={["Date de création","Actif","Nom","Prénom","Email","Revendeur associé"]} value={sortBy} onChange={setSortBy} width={100} showSearch={false} showRadio={false} sortMode={true} />
           <Input placeholder="Rechercher par nom, prénom, e-mail" width={360} />
           <RadioDropdown placeholder="Revendeur" options={["2IT SOLUTIONS","ABC TELECOMS","ADV","AXIUM SOLUTIONS","CIS VALLEY","GROUPE TELECOMS DE L'OUEST GTO","IPNEOS","KOESIO AQUITAINE","KOESIO AURA INFO (VD)","KOESIO AURA INFO (VDI)","KOESIO AURA TELECOM","KOESIO AUSTRALIA","KOESIO CENTRE EST","KOESIO CORPORATE IT","KOESIO EST","KOESIO GRAND EST","KOESIO IDF","KOESIO MANAGED SERVICES","KOESIO MEDITERRANNEE","KOESIO NETWORKS","KOESIO NORD OUEST","KOESIO OCCITANIE","KOESIO OCCITANIE BPA","KOESIO OUEST","KOESIO PACA","KOESIO PACA TELECOMS","KOESIO SUD ALLIANCE","KOESIO SUISSE","ONE OPERATEUR","Production","S-WAN IP"]} value={revendeurFilter} onChange={setRevendeurFilter} width={190} />
           <RadioDropdown placeholder="Clients" options={CLIENT_NAMES} value={clientFilter} onChange={setClientFilter} width={160} />
@@ -704,7 +735,7 @@ function AccessSubsTab({ onOpenDetail }) {
   return (
     <>
       <Toolbar>
-        <RadioDropdown placeholder="Trier" options={["Etat abo.","Revendeur","Client","Site","Numéro mobile","Offre","Etat prod."]} value={sortBy} onChange={setSortBy} width={100} showSearch={false} showRadio={false} />
+        <RadioDropdown placeholder="Trier" options={["Etat abo.","Revendeur","Client","Site","Numéro mobile","Offre","Etat prod."]} value={sortBy} onChange={setSortBy} width={100} showSearch={false} showRadio={false} sortMode={true} />
         <Input placeholder="Rechercher par N° ICCID, nom du lien, client, forfait" width={360} />
         <RadioDropdown placeholder="Revendeur" options={["2IT SOLUTIONS","ABC TELECOMS","ADV","AXIUM SOLUTIONS","CIS VALLEY","GROUPE TELECOMS DE L'OUEST GTO","IPNEOS","KOESIO AQUITAINE","KOESIO AURA INFO (VD)","KOESIO AURA INFO (VDI)","KOESIO AURA TELECOM","KOESIO AUSTRALIA","KOESIO CENTRE EST","KOESIO CORPORATE IT","KOESIO EST","KOESIO GRAND EST","KOESIO IDF","KOESIO MANAGED SERVICES","KOESIO MEDITERRANNEE","KOESIO NETWORKS","KOESIO NORD OUEST","KOESIO OCCITANIE","KOESIO OCCITANIE BPA","KOESIO OUEST","KOESIO PACA","KOESIO PACA TELECOMS","KOESIO SUD ALLIANCE","KOESIO SUISSE","ONE OPERATEUR","Production","S-WAN IP"]} value={revendeurFilter} onChange={setRevendeurFilter} width={180} />
         <RadioDropdown placeholder="Client" options={CLIENT_NAMES} value={clientFilter} onChange={setClientFilter} width={160} />
@@ -763,7 +794,7 @@ function AccessOrdersTab({ onOpenDetail }) {
   return (
     <>
       <Toolbar>
-        <RadioDropdown placeholder="Trier" options={["Date","Réf","Revendeur","Client","Type commande","Etat commande"]} value={sortBy} onChange={setSortBy} width={100} showSearch={false} showRadio={false} />
+        <RadioDropdown placeholder="Trier" options={["Date","Réf","Revendeur","Client","Type commande","Etat commande"]} value={sortBy} onChange={setSortBy} width={100} showSearch={false} showRadio={false} sortMode={true} />
         <Input placeholder="Rechercher par Réf, Client, Numéro, ICCID, Forfait" width={360} />
         <RadioDropdown placeholder="Revendeur" options={["2IT SOLUTIONS","ABC TELECOMS","ADV","AXIUM SOLUTIONS","CIS VALLEY","GROUPE TELECOMS DE L'OUEST GTO","IPNEOS","KOESIO AQUITAINE","KOESIO AURA INFO (VD)","KOESIO AURA INFO (VDI)","KOESIO AURA TELECOM","KOESIO AUSTRALIA","KOESIO CENTRE EST","KOESIO CORPORATE IT","KOESIO EST","KOESIO GRAND EST","KOESIO IDF","KOESIO MANAGED SERVICES","KOESIO MEDITERRANNEE","KOESIO NETWORKS","KOESIO NORD OUEST","KOESIO OCCITANIE","KOESIO OCCITANIE BPA","KOESIO OUEST","KOESIO PACA","KOESIO PACA TELECOMS","KOESIO SUD ALLIANCE","KOESIO SUISSE","ONE OPERATEUR","Production","S-WAN IP"]} value={revendeurFilter} onChange={setRevendeurFilter} width={180} />
         <RadioDropdown placeholder="Client" options={CLIENT_NAMES} value={clientFilter} onChange={setClientFilter} width={160} />

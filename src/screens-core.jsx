@@ -113,11 +113,13 @@ function UsersScreen({ initialTab = "liste", onOpenLog, onOpenUser }) {
   const [q, setQ] = useStateScA("");
   const [page, setPage] = useStateScA(1);
   const [sortBy, setSortBy] = useStateScA(null);
+  const [sortDir, setSortDir] = useStateScA("asc");
   const [revendeurFilter, setRevendeurFilter] = useStateScA(null);
   const [statutFilter, setStatutFilter] = useStateScA(null);
   const [typeFilter, setTypeFilter] = useStateScA([]);
   const [roleFilter, setRoleFilter] = useStateScA([]);
   const [logSortBy, setLogSortBy] = useStateScA(null);
+  const [logSortDir, setLogSortDir] = useStateScA("asc");
   const [logRevendeur, setLogRevendeur] = useStateScA(null);
   const [logClient, setLogClient] = useStateScA(null);
   const [logDate, setLogDate] = useStateScA(null); // { debut, fin }
@@ -126,14 +128,59 @@ function UsersScreen({ initialTab = "liste", onOpenLog, onOpenUser }) {
   const perPage = 15;
   const [logPage, setLogPage] = useStateScA(1);
 
+  const userFieldMap = {
+    "Date de création": "dateCreation",
+    "Actif": "statut.label",
+    "Nom": "nom",
+    "Prénom": "prenom",
+    "Email": "email",
+    "Revendeur associé": "revendeur",
+  };
+
+  const logFieldMap = {
+    "Date de création": "dateCreation",
+    "Numéro d'affaire": "dateCreation",
+    "Revendeur de l'utilisateur": "dateCreation",
+    "Statut": "etatCommande",
+    "Ressources": "type",
+    "Durée": "duree",
+  };
+
+  function handleSortChange(field, dir) { setSortBy(field); setSortDir(dir); }
+  function handleLogSortChange(field, dir) { setLogSortBy(field); setLogSortDir(dir); }
+
   const filtered = useMemoScA(() => {
     const n = q.trim().toLowerCase();
     return n ? USERS.filter(u => (u.prenom + " " + u.nom + " " + u.email).toLowerCase().includes(n)) : USERS;
   }, [q]);
-  const totalPages = Math.max(1, Math.ceil(filtered.length / perPage));
-  const view = filtered.slice((page - 1) * perPage, page * perPage);
-  const logTotalPages = Math.max(1, Math.ceil(LOGS.length / 15));
-  const logView = LOGS.slice((logPage - 1) * 15, logPage * 15);
+
+  const sortedFiltered = useMemoScA(() => {
+    const sortField = sortBy || "Date de création";
+    const key = userFieldMap[sortField];
+    if (!key) return filtered;
+    return [...filtered].sort((a, b) => {
+      let va, vb;
+      if (key === "statut.label") { va = a.statut ? a.statut.label || "" : ""; vb = b.statut ? b.statut.label || "" : ""; }
+      else { va = a[key] || ""; vb = b[key] || ""; }
+      return sortDir === "asc" ? String(va).localeCompare(String(vb)) : String(vb).localeCompare(String(va));
+    });
+  }, [filtered, sortBy, sortDir]);
+
+  const totalPages = Math.max(1, Math.ceil(sortedFiltered.length / perPage));
+  const view = sortedFiltered.slice((page - 1) * perPage, page * perPage);
+
+  const sortedLogs = useMemoScA(() => {
+    const sortField = logSortBy || "Date de création";
+    const key = logFieldMap[sortField];
+    if (!key) return LOGS;
+    return [...LOGS].sort((a, b) => {
+      const va = a[key] || ""; const vb = b[key] || "";
+      return logSortDir === "asc" ? String(va).localeCompare(String(vb)) : String(vb).localeCompare(String(va));
+    });
+  }, [logSortBy, logSortDir]);
+
+  const logTotalPages = Math.max(1, Math.ceil(sortedLogs.length / 15));
+  const logView = sortedLogs.slice((logPage - 1) * 15, logPage * 15);
 
   const isLogs = initialTab === "logs";
 
@@ -152,7 +199,7 @@ function UsersScreen({ initialTab = "liste", onOpenLog, onOpenUser }) {
         {!isLogs && (
           <>
             <Toolbar>
-              <RadioDropdown placeholder="Trier" options={["Nom","Prénom","E-mail","Type","Statut","Rôle"]} value={sortBy} onChange={setSortBy} width={100} showSearch={false} showRadio={false} />
+              <RadioDropdown placeholder="Trier" options={["Date de création","Actif","Nom","Prénom","Email","Revendeur associé"]} value={sortBy} onChange={setSortBy} onSortChange={handleSortChange} width={100} showSearch={false} showRadio={false} sortMode={true} />
               <Input placeholder="Recherche par nom, prénom, e-mail" value={q} onChange={(v) => { setQ(v); setPage(1); }} width={360} />
               <RadioDropdown
                 placeholder="Revendeur"
@@ -205,7 +252,7 @@ function UsersScreen({ initialTab = "liste", onOpenLog, onOpenUser }) {
         {isLogs && (
           <>
             <Toolbar>
-              <RadioDropdown placeholder="Trier" options={["Date","Nom de l'utilisateur","Revendeur de l'utilisateur","Statut","Ressources","Durée"]} value={logSortBy} onChange={setLogSortBy} width={100} showSearch={false} showRadio={false} />
+              <RadioDropdown placeholder="Trier" options={["Date de création","Numéro d'affaire","Revendeur de l'utilisateur","Statut","Ressources","Durée"]} value={logSortBy} onChange={setLogSortBy} onSortChange={handleLogSortChange} width={100} showSearch={false} showRadio={false} sortMode={true} />
               <Input icon="search" placeholder="Statut, Email, Nom et Prénom" width={360} />
               <RadioDropdown placeholder="Revendeur" options={["2IT SOLUTIONS","ABC TELECOMS","ADV","AXIUM SOLUTIONS","CIS VALLEY","GROUPE TELECOMS DE L'OUEST GTO","IPNEOS","KOESIO AQUITAINE","KOESIO AURA INFO (VD)","KOESIO AURA INFO (VDI)","KOESIO AURA TELECOM","KOESIO AUSTRALIA","KOESIO CENTRE EST","KOESIO CORPORATE IT","KOESIO EST","KOESIO GRAND EST","KOESIO IDF","KOESIO MANAGED SERVICES","KOESIO MEDITERRANNEE","KOESIO NETWORKS","KOESIO NORD OUEST","KOESIO OCCITANIE","KOESIO OCCITANIE BPA","KOESIO OUEST","KOESIO PACA","KOESIO PACA TELECOMS","KOESIO SUD ALLIANCE","KOESIO SUISSE","ONE OPERATEUR","Production","S-WAN IP"]} value={logRevendeur} onChange={setLogRevendeur} width={170} />
               <RadioDropdown placeholder="Client" options={CLIENT_NAMES} value={logClient} onChange={setLogClient} width={160} />

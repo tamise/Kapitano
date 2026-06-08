@@ -113,6 +113,7 @@ function subLabel(screen, sub) {
     voix:         { espaces: "Espaces voix", trunk: "Trunk SIP & Centrex", "trunk-cmd": "Commandes Trunk SIP", portabilite: "Portabilité", "info-numero": "Informations de numéro", "numeros-rev": "Numéros revendeurs", numeros: "Numéros clients" },
     commandes:    { suivi: "Suivi de commandes", reporting: "Reporting" },
     technique:    { tickets: "Tickets", "tickets-archives": "Tickets archivés", configurations: "Configurations", supervision: "Supervision" },
+    administration: { questionnaire: "Questionnaire", "regles-service": "Règles de service", "matrices-decision": "Matrices de décision" },
   };
   return (map[screen] && map[screen][sub]) || sub;
 }

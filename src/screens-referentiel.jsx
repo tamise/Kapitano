@@ -49,8 +49,22 @@ function refSubtitle(sub) {
 // ────────────────────────────────────────────────────────────────
 function RevendeursTab({ onOpenDetail }) {
   const [sortBy, setSortBy] = React.useState(null);
+  const [sortDir, setSortDir] = React.useState("asc");
   const [page, setPage] = React.useState(1);
-  const totalPages = Math.max(1, Math.ceil(REVENDEURS.length / 15));
+
+  const revFieldMap = { "Revendeur": "nom", "Code région": "codeRegion", "Email": "email" };
+  function handleSortChange(field, dir) { setSortBy(field); setSortDir(dir); }
+
+  const sorted = React.useMemo(() => {
+    const key = revFieldMap[sortBy || "Revendeur"];
+    if (!key) return REVENDEURS;
+    return [...REVENDEURS].sort((a, b) => {
+      const va = a[key] || ""; const vb = b[key] || "";
+      return sortDir === "asc" ? String(va).localeCompare(String(vb)) : String(vb).localeCompare(String(va));
+    });
+  }, [sortBy, sortDir]);
+
+  const totalPages = Math.max(1, Math.ceil(sorted.length / 15));
 
   return (
     <>
@@ -60,9 +74,11 @@ function RevendeursTab({ onOpenDetail }) {
           options={["Revendeur", "Code région", "Email"]}
           value={sortBy}
           onChange={setSortBy}
+          onSortChange={handleSortChange}
           width={130}
           showSearch={false}
           showRadio={false}
+          sortMode={true}
         />
         <Input placeholder="Recherche par nom, SIREN, ville…" width={360} />
         <div className="grow" />
@@ -80,7 +96,7 @@ function RevendeursTab({ onOpenDetail }) {
             </tr>
           </thead>
           <tbody>
-            {REVENDEURS.slice((page - 1) * 15, page * 15).map(r => (
+            {sorted.slice((page - 1) * 15, page * 15).map(r => (
               <tr key={r.code} className="is-clickable" onClick={() => onOpenDetail({ kind: "revendeur", data: r })}>
                 <td style={{ fontWeight: 600 }}>{r.nom}</td>
                 <td className="muted">{r.codeRegion}</td>
@@ -92,7 +108,7 @@ function RevendeursTab({ onOpenDetail }) {
           </tbody>
         </table>
       </TableBox>
-      <Pagination page={page} totalPages={totalPages} onChange={setPage} totalItems={REVENDEURS.length} perPage={15} />
+      <Pagination page={page} totalPages={totalPages} onChange={setPage} totalItems={sorted.length} perPage={15} />
     </>
   );
 }
@@ -100,9 +116,23 @@ function RevendeursTab({ onOpenDetail }) {
 // ────────────────────────────────────────────────────────────────
 function ClientsTab({ onOpenDetail }) {
   const [sortBy, setSortBy] = React.useState(null);
+  const [sortDir, setSortDir] = React.useState("asc");
   const [revendeurFilter, setRevendeurFilter] = React.useState(null);
   const [page, setPage] = React.useState(1);
-  const totalPages = Math.max(1, Math.ceil(CLIENTS.length / 15));
+
+  const clientFieldMap = { "Client": "nom", "Code Artis": "codeArtis", "SIREN": "siren", "Revendeur": "revendeur", "Date de création": "dateCreation" };
+  function handleSortChange(field, dir) { setSortBy(field); setSortDir(dir); }
+
+  const sorted = React.useMemo(() => {
+    const key = clientFieldMap[sortBy || "Client"];
+    if (!key) return CLIENTS;
+    return [...CLIENTS].sort((a, b) => {
+      const va = a[key] || ""; const vb = b[key] || "";
+      return sortDir === "asc" ? String(va).localeCompare(String(vb)) : String(vb).localeCompare(String(va));
+    });
+  }, [sortBy, sortDir]);
+
+  const totalPages = Math.max(1, Math.ceil(sorted.length / 15));
 
   const setTopbarActions = React.useContext(TopbarActionsContext);
   React.useEffect(() => {
@@ -118,9 +148,11 @@ function ClientsTab({ onOpenDetail }) {
           options={["Client", "Code Artis", "SIREN", "Revendeur", "Date de création"]}
           value={sortBy}
           onChange={setSortBy}
+          onSortChange={handleSortChange}
           width={130}
           showSearch={false}
           showRadio={false}
+          sortMode={true}
         />
         <Input placeholder="Recherche par raison sociale, SIRET…" width={360} />
         <RadioDropdown placeholder="Revendeur" options={["2IT SOLUTIONS","ABC TELECOMS","ADV","AXIUM SOLUTIONS","CIS VALLEY","GROUPE TELECOMS DE L'OUEST GTO","IPNEOS","KOESIO AQUITAINE","KOESIO AURA INFO (VD)","KOESIO AURA INFO (VDI)","KOESIO AURA TELECOM","KOESIO AUSTRALIA","KOESIO CENTRE EST","KOESIO CORPORATE IT","KOESIO EST","KOESIO GRAND EST","KOESIO IDF","KOESIO MANAGED SERVICES","KOESIO MEDITERRANNEE","KOESIO NETWORKS","KOESIO NORD OUEST","KOESIO OCCITANIE","KOESIO OCCITANIE BPA","KOESIO OUEST","KOESIO PACA","KOESIO PACA TELECOMS","KOESIO SUD ALLIANCE","KOESIO SUISSE","ONE OPERATEUR","Production","S-WAN IP"]} value={revendeurFilter} onChange={setRevendeurFilter} width={200} />
@@ -141,7 +173,7 @@ function ClientsTab({ onOpenDetail }) {
             </tr>
           </thead>
           <tbody>
-            {CLIENTS.slice((page - 1) * 15, page * 15).map(c => (
+            {sorted.slice((page - 1) * 15, page * 15).map(c => (
               <tr key={c.id} className="is-clickable" onClick={() => onOpenDetail({ kind: "client", data: c })}>
                 <td style={{ fontWeight: 600 }}>{c.nom}</td>
                 <td className="mono muted">{c.codeArtis}</td>
@@ -155,7 +187,7 @@ function ClientsTab({ onOpenDetail }) {
           </tbody>
         </table>
       </TableBox>
-      <Pagination page={page} totalPages={totalPages} onChange={setPage} totalItems={CLIENTS.length} perPage={15} />
+      <Pagination page={page} totalPages={totalPages} onChange={setPage} totalItems={sorted.length} perPage={15} />
     </>
   );
 }
@@ -163,10 +195,24 @@ function ClientsTab({ onOpenDetail }) {
 // ────────────────────────────────────────────────────────────────
 function SitesTab({ onOpenDetail }) {
   const [sortBy, setSortBy] = React.useState(null);
+  const [sortDir, setSortDir] = React.useState("asc");
   const [revendeurFilter, setRevendeurFilter] = React.useState(null);
   const [clientFilter, setClientFilter] = React.useState(null);
   const [page, setPage] = React.useState(1);
-  const totalPages = Math.max(1, Math.ceil(SITES.length / 15));
+
+  const siteFieldMap = { "Site": "label", "SIRET": "siret", "Ville": "ville", "Code postal": "cp", "Revendeur": "revendeur", "Client": "client" };
+  function handleSortChange(field, dir) { setSortBy(field); setSortDir(dir); }
+
+  const sorted = React.useMemo(() => {
+    const key = siteFieldMap[sortBy || "Site"];
+    if (!key) return SITES;
+    return [...SITES].sort((a, b) => {
+      const va = a[key] || ""; const vb = b[key] || "";
+      return sortDir === "asc" ? String(va).localeCompare(String(vb)) : String(vb).localeCompare(String(va));
+    });
+  }, [sortBy, sortDir]);
+
+  const totalPages = Math.max(1, Math.ceil(sorted.length / 15));
 
   const setTopbarActions = React.useContext(TopbarActionsContext);
   React.useEffect(() => {
@@ -182,9 +228,11 @@ function SitesTab({ onOpenDetail }) {
           options={["Site", "SIRET", "Ville", "Code postal", "Revendeur", "Client"]}
           value={sortBy}
           onChange={setSortBy}
+          onSortChange={handleSortChange}
           width={130}
           showSearch={false}
           showRadio={false}
+          sortMode={true}
         />
         <Input placeholder="Rechercher sur Site, SIRET, Ville ou Code postal" width={360} />
         <RadioDropdown placeholder="Client" options={CLIENT_NAMES} value={clientFilter} onChange={setClientFilter} width={200} />
@@ -208,7 +256,7 @@ function SitesTab({ onOpenDetail }) {
             </tr>
           </thead>
           <tbody>
-            {SITES.slice((page - 1) * 15, page * 15).map(s => (
+            {sorted.slice((page - 1) * 15, page * 15).map(s => (
               <tr key={s.id} className="is-clickable" onClick={() => onOpenDetail({ kind: "site", data: s })}>
                 <td className="mono muted">{s.id}</td>
                 <td style={{ fontWeight: 600 }}>{s.label}</td>
@@ -224,7 +272,7 @@ function SitesTab({ onOpenDetail }) {
           </tbody>
         </table>
       </TableBox>
-      <Pagination page={page} totalPages={totalPages} onChange={setPage} totalItems={SITES.length} perPage={15} />
+      <Pagination page={page} totalPages={totalPages} onChange={setPage} totalItems={sorted.length} perPage={15} />
     </>
   );
 }
@@ -337,13 +385,33 @@ function HebergementsTab({ onOpenDetail }) {
 // ────────────────────────────────────────────────────────────────
 function ServicesTab({ onOpenDetail }) {
   const [sortBy, setSortBy] = React.useState(null);
+  const [sortDir, setSortDir] = React.useState("asc");
   const [statutFilter, setStatutFilter] = React.useState([]);
   const [revendeurFilter, setRevendeurFilter] = React.useState(null);
   const [clientFilter, setClientFilter] = React.useState(null);
   const [siteFilter, setSiteFilter] = React.useState(null);
   const [hebFilter, setHebFilter] = React.useState(null);
   const [page, setPage] = React.useState(1);
-  const totalPages = Math.max(1, Math.ceil(SERVICES.length / 15));
+
+  const serviceFieldMap = { "Service": "type", "Quantité": "quantite", "Matricule": "matricule", "Revendeur": "revendeur", "Client": "client", "Site": "site" };
+  function handleSortChange(field, dir) { setSortBy(field); setSortDir(dir); }
+
+  const sorted = React.useMemo(() => {
+    const key = serviceFieldMap[sortBy || "Service"];
+    if (!key) return SERVICES;
+    if (sortBy === "Quantité") {
+      return [...SERVICES].sort((a, b) => {
+        const va = Number(a[key]) || 0; const vb = Number(b[key]) || 0;
+        return sortDir === "asc" ? va - vb : vb - va;
+      });
+    }
+    return [...SERVICES].sort((a, b) => {
+      const va = a[key] || ""; const vb = b[key] || "";
+      return sortDir === "asc" ? String(va).localeCompare(String(vb)) : String(vb).localeCompare(String(va));
+    });
+  }, [sortBy, sortDir]);
+
+  const totalPages = Math.max(1, Math.ceil(sorted.length / 15));
 
   return (
     <>
@@ -353,9 +421,11 @@ function ServicesTab({ onOpenDetail }) {
           options={["Service","Quantité","Matricule","Revendeur","Client","Site","Statut","Date facturation","Fin d'engagement"]}
           value={sortBy}
           onChange={setSortBy}
+          onSortChange={handleSortChange}
           width={130}
           showSearch={false}
           showRadio={false}
+          sortMode={true}
         />
         <Input placeholder="Rechercher sur Service et Matricule" width={360} />
         <RadioDropdown placeholder="Revendeur" options={["2IT SOLUTIONS","ABC TELECOMS","ADV","AXIUM SOLUTIONS","CIS VALLEY","GROUPE TELECOMS DE L'OUEST GTO","IPNEOS","KOESIO AQUITAINE","KOESIO AURA INFO (VD)","KOESIO AURA INFO (VDI)","KOESIO AURA TELECOM","KOESIO AUSTRALIA","KOESIO CENTRE EST","KOESIO CORPORATE IT","KOESIO EST","KOESIO GRAND EST","KOESIO IDF","KOESIO MANAGED SERVICES","KOESIO MEDITERRANNEE","KOESIO NETWORKS","KOESIO NORD OUEST","KOESIO OCCITANIE","KOESIO OCCITANIE BPA","KOESIO OUEST","KOESIO PACA","KOESIO PACA TELECOMS","KOESIO SUD ALLIANCE","KOESIO SUISSE","ONE OPERATEUR","Production","S-WAN IP"]} value={revendeurFilter} onChange={setRevendeurFilter} width={180} />
@@ -383,7 +453,7 @@ function ServicesTab({ onOpenDetail }) {
             </tr>
           </thead>
           <tbody>
-            {SERVICES.slice((page - 1) * 15, page * 15).map(s => (
+            {sorted.slice((page - 1) * 15, page * 15).map(s => (
               <tr key={s.id} className="is-clickable" onClick={() => onOpenDetail({ kind: "service", data: s })}>
                 <td style={{ fontWeight: 600 }}>{s.type}</td>
                 <td className="muted">{s.quantite}</td>
@@ -406,7 +476,7 @@ function ServicesTab({ onOpenDetail }) {
           </tbody>
         </table>
       </TableBox>
-      <Pagination page={page} totalPages={totalPages} onChange={setPage} totalItems={SERVICES.length} perPage={15} />
+      <Pagination page={page} totalPages={totalPages} onChange={setPage} totalItems={sorted.length} perPage={15} />
     </>
   );
 }
@@ -414,10 +484,24 @@ function ServicesTab({ onOpenDetail }) {
 // ────────────────────────────────────────────────────────────────
 function CataloguesTab({ onOpenDetail }) {
   const [sortBy, setSortBy] = React.useState(null);
+  const [sortDir, setSortDir] = React.useState("asc");
   const [familleFilter, setFamilleFilter] = React.useState(null);
   const [sousFamilleFilter, setSousFamilleFilter] = React.useState(null);
   const [page, setPage] = React.useState(1);
-  const totalPages = Math.max(1, Math.ceil(CATALOGUE.length / 15));
+
+  const catFieldMap = { "Libellé": "designation" };
+  function handleSortChange(field, dir) { setSortBy(field); setSortDir(dir); }
+
+  const sorted = React.useMemo(() => {
+    const key = catFieldMap[sortBy || "Libellé"];
+    if (!key) return CATALOGUE;
+    return [...CATALOGUE].sort((a, b) => {
+      const va = a[key] || ""; const vb = b[key] || "";
+      return sortDir === "asc" ? String(va).localeCompare(String(vb)) : String(vb).localeCompare(String(va));
+    });
+  }, [sortBy, sortDir]);
+
+  const totalPages = Math.max(1, Math.ceil(sorted.length / 15));
 
   return (
     <>
@@ -427,9 +511,11 @@ function CataloguesTab({ onOpenDetail }) {
           options={["Libellé"]}
           value={sortBy}
           onChange={setSortBy}
+          onSortChange={handleSortChange}
           width={130}
           showSearch={false}
           showRadio={false}
+          sortMode={true}
         />
         <Input placeholder="Rechercher par famille, sous-famille, libellé, Réf." width={360} />
         <RadioDropdown placeholder="Famille" options={["Centrex","Cinet","Colocation","Connectivité","Cvoice","Cvpn","Détail matériel centrex","Hébergement","Lien ADSL","Lien FON","Lien FTTE","Lien FTTH","Lien FTTO","Lien SDSL","Mobile","Option centrex","Option Cinet","Option Cvoice","Option lien","Option routeur","Option VM","Parefeu","Passerelle","Portabilité","Routeur","SDA IP","SDA RNIS","Service VOIP","Services SAAS","Stochage","VGA","VM"]} value={familleFilter} onChange={setFamilleFilter} width={160} />
@@ -453,7 +539,7 @@ function CataloguesTab({ onOpenDetail }) {
             </tr>
           </thead>
           <tbody>
-            {CATALOGUE.slice((page - 1) * 15, page * 15).map(c => (
+            {sorted.slice((page - 1) * 15, page * 15).map(c => (
               <tr key={c.ref} className="is-clickable" onClick={() => onOpenDetail({ kind: "catalogue", data: c })}>
                 <td className="mono muted">{c.ref}</td>
                 <td style={{ fontWeight: 600 }}>{c.designation}</td>
@@ -469,7 +555,7 @@ function CataloguesTab({ onOpenDetail }) {
           </tbody>
         </table>
       </TableBox>
-      <Pagination page={page} totalPages={totalPages} onChange={setPage} totalItems={CATALOGUE.length} perPage={15} />
+      <Pagination page={page} totalPages={totalPages} onChange={setPage} totalItems={sorted.length} perPage={15} />
     </>
   );
 }

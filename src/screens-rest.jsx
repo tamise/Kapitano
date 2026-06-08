@@ -24,16 +24,30 @@ function CommandesScreen({ initialSub = "suivi", onOpenDetail }) {
 
 function OrdersTab({ onOpenDetail }) {
   const [sortBy, setSortBy] = useStateCt(null);
+  const [sortDir, setSortDir] = useStateCt("asc");
   const [sourceFilter, setSourceFilter] = useStateCt([]);
   const [revendeurFilter, setRevendeurFilter] = useStateCt(null);
   const [clientFilter, setClientFilter] = useStateCt(null);
   const [etatFilter, setEtatFilter] = useStateCt([]);
   const [page, setPage] = useStateCt(1);
-  const totalPages = Math.max(1, Math.ceil(ORDERS.length / 15));
+
+  const ordersFieldMap = { "Date": "dap", "Numéro d'affaire": "numeroAffaire", "Revendeur": "revendeur", "Client": "client" };
+  function handleSortChange(field, dir) { setSortBy(field); setSortDir(dir); }
+
+  const sorted = React.useMemo(() => {
+    const key = ordersFieldMap[sortBy || "Date"];
+    if (!key) return ORDERS;
+    return [...ORDERS].sort((a, b) => {
+      const va = a[key] || ""; const vb = b[key] || "";
+      return sortDir === "asc" ? String(va).localeCompare(String(vb)) : String(vb).localeCompare(String(va));
+    });
+  }, [sortBy, sortDir]);
+
+  const totalPages = Math.max(1, Math.ceil(sorted.length / 15));
   return (
     <>
       <Toolbar>
-        <RadioDropdown placeholder="Trier" options={["Date","Numéro d'affaire","Source","Revendeur","Client","État commande"]} value={sortBy} onChange={setSortBy} width={100} showSearch={false} showRadio={false} />
+        <RadioDropdown placeholder="Trier" options={["Date","Numéro d'affaire","Source","Revendeur","Client","État commande"]} value={sortBy} onChange={setSortBy} onSortChange={handleSortChange} width={100} showSearch={false} showRadio={false} sortMode={true} />
         <Input placeholder="Rechercher par numéro d'affaire ou client" width={360} />
         <RadioDropdown placeholder="Source" options={["Cristal","Hub commandes"]} value={sourceFilter} onChange={setSourceFilter} width={160} showSearch={false} multiSelect={true} />
         <RadioDropdown placeholder="Revendeur" options={["2IT SOLUTIONS","ABC TELECOMS","ADV","AXIUM SOLUTIONS","CIS VALLEY","GROUPE TELECOMS DE L'OUEST GTO","IPNEOS","KOESIO AQUITAINE","KOESIO AURA INFO (VD)","KOESIO AURA INFO (VDI)","KOESIO AURA TELECOM","KOESIO AUSTRALIA","KOESIO CENTRE EST","KOESIO CORPORATE IT","KOESIO EST","KOESIO GRAND EST","KOESIO IDF","KOESIO MANAGED SERVICES","KOESIO MEDITERRANNEE","KOESIO NETWORKS","KOESIO NORD OUEST","KOESIO OCCITANIE","KOESIO OCCITANIE BPA","KOESIO OUEST","KOESIO PACA","KOESIO PACA TELECOMS","KOESIO SUD ALLIANCE","KOESIO SUISSE","ONE OPERATEUR","Production","S-WAN IP"]} value={revendeurFilter} onChange={setRevendeurFilter} width={180} />
@@ -57,7 +71,7 @@ function OrdersTab({ onOpenDetail }) {
             </tr>
           </thead>
           <tbody>
-            {ORDERS.slice((page - 1) * 15, page * 15).map(o => (
+            {sorted.slice((page - 1) * 15, page * 15).map(o => (
               <tr key={o.id} className="is-clickable" onClick={() => onOpenDetail({ kind: "order", data: o })}>
                 <td className="muted">{o.dap}</td>
                 <td className="mono" style={{ fontWeight: 600 }}>{o.numeroAffaire}</td>
@@ -72,7 +86,7 @@ function OrdersTab({ onOpenDetail }) {
           </tbody>
         </table>
       </TableBox>
-      <Pagination page={page} totalPages={totalPages} onChange={setPage} totalItems={ORDERS.length} perPage={15} />
+      <Pagination page={page} totalPages={totalPages} onChange={setPage} totalItems={sorted.length} perPage={15} />
     </>
   );
 }
@@ -86,6 +100,7 @@ const TYPE_PROD_ICON = {
 
 function ReportingTab() {
   const [sortBy, setSortBy] = useStateCt(null);
+  const [sortDir, setSortDir] = useStateCt("asc");
   const [dateFilter, setDateFilter] = useStateCt(null);
   const [revendeurFilter, setRevendeurFilter] = useStateCt(null);
   const [clientFilter, setClientFilter] = useStateCt(null);
@@ -94,8 +109,21 @@ function ReportingTab() {
   const [page, setPage] = useStateCt(1);
   const TOTAL = 4190;
   const perPage = 15;
+
+  const reportingFieldMap = { "Date de l'action": "dateAction", "Numéro d'affaire": "numeroAffaire", "Revendeur": "revendeur", "Client": "client" };
+  function handleSortChange(field, dir) { setSortBy(field); setSortDir(dir); }
+
+  const sorted = React.useMemo(() => {
+    const key = reportingFieldMap[sortBy || "Date de l'action"];
+    if (!key) return REPORTING_LOGS;
+    return [...REPORTING_LOGS].sort((a, b) => {
+      const va = a[key] || ""; const vb = b[key] || "";
+      return sortDir === "asc" ? String(va).localeCompare(String(vb)) : String(vb).localeCompare(String(va));
+    });
+  }, [sortBy, sortDir]);
+
   const totalPages = Math.ceil(TOTAL / perPage);
-  const view = REPORTING_LOGS.slice((page - 1) * perPage, page * perPage);
+  const view = sorted.slice((page - 1) * perPage, page * perPage);
 
   const setTopbarActions = React.useContext(TopbarActionsContext);
   React.useEffect(() => {
@@ -106,7 +134,7 @@ function ReportingTab() {
   return (
     <>
       <Toolbar>
-        <RadioDropdown placeholder="Trier" options={["Date de l'action","Numéro d'affaire","Revendeur","Client","Nom de l'article","Quantité"]} value={sortBy} onChange={setSortBy} width={100} showSearch={false} showRadio={false} />
+        <RadioDropdown placeholder="Trier" options={["Date de l'action","Numéro d'affaire","Revendeur","Client","Nom de l'article","Quantité"]} value={sortBy} onChange={setSortBy} onSortChange={handleSortChange} width={100} showSearch={false} showRadio={false} sortMode={true} />
         <Input placeholder="Rechercher par numéro d'affaire, client ou article" width={380} />
         <DateRangeDropdown placeholder="Date de l'action" value={dateFilter} onChange={setDateFilter} width={180} />
         <RadioDropdown placeholder="Revendeur" options={["2IT SOLUTIONS","ABC TELECOMS","ADV","AXIUM SOLUTIONS","CIS VALLEY","GROUPE TELECOMS DE L'OUEST GTO","IPNEOS","KOESIO AQUITAINE","KOESIO AURA INFO (VD)","KOESIO AURA INFO (VDI)","KOESIO AURA TELECOM","KOESIO AUSTRALIA","KOESIO CENTRE EST","KOESIO CORPORATE IT","KOESIO EST","KOESIO GRAND EST","KOESIO IDF","KOESIO MANAGED SERVICES","KOESIO MEDITERRANNEE","KOESIO NETWORKS","KOESIO NORD OUEST","KOESIO OCCITANIE","KOESIO OCCITANIE BPA","KOESIO OUEST","KOESIO PACA","KOESIO PACA TELECOMS","KOESIO SUD ALLIANCE","KOESIO SUISSE","ONE OPERATEUR","Production","S-WAN IP"]} value={revendeurFilter} onChange={setRevendeurFilter} width={180} />
@@ -194,6 +222,7 @@ const NATURE_CHIP = {
 
 function TicketsTab({ onOpenDetail }) {
   const [sortBy, setSortBy] = useStateCt(null);
+  const [sortDir, setSortDir] = useStateCt("asc");
   const [revendeurFilter, setRevendeurFilter] = useStateCt(null);
   const [clientFilter, setClientFilter] = useStateCt(null);
   const [etatFilter, setEtatFilter] = useStateCt([]);
@@ -201,8 +230,21 @@ function TicketsTab({ onOpenDetail }) {
   const [natureFilter, setNatureFilter] = useStateCt([]);
   const [page, setPage] = useStateCt(1);
   const TOTAL_TKT = 720;
+
+  const ticketFieldMap = { "Date de création": "dateCreation", "Référence": "reference", "Sujet": "sujet", "État": "etat" };
+  function handleSortChange(field, dir) { setSortBy(field); setSortDir(dir); }
+
+  const sorted = React.useMemo(() => {
+    const key = ticketFieldMap[sortBy || "Date de création"];
+    if (!key) return TICKETS;
+    return [...TICKETS].sort((a, b) => {
+      const va = a[key] || ""; const vb = b[key] || "";
+      return sortDir === "asc" ? String(va).localeCompare(String(vb)) : String(vb).localeCompare(String(va));
+    });
+  }, [sortBy, sortDir]);
+
   const totalPages = Math.ceil(TOTAL_TKT / 15);
-  const view = TICKETS.slice((page - 1) * 15, page * 15);
+  const view = sorted.slice((page - 1) * 15, page * 15);
 
   const setTopbarActions = React.useContext(TopbarActionsContext);
   React.useEffect(() => {
@@ -216,7 +258,7 @@ function TicketsTab({ onOpenDetail }) {
   return (
     <>
       <Toolbar>
-        <RadioDropdown placeholder="Trier" options={["Date de création","Référence","Sujet","État","Criticité","Nature"]} value={sortBy} onChange={setSortBy} width={100} showSearch={false} showRadio={false} />
+        <RadioDropdown placeholder="Trier" options={["Date de création","Référence","Sujet","État","Criticité","Nature"]} value={sortBy} onChange={setSortBy} onSortChange={handleSortChange} width={100} showSearch={false} showRadio={false} sortMode={true} />
         <Input placeholder="Rechercher par Référence, Sujet ou Client" width={380} />
         <RadioDropdown placeholder="Revendeur" options={["2IT SOLUTIONS","ABC TELECOMS","ADV","AXIUM SOLUTIONS","CIS VALLEY","GROUPE TELECOMS DE L'OUEST GTO","IPNEOS","KOESIO AQUITAINE","KOESIO AURA INFO (VD)","KOESIO AURA INFO (VDI)","KOESIO AURA TELECOM","KOESIO AUSTRALIA","KOESIO CENTRE EST","KOESIO CORPORATE IT","KOESIO EST","KOESIO GRAND EST","KOESIO IDF","KOESIO MANAGED SERVICES","KOESIO MEDITERRANNEE","KOESIO NETWORKS","KOESIO NORD OUEST","KOESIO OCCITANIE","KOESIO OCCITANIE BPA","KOESIO OUEST","KOESIO PACA","KOESIO PACA TELECOMS","KOESIO SUD ALLIANCE","KOESIO SUISSE","ONE OPERATEUR","Production","S-WAN IP"]} value={revendeurFilter} onChange={setRevendeurFilter} width={180} />
         <RadioDropdown placeholder="Client" options={CLIENT_NAMES} value={clientFilter} onChange={setClientFilter} width={160} />
@@ -292,7 +334,7 @@ function TicketsArchivesTab() {
   return (
     <>
       <Toolbar>
-        <RadioDropdown placeholder="Trier" options={["Date de création","Numéro","Symptôme","Type DIT"]} value={sortBy} onChange={setSortBy} width={100} showSearch={false} showRadio={false} />
+        <RadioDropdown placeholder="Trier" options={["Date de création","Numéro","Symptôme","Type DIT"]} value={sortBy} onChange={setSortBy} width={100} showSearch={false} showRadio={false} sortMode={true} />
         <Input placeholder="Rechercher par Numéro ou Code Artis" width={340} />
         <RadioDropdown placeholder="Revendeur" options={["2IT SOLUTIONS","ABC TELECOMS","ADV","AXIUM SOLUTIONS","CIS VALLEY","GROUPE TELECOMS DE L'OUEST GTO","IPNEOS","KOESIO AQUITAINE","KOESIO AURA INFO (VD)","KOESIO AURA INFO (VDI)","KOESIO AURA TELECOM","KOESIO AUSTRALIA","KOESIO CENTRE EST","KOESIO CORPORATE IT","KOESIO EST","KOESIO GRAND EST","KOESIO IDF","KOESIO MANAGED SERVICES","KOESIO MEDITERRANNEE","KOESIO NETWORKS","KOESIO NORD OUEST","KOESIO OCCITANIE","KOESIO OCCITANIE BPA","KOESIO OUEST","KOESIO PACA","KOESIO PACA TELECOMS","KOESIO SUD ALLIANCE","KOESIO SUISSE","ONE OPERATEUR","Production","S-WAN IP"]} value={revendeurFilter} onChange={setRevendeurFilter} width={180} />
         <RadioDropdown placeholder="Client" options={CLIENT_NAMES} value={clientFilter} onChange={setClientFilter} width={160} />
@@ -361,7 +403,7 @@ function ConfigurationsTab({ onOpenDetail }) {
   return (
     <>
       <Toolbar>
-        <RadioDropdown placeholder="Trier" options={["Date de création","Version","Statut","Date d'archivage","Revendeur","Client","Site","Service"]} value={sortBy} onChange={setSortBy} width={100} showSearch={false} showRadio={false} />
+        <RadioDropdown placeholder="Trier" options={["Date de création","Version","Statut","Date d'archivage","Revendeur","Client","Site","Service"]} value={sortBy} onChange={setSortBy} width={100} showSearch={false} showRadio={false} sortMode={true} />
         <Input placeholder="Rechercher par N° de série, Revendeur, Client, Site, Se..." width={380} />
         <RadioDropdown placeholder="Statut" options={["Active","Archivée"]} value={statutFilter} onChange={setStatutFilter} width={130} showSearch={false} />
         <RadioDropdown placeholder="Revendeur" options={["2IT SOLUTIONS","ABC TELECOMS","ADV","AXIUM SOLUTIONS","CIS VALLEY","GROUPE TELECOMS DE L'OUEST GTO","IPNEOS","KOESIO AQUITAINE","KOESIO AURA INFO (VD)","KOESIO AURA INFO (VDI)","KOESIO AURA TELECOM","KOESIO AUSTRALIA","KOESIO CENTRE EST","KOESIO CORPORATE IT","KOESIO EST","KOESIO GRAND EST","KOESIO IDF","KOESIO MANAGED SERVICES","KOESIO MEDITERRANNEE","KOESIO NETWORKS","KOESIO NORD OUEST","KOESIO OCCITANIE","KOESIO OCCITANIE BPA","KOESIO OUEST","KOESIO PACA","KOESIO PACA TELECOMS","KOESIO SUD ALLIANCE","KOESIO SUISSE","ONE OPERATEUR","Production","S-WAN IP"]} value={revendeurFilter} onChange={setRevendeurFilter} width={180} />
@@ -539,6 +581,241 @@ function EligPlaceholder({ titre }) {
   );
 }
 
+// ════════════════════════════════════════════════════════════════
+// ÉLIGIBILITÉ — DEMANDES
+// ════════════════════════════════════════════════════════════════
+const DEMANDES_USERS = ["Marie-Gabrielle Jendrian","Alexandre LUIS","Baptiste PFEFFERKORN","Geoffrey LAVIALLE","Isabelle MOREAU","Nicolas DUPONT","Sophie GARNIER"];
+const DEMANDES_ADRESSES = ["12 RUE DE BELFORT, 69004 LYON","61 rue Pierre et Marie Curie 87000 Limoges","35 Rue Pasteur 69300 Caluire-et-Cuire","30 Rue Pasteur 69300 Caluire-et-Cuire","53 Avenue des Langories 26000 Valence","22 Boulevard des Brotteaux 69006 Lyon","8 Impasse des Acacias 38000 Grenoble","14 Rue de la Paix 75002 Paris"];
+const DEMANDES_TYPES = ["Adresse","Adresse","NDI","Adresse","Code immeuble"];
+
+const DEMANDES = Array.from({ length: 80 }).map((_, i) => {
+  const d = new Date(2026, 5, 8 - Math.floor(i/9), 16 - (i % 9) * 0.5);
+  const fmt = (n) => String(n).padStart(2,"0");
+  const dateStr = (dt) => `${fmt(dt.getDate())}/0${dt.getMonth()+1}/${dt.getFullYear()} - ${fmt(dt.getHours())}:${fmt(dt.getMinutes())}:${fmt(dt.getSeconds())}`;
+  const creee = new Date(d.getTime() - i * 3600000);
+  const traitee = new Date(creee.getTime() + Math.floor(15 + i % 45) * 1000);
+  return {
+    id: i + 1,
+    utilisateur: DEMANDES_USERS[i % DEMANDES_USERS.length],
+    creeLe: dateStr(creee),
+    libelle: DEMANDES_ADRESSES[i % DEMANDES_ADRESSES.length],
+    statut: "1/1",
+    traiteLe: dateStr(traitee),
+    type: DEMANDES_TYPES[i % DEMANDES_TYPES.length],
+  };
+});
+
+function EligDemandesScreen() {
+  const [sortBy, setSortBy] = useStateCt(null);
+  const [revendeurFilter, setRevendeurFilter] = useStateCt(null);
+  const [utilisateurFilter, setUtilisateurFilter] = useStateCt(false);
+  const [utilisateurOpen, setUtilisateurOpen] = useStateCt(false);
+  const utilisateurRef = React.useRef(null);
+  React.useEffect(() => {
+    if (!utilisateurOpen) return;
+    function h(e) { if (utilisateurRef.current && !utilisateurRef.current.contains(e.target)) setUtilisateurOpen(false); }
+    document.addEventListener("mousedown", h);
+    return () => document.removeEventListener("mousedown", h);
+  }, [utilisateurOpen]);
+  const [dateFilter, setDateFilter] = useStateCt(null);
+  const [typeFilter, setTypeFilter] = useStateCt(null);
+  const [statutFilter, setStatutFilter] = useStateCt(null);
+  const [page, setPage] = useStateCt(1);
+  const TOTAL = 1553;
+  const perPage = 15;
+  const totalPages = Math.ceil(TOTAL / perPage);
+  const view = DEMANDES.slice((page - 1) * perPage, page * perPage);
+
+  const setTopbarActions = React.useContext(TopbarActionsContext);
+  React.useEffect(() => {
+    setTopbarActions(<Button variant="primary" icon="plus">Demande d'éligibilité en masse</Button>);
+    return () => setTopbarActions(null);
+  }, []);
+
+  return (
+    <>
+      <Toolbar>
+        <RadioDropdown placeholder="Trier" options={["Créée le","Libellé","Statut","Traitée le"]} value={sortBy} onChange={setSortBy} width={100} showSearch={false} showRadio={false} sortMode={true} />
+        <Input placeholder="Rechercher un libellé" width={360} />
+        <RadioDropdown placeholder="Revendeur" options={["2IT SOLUTIONS","ABC TELECOMS","ADV","AXIUM SOLUTIONS","CIS VALLEY","GROUPE TELECOMS DE L'OUEST GTO","IPNEOS","KOESIO AQUITAINE","KOESIO AURA INFO (VD)","KOESIO AURA INFO (VDI)","KOESIO AURA TELECOM","KOESIO AUSTRALIA","KOESIO CENTRE EST","KOESIO CORPORATE IT","KOESIO EST","KOESIO GRAND EST","KOESIO IDF","KOESIO MANAGED SERVICES","KOESIO MEDITERRANNEE","KOESIO NETWORKS","KOESIO NORD OUEST","KOESIO OCCITANIE","KOESIO OCCITANIE BPA","KOESIO OUEST","KOESIO PACA","KOESIO PACA TELECOMS","KOESIO SUD ALLIANCE","KOESIO SUISSE","ONE OPERATEUR","Production","S-WAN IP"]} value={revendeurFilter} onChange={setRevendeurFilter} width={180} />
+        <div ref={utilisateurRef} style={{ position:"relative", display:"inline-block" }}
+          onMouseEnter={() => setUtilisateurOpen(true)}
+          onMouseLeave={() => setUtilisateurOpen(false)}>
+          <span className="kap-input-wrap" style={{ cursor:"pointer", userSelect:"none" }} onClick={() => setUtilisateurOpen(o => !o)}>
+            <span style={{ display:"flex", alignItems:"center", gap:6, fontSize:13, fontFamily:"var(--kap-font-ui)", color:"var(--kap-fg-3)" }}>
+              Utilisateur
+              {utilisateurFilter && <span style={{ background:"var(--kap-primary)", color:"#fff", borderRadius:99, fontSize:11, fontWeight:700, minWidth:18, height:18, display:"inline-flex", alignItems:"center", justifyContent:"center", padding:"0 5px" }}>1</span>}
+            </span>
+            <Icon name="chevron-down" size={16} style={{ marginRight:-4 }} />
+          </span>
+          {utilisateurOpen && (
+            <div style={{ position:"absolute", top:"calc(100% + 4px)", left:0, minWidth:220, background:"#fff", border:"1px solid var(--kap-border-2)", borderRadius:8, boxShadow:"0 8px 24px rgba(0,0,0,0.12)", zIndex:200, padding:"14px 16px" }}>
+              <label style={{ display:"flex", alignItems:"center", justifyContent:"space-between", cursor:"pointer", fontFamily:"var(--kap-font-ui)", fontSize:13 }}>
+                <span>Mes recherches uniquement</span>
+                <span onClick={() => setUtilisateurFilter(v => !v)} style={{ display:"inline-block", width:36, height:20, borderRadius:99, background:utilisateurFilter ? "var(--kap-primary)" : "#ccc", cursor:"pointer", position:"relative", transition:"background 200ms", flexShrink:0 }}>
+                  <span style={{ position:"absolute", top:2, left:utilisateurFilter ? 18 : 2, width:16, height:16, borderRadius:99, background:"#fff", transition:"left 200ms", boxShadow:"0 1px 3px rgba(0,0,0,0.2)" }} />
+                </span>
+              </label>
+            </div>
+          )}
+        </div>
+        <DateRangeDropdown placeholder="Créée le" value={dateFilter} onChange={setDateFilter} width={150} />
+        <RadioDropdown placeholder="Type de demande" options={["Unitaire","En masse"]} value={typeFilter} onChange={setTypeFilter} width={170} showSearch={false} />
+        <RadioDropdown placeholder="Statut" options={["Créée","En cours","Terminée","En erreur","Annulée"]} value={statutFilter} onChange={setStatutFilter} width={130} showSearch={false} />
+        <div className="grow" />
+        <Button variant="tertiary" icon="refresh-cw">Réinitialiser</Button>
+      </Toolbar>
+      <TableBox>
+        <table className="kap-table">
+          <thead>
+            <tr>
+              <th><SortHeader active dir="desc">Utilisateur</SortHeader></th>
+              <th>Créée le</th>
+              <th>Libellé</th>
+              <th>Statut</th>
+              <th>Traitée le</th>
+              <th style={{ width: 48 }}></th>
+            </tr>
+          </thead>
+          <tbody>
+            {view.map(d => (
+              <tr key={d.id} className="is-clickable">
+                <td style={{ color:"var(--kap-primary)", fontWeight:500 }}>{d.utilisateur}</td>
+                <td className="muted">{d.creeLe}</td>
+                <td>{d.libelle}</td>
+                <td>
+                  <span style={{ display:"inline-flex", alignItems:"center", gap:6, fontFamily:"var(--kap-font-ui)", fontSize:13 }}>
+                    <Icon name="check-circle-2" size={18} style={{ color:"#2E7D32" }} />
+                    {d.statut}
+                  </span>
+                </td>
+                <td className="muted">{d.traiteLe}</td>
+                <td><IconButton icon="more-vertical" /></td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </TableBox>
+      <Pagination page={page} totalPages={totalPages} onChange={setPage} totalItems={TOTAL} perPage={perPage} />
+    </>
+  );
+}
+
+// ════════════════════════════════════════════════════════════════
+// ÉLIGIBILITÉ — ADRESSES
+// ════════════════════════════════════════════════════════════════
+const ADDR_TYPES = ["NDI","NDI","Code immeuble","Code immeuble","Adresse","GPS"];
+const ADDR_DONNEES = ["0472800336","0472800336","IMB/87085/C/06KB","IMB/69034/S/FI51","IMB/69034/C/FI3Q","IMB/26362/C/059T","45.7640,4.8357","0478398676"];
+const ADDR_LIBELLES = ["12 RUE DE BELFORT, 69004 LYON","61 rue Pierre et Marie Curie 87000 Limoges","35 Rue Pasteur 69300 Caluire-et-Cuire","30 Rue Pasteur 69300 Caluire-et-Cuire","53 Avenue des Langories 26000 Valence","22 Boulevard des Brotteaux 69006 Lyon"];
+
+const ADRESSES_ELIG = Array.from({ length: 80 }).map((_, i) => {
+  const fmt = (n) => String(n).padStart(2,"0");
+  const h = 16 - Math.floor(i / 9), m = (i * 7) % 60, s = (i * 13) % 60;
+  const day = i < 9 ? 8 : i < 18 ? 8 : 13;
+  const month = i < 27 ? "06" : "03";
+  const year = 2026;
+  const creee = `${fmt(day)}/${month}/${year} - ${fmt(h)}:${fmt(m)}:${fmt(s)}`;
+  const testee = `${fmt(day)}/${month}/${year} - ${fmt(h)}:${fmt((m+1)%60)}:${fmt((s+15)%60)}`;
+  return {
+    id: i + 1,
+    utilisateur: DEMANDES_USERS[i % DEMANDES_USERS.length],
+    creeLe: creee,
+    type: ADDR_TYPES[i % ADDR_TYPES.length],
+    donnees: ADDR_DONNEES[i % ADDR_DONNEES.length],
+    libelle: ADDR_LIBELLES[i % ADDR_LIBELLES.length],
+    testeeLe: testee,
+  };
+});
+
+function EligAdressesScreen() {
+  const [sortBy, setSortBy] = useStateCt(null);
+  const [revendeurFilter, setRevendeurFilter] = useStateCt(null);
+  const [utilisateurFilter2, setUtilisateurFilter2] = useStateCt(false);
+  const [utilisateurOpen2, setUtilisateurOpen2] = useStateCt(false);
+  const utilisateurRef2 = React.useRef(null);
+  React.useEffect(() => {
+    if (!utilisateurOpen2) return;
+    function h(e) { if (utilisateurRef2.current && !utilisateurRef2.current.contains(e.target)) setUtilisateurOpen2(false); }
+    document.addEventListener("mousedown", h);
+    return () => document.removeEventListener("mousedown", h);
+  }, [utilisateurOpen2]);
+  const [dateFilter, setDateFilter] = useStateCt(null);
+  const [typeFilter, setTypeFilter] = useStateCt(null);
+  const [statutFilter, setStatutFilter] = useStateCt(null);
+  const [page, setPage] = useStateCt(1);
+  const TOTAL = 1589;
+  const perPage = 15;
+  const totalPages = Math.ceil(TOTAL / perPage);
+  const view = ADRESSES_ELIG.slice((page - 1) * perPage, page * perPage);
+
+  return (
+    <>
+      <Toolbar>
+        <RadioDropdown placeholder="Trier" options={["Créée le","Type de recherche","Données de la recherche","Libellé","Statut","Testée le"]} value={sortBy} onChange={setSortBy} width={100} showSearch={false} showRadio={false} sortMode={true} />
+        <Input placeholder="Rechercher une adresse ou un libellé" width={360} />
+        <RadioDropdown placeholder="Revendeur" options={["2IT SOLUTIONS","ABC TELECOMS","ADV","AXIUM SOLUTIONS","CIS VALLEY","GROUPE TELECOMS DE L'OUEST GTO","IPNEOS","KOESIO AQUITAINE","KOESIO AURA INFO (VD)","KOESIO AURA INFO (VDI)","KOESIO AURA TELECOM","KOESIO AUSTRALIA","KOESIO CENTRE EST","KOESIO CORPORATE IT","KOESIO EST","KOESIO GRAND EST","KOESIO IDF","KOESIO MANAGED SERVICES","KOESIO MEDITERRANNEE","KOESIO NETWORKS","KOESIO NORD OUEST","KOESIO OCCITANIE","KOESIO OCCITANIE BPA","KOESIO OUEST","KOESIO PACA","KOESIO PACA TELECOMS","KOESIO SUD ALLIANCE","KOESIO SUISSE","ONE OPERATEUR","Production","S-WAN IP"]} value={revendeurFilter} onChange={setRevendeurFilter} width={180} />
+        <div ref={utilisateurRef2} style={{ position:"relative", display:"inline-block" }}
+          onMouseEnter={() => setUtilisateurOpen2(true)}
+          onMouseLeave={() => setUtilisateurOpen2(false)}>
+          <span className="kap-input-wrap" style={{ cursor:"pointer", userSelect:"none" }} onClick={() => setUtilisateurOpen2(o => !o)}>
+            <span style={{ display:"flex", alignItems:"center", gap:6, fontSize:13, fontFamily:"var(--kap-font-ui)", color:"var(--kap-fg-3)" }}>
+              Utilisateur
+              {utilisateurFilter2 && <span style={{ background:"var(--kap-primary)", color:"#fff", borderRadius:99, fontSize:11, fontWeight:700, minWidth:18, height:18, display:"inline-flex", alignItems:"center", justifyContent:"center", padding:"0 5px" }}>1</span>}
+            </span>
+            <Icon name="chevron-down" size={16} style={{ marginRight:-4 }} />
+          </span>
+          {utilisateurOpen2 && (
+            <div style={{ position:"absolute", top:"calc(100% + 4px)", left:0, minWidth:220, background:"#fff", border:"1px solid var(--kap-border-2)", borderRadius:8, boxShadow:"0 8px 24px rgba(0,0,0,0.12)", zIndex:200, padding:"14px 16px" }}>
+              <label style={{ display:"flex", alignItems:"center", justifyContent:"space-between", cursor:"pointer", fontFamily:"var(--kap-font-ui)", fontSize:13 }}>
+                <span>Mes recherches uniquement</span>
+                <span onClick={() => setUtilisateurFilter2(v => !v)} style={{ display:"inline-block", width:36, height:20, borderRadius:99, background:utilisateurFilter2 ? "var(--kap-primary)" : "#ccc", cursor:"pointer", position:"relative", transition:"background 200ms", flexShrink:0 }}>
+                  <span style={{ position:"absolute", top:2, left:utilisateurFilter2 ? 18 : 2, width:16, height:16, borderRadius:99, background:"#fff", transition:"left 200ms", boxShadow:"0 1px 3px rgba(0,0,0,0.2)" }} />
+                </span>
+              </label>
+            </div>
+          )}
+        </div>
+        <DateRangeDropdown placeholder="Créée le" value={dateFilter} onChange={setDateFilter} width={140} />
+        <RadioDropdown placeholder="Type de recherche" options={["NDI","Code immeuble","Adresse","GPS"]} value={typeFilter} onChange={setTypeFilter} width={180} showSearch={false} />
+        <RadioDropdown placeholder="Statut" options={["Créée","En cours","Terminée","En erreur","Annulée"]} value={statutFilter} onChange={setStatutFilter} width={130} showSearch={false} />
+        <div className="grow" />
+        <Button variant="tertiary" icon="refresh-cw">Réinitialiser</Button>
+      </Toolbar>
+      <TableBox>
+        <table className="kap-table">
+          <thead>
+            <tr>
+              <th><SortHeader active dir="desc">Utilisateur</SortHeader></th>
+              <th>Créée le</th>
+              <th>Type de recherche</th>
+              <th>Données de la recherche</th>
+              <th>Libellé</th>
+              <th>Statut</th>
+              <th>Testée le</th>
+              <th style={{ width: 48 }}></th>
+            </tr>
+          </thead>
+          <tbody>
+            {view.map(d => (
+              <tr key={d.id} className="is-clickable">
+                <td style={{ color:"var(--kap-primary)", fontWeight:500 }}>{d.utilisateur}</td>
+                <td className="muted">{d.creeLe}</td>
+                <td className="muted">{d.type}</td>
+                <td className="mono muted">{d.donnees}</td>
+                <td>{d.libelle}</td>
+                <td><Icon name="check-circle-2" size={18} style={{ color:"#2E7D32" }} /></td>
+                <td className="muted">{d.testeeLe}</td>
+                <td><IconButton icon="more-vertical" /></td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </TableBox>
+      <Pagination page={page} totalPages={totalPages} onChange={setPage} totalItems={TOTAL} perPage={perPage} />
+    </>
+  );
+}
+
 const ELIG_SUGGESTIONS = [
   { label: "Test Fontenils métrique 41600 Nouan-le-Fuzelier", hasData: true },
   { label: "teste 97615 Dzaoudzi", hasData: true },
@@ -554,7 +831,7 @@ const SEARCH_MODES = [
   { key: "adresse",   icon: "home",      label: "Adresse",         placeholder: "Adresse (ex: Impasse de la Croix, 69270)" },
   { key: "gps",       icon: "map-pin",   label: "Coordonnées GPS", placeholder: "Coordonnées GPS (ex: 45.7640, 4.8357)" },
   { key: "immeuble",  icon: "building-2",label: "Code immeuble",   placeholder: "Code immeuble (ex: IMM123456)" },
-  { key: "ndi",       icon: "hash",      label: "NDI",             placeholder: "NDI (ex: 0033123456789)" },
+  { key: "ndi",       icon: "phone",     label: "NDI",             placeholder: "NDI (ex: 0033123456789)" },
 ];
 
 const LEGENDE_FTTH = [
@@ -572,6 +849,7 @@ function EligCarteScreen() {
   const [showModes, setShowModes] = useStateCt(false);
   const [showSugg, setShowSugg] = useStateCt(false);
   const [hoveredMode, setHoveredMode] = useStateCt(null);
+  const [hoveredCell, setHoveredCell] = useStateCt(null);
   const [showLegende, setShowLegende] = useStateCt(false);
   const [showModal, setShowModal] = useStateCt(false);
   const [modalStep, setModalStep] = useStateCt(1);
@@ -604,6 +882,10 @@ function EligCarteScreen() {
     { key:"sfr",      color:"#D32F2F", logo: <span style={{ background:"#D32F2F", color:"#fff", fontFamily:"Arial, sans-serif", fontWeight:900, fontSize:12, padding:"2px 7px", borderRadius:3, letterSpacing:"1px" }}>SFR</span> },
     { key:"siea",     color:"#2E7D32", logo: <span style={{ fontFamily:"Arial, sans-serif", fontWeight:700, fontSize:13, color:"#2E7D32", letterSpacing:"1px" }}>SIEA</span> },
   ];
+  const ELIG_WARNINGS = {
+    "covage_FTTO": "Adresse introuvable chez l'opérateur. Résultats basés sur l'adresse la plus proche (21,54 m) ; 8 RUE DE NUITS 69004 LYON",
+  };
+
   const ELIG_GRID = {
     koesio:  { XDSL:null, SDSL:null, FTTE:null,  FTTO:8,       FTTH:null },
     axione:  { XDSL:null, SDSL:null, FTTE:0,     FTTO:0,       FTTH:0    },
@@ -692,10 +974,11 @@ function EligCarteScreen() {
         {showModes && (
           <div style={{ display:"flex", flexDirection:"column", borderRadius:"0 0 6px 6px", boxShadow:"0 4px 12px rgba(0,0,0,0.25)" }}>
             {[
+              { key:"adresse",  icon:"home",       label:"Adresse" },
               { key:"gps",      icon:"map-pin",    label:"Coordonnées GPS" },
               { key:"immeuble", icon:"building-2", label:"Code immeuble" },
               { key:"ndi",      icon:"phone",      label:"NDI" },
-            ].map((m, idx, arr) => (
+            ].filter(m => m.key !== mode).map((m, idx, arr) => (
               <Tooltip key={m.key} text={m.label} placement="top-start">
                 <button
                   onClick={() => { setMode(m.key); setShowModes(false); setQuery(""); }}
@@ -792,8 +1075,8 @@ function EligCarteScreen() {
               <button onClick={() => setShowEligModal(false)} style={{ background:"none", border:"none", cursor:"pointer" }}><Icon name="x" size={20} style={{ color:"var(--kap-fg-3)" }} /></button>
             </div>
             <div style={{ display:"flex", flex:1, minHeight:0, overflow:"hidden" }}>
-              <div style={{ width:420, flexShrink:0, borderRight:"1px solid var(--kap-border-1)", borderRight:"1px solid var(--kap-border-1)", display:"flex", flexDirection:"column", padding:"16px 12px" }}>
-                <table style={{ width:"100%", borderCollapse:"separate", borderSpacing:3, fontSize:12, fontFamily:"var(--kap-font-ui)", border:"none" }}>
+              <div style={{ width:420, flexShrink:0, borderRight:"1px solid var(--kap-border-1)", display:"flex", flexDirection:"column", padding:"16px 12px", overflow:"visible" }}>
+                <table style={{ width:"100%", borderCollapse:"separate", borderSpacing:3, fontSize:12, fontFamily:"var(--kap-font-ui)", border:"1px solid var(--kap-border-2)", borderRadius:6 }}>
                   <thead>
                     <tr>
                       <th style={{ padding:"4px 8px", textAlign:"left" }}></th>
@@ -803,7 +1086,7 @@ function EligCarteScreen() {
                   <tbody>
                     {OPERATEURS.map(op => (
                       <tr key={op.key}>
-                        <td style={{ padding:"4px 8px", whiteSpace:"nowrap" }}>{op.logo}</td>
+                        <td style={{ padding:"4px 8px", whiteSpace:"nowrap", border:"1px solid var(--kap-border-2)", borderRadius:4 }}>{op.logo}</td>
                         {TECHS.map(tech => {
                           const val = ELIG_GRID[op.key]?.[tech];
                           const cs = getCellStyle(val);
@@ -811,11 +1094,31 @@ function EligCarteScreen() {
                           const isSel = selectedCells.includes(id);
                           const isClick = typeof val === "number" && val > 0;
                           const isEmpty = val === null || val === undefined;
+                          const tooltipText = isEmpty && progress < 100 ? "En cours"
+                            : val === "X" ? "Opérateur indisponible"
+                            : val === 0 ? "Aucune offre"
+                            : null;
+                          const cellId = id;
+                          const warningMsg = ELIG_WARNINGS[cellId] || null;
+                          const activeTooltip = warningMsg || tooltipText;
                           return (
-                            <td key={tech} onClick={() => isClick && toggleCell(op.key, tech)}
+                            <td key={tech}
+                              onClick={() => isClick && toggleCell(op.key, tech)}
+                              onMouseEnter={() => activeTooltip && setHoveredCell(cellId)}
+                              onMouseLeave={() => setHoveredCell(null)}
                               className={isEmpty && progress < 100 ? "elig-cell-loading" : ""}
-                              style={{ ...(!isEmpty ? cs : { background: progress >= 100 ? "#eeeeee" : "transparent" }), padding:"8px 16px", textAlign:"center", cursor:isClick ? "pointer" : "default", fontWeight:700, fontSize:13, borderRadius:4, outline:isSel ? "2px solid #1B5E20" : "none", outlineOffset:"-2px" }}>
+                              style={{ ...(!isEmpty ? cs : { background: progress >= 100 ? "#eeeeee" : "transparent" }), padding:"8px 16px", textAlign:"center", cursor:isClick ? "pointer" : "default", fontWeight:700, fontSize:13, borderRadius:4, outline: isSel ? "2px solid #1B5E20" : "none", outlineOffset:"-2px", position:"relative" }}>
                               {!isEmpty ? getCellContent(val) : ""}
+                              {warningMsg && (
+                                <span style={{ position:"absolute", top:2, right:2, pointerEvents:"none" }}>
+                                  <Icon name="alert-triangle" size={12} style={{ color:"#ED6C02" }} />
+                                </span>
+                              )}
+                              {hoveredCell === cellId && activeTooltip && (
+                                <span style={{ position:"absolute", bottom:"calc(100% + 6px)", left:"50%", transform:"translateX(-50%)", background:"#1a1a2e", color:"#fff", padding:"8px 12px", borderRadius:6, fontSize:12, fontFamily:"var(--kap-font-ui)", whiteSpace:"normal", width:"max-content", maxWidth:400, textAlign:"left", pointerEvents:"none", zIndex:9999, boxShadow:"0 4px 16px rgba(0,0,0,0.3)", lineHeight:"1.5" }}>
+                                  {activeTooltip}
+                                </span>
+                              )}
                             </td>
                           );
                         })}
@@ -830,52 +1133,68 @@ function EligCarteScreen() {
                   <div style={{ textAlign:"right", fontSize:11, color:"var(--kap-fg-3)", fontFamily:"var(--kap-font-ui)", marginTop:2 }}>{progress}%</div>
                 </div>
               </div>
-              <div style={{ flex:1, overflowY:"auto", padding:"16px", border:"1px solid var(--kap-border-2)", borderLeft:"none" }}>
+              <div style={{ flex:1, overflowY:"auto", padding:"16px" }}>
                 {filteredOffers.length === 0 ? (
                   <div style={{ display:"flex", alignItems:"center", justifyContent:"center", height:"100%", fontFamily:"var(--kap-font-ui)", fontSize:13, color:"var(--kap-fg-3)", textAlign:"center", padding:20 }}>
                     Veuillez sélectionner une ou plusieurs cases du tableau d'éligibilité afin d'afficher les offres disponibles
                   </div>
                 ) : (
-                  <div>
-                    <div style={{ display:"grid", gridTemplateColumns:"130px 80px 110px 1fr 80px", borderBottom:"1px solid var(--kap-border-1)", paddingBottom:6, marginBottom:4 }}>
-                      {["Opérateur","Gamme","Débit ↓","Zone","Articles"].map(h => (
-                        <span key={h} style={{ fontFamily:"var(--kap-font-ui)", fontSize:12, fontWeight:700, color:"var(--kap-primary)", padding:"0 6px" }}>{h}</span>
-                      ))}
-                    </div>
+                  <table style={{ width:"100%", borderCollapse:"collapse", fontFamily:"var(--kap-font-ui)", border:"1px solid var(--kap-border-2)", borderRadius:6 }}>
+                    <thead>
+                      <tr>
+                        {["Opérateur","Gamme","Débit ↓","Zone","Articles"].map(h => (
+                          <th key={h} style={{ padding:"8px 10px", fontSize:12, fontWeight:700, color:"var(--kap-primary)", border:"1px solid var(--kap-border-2)", background:"#fafafa", textAlign:"left" }}>{h}</th>
+                        ))}
+                      </tr>
+                    </thead>
+                    <tbody>
                     {filteredOffers.map((o, idx) => {
                       const opColor = OPERATEURS.find(x => x.key === o.operateur)?.color || "#333";
                       const isExp = expandedOffer === idx;
+                      const cellStyle = { padding:"8px 10px", border:"1px solid var(--kap-border-2)", fontSize:13, verticalAlign:"middle" };
                       return (
-                        <div key={idx} style={{ borderBottom:"1px solid var(--kap-border-1)" }}>
-                          <div style={{ display:"grid", gridTemplateColumns:"130px 80px 110px 1fr 80px", alignItems:"center", padding:"10px 0", cursor:"pointer" }} onClick={() => setExpandedOffer(isExp ? null : idx)}>
-                            <span style={{ fontWeight:700, color:opColor, fontFamily:"var(--kap-font-ui)", fontSize:13, padding:"0 6px" }}>{o.operateur}</span>
-                            <span style={{ fontFamily:"var(--kap-font-ui)", fontSize:13, padding:"0 6px", color:"var(--kap-fg-3)" }}>{o.gamme}</span>
-                            <span style={{ fontFamily:"var(--kap-font-ui)", fontSize:13, padding:"0 6px" }}>{o.debit}</span>
-                            <span style={{ fontFamily:"var(--kap-font-ui)", fontSize:12, padding:"0 6px", color:"var(--kap-fg-3)" }}>{o.zone}</span>
-                            <span style={{ padding:"0 6px", textAlign:"center" }}><Icon name={isExp ? "chevron-up" : "chevron-down"} size={16} style={{ color:"var(--kap-fg-3)" }} /></span>
-                          </div>
-                          {isExp && o.articles.length > 0 && (
-                            <div style={{ background:"#FAFBFD", borderTop:"1px solid var(--kap-border-1)", padding:"8px 12px" }}>
-                              <div style={{ display:"grid", gridTemplateColumns:"80px 80px 1fr 120px 100px", marginBottom:4 }}>
-                                {["Référence","Catégorie","Libellé","Prix d'achat","Prix public"].map(h => (
-                                  <span key={h} style={{ fontFamily:"var(--kap-font-ui)", fontSize:11, fontWeight:700, color:"var(--kap-primary)", padding:"0 6px" }}>{h}</span>
-                                ))}
-                              </div>
-                              {o.articles.map((a, ai) => (
-                                <div key={ai} style={{ display:"grid", gridTemplateColumns:"80px 80px 1fr 120px 100px", padding:"4px 0" }}>
-                                  <span style={{ fontFamily:"var(--kap-font-mono)", fontSize:12, padding:"0 6px" }}>{a.ref}</span>
-                                  <span style={{ fontFamily:"var(--kap-font-ui)", fontSize:12, padding:"0 6px", color:"var(--kap-fg-3)" }}>{a.cat}</span>
-                                  <span style={{ fontFamily:"var(--kap-font-ui)", fontSize:12, padding:"0 6px" }}>{a.libelle}</span>
-                                  <span style={{ fontFamily:"var(--kap-font-ui)", fontSize:12, padding:"0 6px", color:"var(--kap-fg-3)" }}>{a.pa}</span>
-                                  <span style={{ fontFamily:"var(--kap-font-ui)", fontSize:12, padding:"0 6px", color:"var(--kap-fg-3)" }}>{a.pp}</span>
-                                </div>
-                              ))}
-                            </div>
+                        <React.Fragment key={idx}>
+                          <tr style={{ cursor:"pointer" }} onClick={() => setExpandedOffer(isExp ? null : idx)}>
+                            <td style={{ ...cellStyle, fontWeight:700, color:opColor }}>{o.operateur}</td>
+                            <td style={{ ...cellStyle, color:"var(--kap-fg-3)" }}>{o.gamme}</td>
+                            <td style={cellStyle}>{o.debit}</td>
+                            <td style={{ ...cellStyle, color:"var(--kap-fg-3)" }}>{o.zone}</td>
+                            <td style={{ ...cellStyle, textAlign:"center" }}><Icon name={isExp ? "chevron-up" : "chevron-down"} size={16} style={{ color:"var(--kap-fg-3)" }} /></td>
+                          </tr>
+                          {isExp && (
+                            <tr>
+                              <td colSpan={5} style={{ padding:"12px 16px", background:"#f8f9fb", borderTop:"1px solid #e8eaf0", borderBottom:"1px solid #e8eaf0" }}>
+                                {o.articles.length === 0 && <span style={{ fontFamily:"var(--kap-font-ui)", fontSize:12, color:"var(--kap-fg-3)" }}>Aucun article disponible pour cette offre.</span>}
+                                {o.articles.length > 0 && (
+                                  <table style={{ width:"100%", borderCollapse:"collapse" }}>
+                                    <thead>
+                                      <tr>
+                                        {["Référence","Catégorie","Libellé","Prix d'achat","Prix public"].map(h => (
+                                          <th key={h} style={{ padding:"6px 8px", fontSize:11, fontWeight:700, color:"var(--kap-primary)", borderBottom:"1px solid #e8eaf0", textAlign:"left" }}>{h}</th>
+                                        ))}
+                                      </tr>
+                                    </thead>
+                                    <tbody>
+                                      {o.articles.map((a, ai) => (
+                                        <tr key={ai}>
+                                          <td style={{ padding:"6px 8px", fontFamily:"var(--kap-font-mono)", fontSize:12 }}>{a.ref}</td>
+                                          <td style={{ padding:"6px 8px", fontSize:12, color:"var(--kap-fg-3)" }}>{a.cat}</td>
+                                          <td style={{ padding:"6px 8px", fontSize:12 }}>{a.libelle}</td>
+                                          <td style={{ padding:"6px 8px", fontSize:12, color:"var(--kap-fg-3)" }}>{a.pa}</td>
+                                          <td style={{ padding:"6px 8px", fontSize:12, color:"var(--kap-fg-3)" }}>{a.pp}</td>
+                                        </tr>
+                                      ))}
+                                    </tbody>
+                                  </table>
+                                )}
+                              </td>
+                            </tr>
                           )}
-                        </div>
+                        </React.Fragment>
                       );
                     })}
-                  </div>
+                    </tbody>
+                  </table>
                 )}
               </div>
             </div>
@@ -914,8 +1233,8 @@ function EligCarteScreen() {
                 <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:12 }}>
                   <span className="kap-input-wrap" style={{ width:"100%" }}><input placeholder="Code postal" value={codePostal} onChange={e => setCodePostal(e.target.value)} style={{ width:"100%" }} /></span>
                   <span className="kap-input-wrap" style={{ width:"100%" }}><input placeholder="Ville" value={ville} onChange={e => setVille(e.target.value)} style={{ width:"100%" }} /></span>
-                  <span className="kap-input-wrap" style={{ width:"100%" }}><input placeholder="Nom de la voie" value={nomVoie} onChange={e => setNomVoie(e.target.value)} style={{ width:"100%" }} /></span>
-                  <span className="kap-input-wrap" style={{ width:"100%" }}><input placeholder="Numéro de la voie" value={numVoie} onChange={e => setNumVoie(e.target.value)} style={{ width:"100%" }} /></span>
+                  <span className="kap-input-wrap" style={{ width:"100%" }}><input placeholder="Nom de la voie" value={nomVoie} onChange={e => setNomVoie(e.target.value)} autoComplete="address-line1" style={{ width:"100%" }} /></span>
+                  <span className="kap-input-wrap" style={{ width:"100%" }}><input placeholder="Numéro de la voie" value={numVoie} onChange={e => setNumVoie(e.target.value)} autoComplete="address-line2" style={{ width:"100%" }} /></span>
                 </div>
                 <div style={{ display:"flex", justifyContent:"center", paddingTop:4 }}>
                   <Button variant="primary" disabled={!codePostal || !ville || !nomVoie} onClick={() => setModalStep(2)}>Rechercher une ligne</Button>
@@ -926,12 +1245,18 @@ function EligCarteScreen() {
             {/* Contenu étape 2 */}
             {modalStep === 2 && (
               <div style={{ padding:"20px 24px 24px", display:"flex", flexDirection:"column", gap:16 }}>
+                <div style={{ background:"#E3F2FD", borderRadius:8, padding:"10px 14px", display:"flex", alignItems:"flex-start", gap:10 }}>
+                  <Icon name="info" size={18} style={{ color:"#1976D2", flexShrink:0, marginTop:1 }} />
+                  <span style={{ fontFamily:"var(--kap-font-ui)", fontSize:13, color:"#1565C0", lineHeight:"1.5" }}>
+                    <strong>Vous ne trouvez pas votre adresse ?</strong> Vous pouvez en sélectionner une de cette liste située dans le même immeuble pour valider votre éligibilité.
+                  </span>
+                </div>
                 <table className="kap-table" style={{ borderRadius:8, overflow:"hidden", border:"1px solid var(--kap-border-1)" }}>
                   <thead>
                     <tr>
                       <th>NDI</th>
                       <th>Nom du résidant</th>
-                      <th>Statut de la ligne</th>
+                      <th style={{ textAlign:"center" }}>Statut de la ligne</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -939,7 +1264,11 @@ function EligCarteScreen() {
                       <tr key={l.ndi} className="is-clickable" onClick={() => setSelectedNDI(l.ndi)} style={{ background: selectedNDI === l.ndi ? "var(--kap-primary-soft)" : "transparent" }}>
                         <td className="mono">{l.ndi}</td>
                         <td>{l.resident}</td>
-                        <td><span style={{ background: l.statut === "ACTIVE" ? "#2E7D32" : "#D32F2F", color:"#fff", borderRadius:99, padding:2, fontSize:11, fontWeight:700, fontFamily:"var(--kap-font-ui)" }}>{l.statut}</span></td>
+                        <td style={{ textAlign:"center" }}>
+                          <span className="kap-pill kap-pill--soft" style={{ "--bg": l.statut === "ACTIVE" ? "#E6F2E7" : "#FDECEA", "--fg": l.statut === "ACTIVE" ? "var(--kap-success)" : "var(--kap-error)" }}>
+                            {l.statut}
+                          </span>
+                        </td>
                       </tr>
                     ))}
                   </tbody>
@@ -958,8 +1287,8 @@ function EligCarteScreen() {
 }
 
 function EligibiliteScreen({ initialSub = "carte" }) {
-  if (initialSub === "demande") return <EligPlaceholder titre="Demande d'éligibilité" />;
-  if (initialSub === "adresse") return <EligPlaceholder titre="Adresse" />;
+  if (initialSub === "demande") return <EligDemandesScreen />;
+  if (initialSub === "adresse") return <EligAdressesScreen />;
   if (initialSub === "carte") return <EligCarteScreen />;
   const [country, setCountry] = useStateCt("fr");
   const [searched, setSearched] = useStateCt(true);
@@ -1181,44 +1510,204 @@ function NotifRow({ label, desc, on }) {
 }
 
 const QUESTIONNAIRES = [
-  { libelle: "Q-NET-001", nbQuestions: 5,  symptomes: "Coupure tunnel" },
-  { libelle: "Q-NET-002", nbQuestions: 5,  symptomes: "Coupure totale" },
-  { libelle: "Q-NET-003", nbQuestions: 5,  symptomes: "Lenteur VPN" },
-  { libelle: "Q-NET-004", nbQuestions: 5,  symptomes: "Lenteur Internet" },
-  { libelle: "Q-NET-005", nbQuestions: 5,  symptomes: "Lenteur serv. distant" },
-  { libelle: "Q-NET-006", nbQuestions: 5,  symptomes: "Difficulté web" },
-  { libelle: "Q-VOI-001", nbQuestions: 7,  symptomes: "Coupure voip" },
-  { libelle: "Q-VOI-002", nbQuestions: 7,  symptomes: "VGA HS" },
-  { libelle: "Q-VOI-003", nbQuestions: 7,  symptomes: "Qualité VOIP" },
-  { libelle: "Q-VOI-004", nbQuestions: 7,  symptomes: "Joignabilité voix" },
-  { libelle: "Q-VOI-005", nbQuestions: 7,  symptomes: "Poste isolé" },
-  { libelle: "Q-VOI-006", nbQuestions: 7,  symptomes: "Fax" },
-  { libelle: "Q-MOB-001", nbQuestions: 7,  symptomes: "Autre problème mobile, Qualité voix / pas de débit, Pas de..." },
-  { libelle: "Q-HEB-001", nbQuestions: 2,  symptomes: "Dysfonctionnement FW" },
-  { libelle: "Q-HEB-002", nbQuestions: 3,  symptomes: "Perte de connectivité" },
-  { libelle: "Q-HEB-003", nbQuestions: 4,  symptomes: "Lenteur applicative" },
-  { libelle: "Q-LIA-001", nbQuestions: 5,  symptomes: "Coupure totale lien" },
-  { libelle: "Q-LIA-002", nbQuestions: 6,  symptomes: "Dégradation débit" },
+  { libelle: "Q-NET-001", nbQuestions: 5,  symptomes: "Coupure tunnel",                                                       matrices: 3, matricesIds: ["APP-KAPITANO","APP-KALI","APP-KARGO"] },
+  { libelle: "Q-NET-002", nbQuestions: 5,  symptomes: "Coupure totale",                                                       matrices: 5  },
+  { libelle: "Q-NET-003", nbQuestions: 5,  symptomes: "Lenteur VPN",                                                          matrices: 2  },
+  { libelle: "Q-NET-004", nbQuestions: 5,  symptomes: "Lenteur Internet",                                                     matrices: 4  },
+  { libelle: "Q-NET-005", nbQuestions: 5,  symptomes: "Lenteur serv. distant",                                                matrices: 1  },
+  { libelle: "Q-NET-006", nbQuestions: 5,  symptomes: "Difficulté web",                                                       matrices: 2  },
+  { libelle: "Q-VOI-001", nbQuestions: 7,  symptomes: "Coupure voip",                                                         matrices: 6  },
+  { libelle: "Q-VOI-002", nbQuestions: 7,  symptomes: "VGA HS",                                                               matrices: 3  },
+  { libelle: "Q-VOI-003", nbQuestions: 7,  symptomes: "Qualité VOIP",                                                         matrices: 4  },
+  { libelle: "Q-VOI-004", nbQuestions: 7,  symptomes: "Joignabilité voix",                                                    matrices: 2  },
+  { libelle: "Q-VOI-005", nbQuestions: 7,  symptomes: "Poste isolé",                                                          matrices: 1  },
+  { libelle: "Q-VOI-006", nbQuestions: 7,  symptomes: "Fax",                                                                  matrices: 3  },
+  { libelle: "Q-MOB-001", nbQuestions: 7,  symptomes: "Autre problème mobile, Qualité voix / pas de débit, Pas de...",        matrices: 7  },
+  { libelle: "Q-HEB-001", nbQuestions: 2,  symptomes: "Dysfonctionnement FW",                                                 matrices: 1  },
+  { libelle: "Q-HEB-002", nbQuestions: 3,  symptomes: "Perte de connectivité",                                                matrices: 2  },
+  { libelle: "Q-HEB-003", nbQuestions: 4,  symptomes: "Lenteur applicative",                                                  matrices: 3  },
+  { libelle: "Q-LIA-001", nbQuestions: 5,  symptomes: "Coupure totale lien",                                                  matrices: 4  },
+  { libelle: "Q-LIA-002", nbQuestions: 6,  symptomes: "Dégradation débit",                                                    matrices: 2  },
 ];
 const Q_DATE = "02/04/2026 - 17:32:56";
 
 function AdminScreen({ initialSub = "questionnaire" }) {
-  if (initialSub === "questionnaire") return <QuestionnaireTab />;
-  if (initialSub === "regles-service") return <ReglesServiceTab />;
+  const [activeSub, setActiveSub] = useStateCt(initialSub);
+  const [questFilter, setQuestFilter] = useStateCt(null);
+
+  React.useEffect(() => {
+    setActiveSub(initialSub);
+    if (initialSub !== "matrices-decision") setQuestFilter(null);
+  }, [initialSub]);
+
+  function goToMatrices(filter, count) {
+    setQuestFilter({ libelle: filter, count });
+    setActiveSub("matrices-decision");
+  }
+
+  if (activeSub === "questionnaire") return <QuestionnaireTab onGoToMatrices={goToMatrices} />;
+  if (activeSub === "regles-service") return <ReglesServiceTab />;
+  if (activeSub === "matrices-decision") return <MatricesDecisionTab questFilter={questFilter} onClearFilter={() => setQuestFilter(null)} />;
   return null;
 }
 
-function QuestionnaireTab() {
+const MATRICES = [
+  { nature:"Demande",  sujet:"Outil", cible:"Kapitano",   perimetre:"Technique",                    symptome:"", codeKali:"APP-KAPITANO",   queue:7 },
+  { nature:"Demande",  sujet:"Outil", cible:"Kapitano",   perimetre:"Référentiel",                  symptome:"", codeKali:"APP-KAPITANO",   queue:7 },
+  { nature:"Demande",  sujet:"Outil", cible:"Kapitano",   perimetre:"Mobile",                       symptome:"", codeKali:"APP-KAPITANO",   queue:7 },
+  { nature:"Demande",  sujet:"Outil", cible:"Kapitano",   perimetre:"Voix fixe",                    symptome:"", codeKali:"APP-KAPITANO",   queue:7 },
+  { nature:"Demande",  sujet:"Outil", cible:"Kapitano",   perimetre:"Administration - Droits accès",symptome:"", codeKali:"APP-KAPITANO",   queue:7 },
+  { nature:"Demande",  sujet:"Outil", cible:"Kali",       perimetre:"Demande générique",            symptome:"", codeKali:"APP-KALI",       queue:7 },
+  { nature:"Incident", sujet:"Outil", cible:"Kargo",      perimetre:"Incident applicatif",          symptome:"", codeKali:"APP-KARGO",      queue:6 },
+  { nature:"Incident", sujet:"Outil", cible:"Yoshipam",   perimetre:"Incident applicatif",          symptome:"", codeKali:"APP-YOSHI",      queue:6 },
+  { nature:"Incident", sujet:"Outil", cible:"Ninjaconf",  perimetre:"Incident applicatif",          symptome:"", codeKali:"APP-NINJA",      queue:6 },
+  { nature:"Incident", sujet:"Outil", cible:"APPIAN",     perimetre:"Incident applicatif",          symptome:"", codeKali:"APP-APPIAN",     queue:6 },
+  { nature:"Incident", sujet:"Outil", cible:"Cfast",      perimetre:"Incident applicatif",          symptome:"", codeKali:"APP-CFAST",      queue:6 },
+  { nature:"Incident", sujet:"Outil", cible:"NSM",        perimetre:"Incident applicatif",          symptome:"", codeKali:"APP-NSM",        queue:6 },
+  { nature:"Incident", sujet:"Outil", cible:"Mon Mobile", perimetre:"Incident applicatif",          symptome:"", codeKali:"APP-MONMOBILE",  queue:6 },
+  { nature:"Incident", sujet:"Outil", cible:"Kapitano",   perimetre:"Incident applicatif",          symptome:"", codeKali:"APP-KAPITANO",   queue:6 },
+  { nature:"Demande",  sujet:"Outil",    cible:"Kapitano",   perimetre:"Liens d'accès",                symptome:"", codeKali:"APP-KAPITANO",   queue:7 },
+  { nature:"Incident", sujet:"Commande", cible:"Kapitano",   perimetre:"Mobile",                       symptome:"", codeKali:"APP-KAPITANO",   queue:5 },
+  { nature:"Demande",  sujet:"Service",  cible:"Kargo",      perimetre:"Technique",                    symptome:"", codeKali:"APP-KARGO",      queue:4 },
+];
+
+const NATURE_ICON = {
+  "Demande":  { icon:"chat_bubble", color:"#1976D2" },
+  "Incident": { icon:"alert-triangle", color:"#ED6C02" },
+};
+
+function MatricesDecisionTab({ questFilter, onClearFilter }) {
   const [sortBy, setSortBy] = useStateCt(null);
+  const [sortDir, setSortDir] = useStateCt("asc");
+  const [natureFilter, setNatureFilter] = useStateCt(null);
+  const [sujetFilter, setSujetFilter] = useStateCt(null);
+  const [questionnaireFilter, setQuestionnaireFilter] = useStateCt(questFilter || null);
+  const [page, setPage] = useStateCt(1);
+
+  React.useEffect(() => { setQuestionnaireFilter(questFilter || null); setPage(1); }, [questFilter]);
+  const perPage = 15;
+  const questLibelle = questionnaireFilter?.libelle || null;
+  const questCount = questionnaireFilter?.count || null;
+  const filtered = questLibelle && questCount !== null
+    ? MATRICES.slice(0, questCount)
+    : MATRICES;
+
+  const matricesFieldMap = { "Nature": "nature", "Sujet": "sujet", "Type de cible": "cible", "Code catégorie Kali": "codeKali" };
+  function handleSortChange(field, dir) { setSortBy(field); setSortDir(dir); }
+
+  const sortedFiltered = React.useMemo(() => {
+    const key = matricesFieldMap[sortBy];
+    if (!key) return filtered;
+    return [...filtered].sort((a, b) => {
+      const va = a[key] || ""; const vb = b[key] || "";
+      return sortDir === "asc" ? String(va).localeCompare(String(vb)) : String(vb).localeCompare(String(va));
+    });
+  }, [filtered, sortBy, sortDir]);
+
+  const TOTAL = questLibelle ? filtered.length : 56;
+  const totalPages = Math.max(1, Math.ceil(sortedFiltered.length / perPage));
+  const view = sortedFiltered.slice((page - 1) * perPage, page * perPage);
+
+  const setTopbarActions = React.useContext(TopbarActionsContext);
+  React.useEffect(() => {
+    setTopbarActions(<Button variant="primary" icon="plus">Créer une matrice</Button>);
+    return () => setTopbarActions(null);
+  }, []);
+
+  return (
+    <>
+      {questLibelle && (
+        <div style={{ padding:"8px 16px", background:"var(--kap-primary-soft)", borderBottom:"1px solid var(--kap-border-1)", display:"flex", alignItems:"center", gap:10, flexShrink:0, fontFamily:"var(--kap-font-ui)", fontSize:13 }}>
+          <Icon name="filter" size={16} style={{ color:"var(--kap-primary)" }} />
+          <span style={{ color:"var(--kap-primary)" }}>Filtré par questionnaire : <strong>{questLibelle}</strong> — {filtered.length} matrice{filtered.length > 1 ? "s" : ""} affectée{filtered.length > 1 ? "s" : ""}</span>
+          <button onClick={() => { setQuestionnaireFilter(null); if (onClearFilter) onClearFilter(); }} style={{ marginLeft:"auto", background:"none", border:"none", cursor:"pointer", color:"var(--kap-primary)", fontFamily:"var(--kap-font-ui)", fontSize:13, display:"flex", alignItems:"center", gap:4 }}>
+            <Icon name="x" size={14} />Effacer le filtre
+          </button>
+        </div>
+      )}
+      <Toolbar>
+        <RadioDropdown placeholder="Trier" options={["Dernière modification","Nature","Sujet","Type de cible","Code catégorie Kali"]} value={sortBy} onChange={setSortBy} onSortChange={handleSortChange} width={100} showSearch={false} showRadio={false} sortMode={true} />
+        <Input placeholder="Rechercher par type de cible, code catégorie..." width={380} />
+        <RadioDropdown placeholder="Nature" options={["Demande","Incident"]} value={natureFilter} onChange={setNatureFilter} width={140} showSearch={false} />
+        <RadioDropdown placeholder="Sujet" options={["Outil","Service","Commande"]} value={sujetFilter} onChange={setSujetFilter} width={130} showSearch={false} />
+        <RadioDropdown placeholder="Questionnaire" options={QUESTIONNAIRES.map(q => q.libelle)} value={questionnaireFilter} onChange={setQuestionnaireFilter} width={170} />
+        <div className="grow" />
+        <Button variant="tertiary" icon="refresh-cw">Réinitialiser</Button>
+      </Toolbar>
+      <TableBox>
+        <table className="kap-table">
+          <thead>
+            <tr>
+              <th><SortHeader active dir="desc">Dernière modification</SortHeader></th>
+              <th>Nature</th>
+              <th>Sujet</th>
+              <th>Type de cible</th>
+              <th>Mapping périmètre</th>
+              <th>Mapping symptôme</th>
+              <th>Code catégorie Kali</th>
+              <th>Kali Queue</th>
+              <th style={{ width: 48 }}></th>
+            </tr>
+          </thead>
+          <tbody>
+            {view.map((m, i) => (
+              <tr key={i} className="is-clickable">
+                <td className="muted">05/06/2026 - 13:35:38</td>
+                <td>
+                  <span style={{ display:"inline-flex", alignItems:"center", gap:6, fontFamily:"var(--kap-font-ui)", fontSize:13 }}>
+                    <Icon name={NATURE_ICON[m.nature].icon} size={16} style={{ color: NATURE_ICON[m.nature].color }} />
+                    {m.nature}
+                  </span>
+                </td>
+                <td>
+                  <span style={{ display:"inline-flex", alignItems:"center", gap:6, fontFamily:"var(--kap-font-ui)", fontSize:13, color:"var(--kap-fg-3)" }}>
+                    {m.sujet === "Outil"    && <Icon name="wrench"          size={16} style={{ color:"var(--kap-fg-3)" }} />}
+                    {m.sujet === "Commande" && <Icon name="shopping_cart"    size={16} style={{ color:"var(--kap-fg-3)" }} />}
+                    {m.sujet === "Service"  && <Icon name="settings"         size={16} style={{ color:"var(--kap-fg-3)" }} />}
+                    {m.sujet}
+                  </span>
+                </td>
+                <td style={{ color: m.cible === "Kapitano" || m.cible === "APPIAN" ? "var(--kap-primary)" : "inherit", fontWeight: m.cible === "Kapitano" || m.cible === "APPIAN" ? 500 : 400 }}>{m.cible}</td>
+                <td className="muted">{m.perimetre}</td>
+                <td className="muted">{m.symptome || "—"}</td>
+                <td className="mono muted">{m.codeKali}</td>
+                <td>{m.queue}</td>
+                <td><IconButton icon="more-vertical" /></td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </TableBox>
+      <Pagination page={page} totalPages={totalPages} onChange={setPage} totalItems={TOTAL} perPage={perPage} />
+    </>
+  );
+}
+
+function QuestionnaireTab({ onGoToMatrices }) {
+  const [sortBy, setSortBy] = useStateCt(null);
+  const [sortDir, setSortDir] = useStateCt("asc");
   const [page, setPage] = useStateCt(1);
   const perPage = 15;
-  const totalPages = Math.max(1, Math.ceil(QUESTIONNAIRES.length / perPage));
-  const view = QUESTIONNAIRES.slice((page - 1) * perPage, page * perPage);
+
+  const questFieldMap = { "Libellé": "libelle" };
+  function handleSortChange(field, dir) { setSortBy(field); setSortDir(dir); }
+
+  const sorted = React.useMemo(() => {
+    const key = questFieldMap[sortBy];
+    if (!key) return QUESTIONNAIRES;
+    return [...QUESTIONNAIRES].sort((a, b) => {
+      const va = a[key] || ""; const vb = b[key] || "";
+      return sortDir === "asc" ? String(va).localeCompare(String(vb)) : String(vb).localeCompare(String(va));
+    });
+  }, [sortBy, sortDir]);
+
+  const totalPages = Math.max(1, Math.ceil(sorted.length / perPage));
+  const view = sorted.slice((page - 1) * perPage, page * perPage);
 
   return (
     <>
       <Toolbar>
-        <RadioDropdown placeholder="Trier" options={["Dernière modification","Libellé"]} value={sortBy} onChange={setSortBy} width={100} showSearch={false} showRadio={false} />
+        <RadioDropdown placeholder="Trier" options={["Dernière modification","Libellé"]} value={sortBy} onChange={setSortBy} onSortChange={handleSortChange} width={100} showSearch={false} showRadio={false} sortMode={true} />
         <Input placeholder="Rechercher par libellé" width={360} />
         <div className="grow" />
         <Button variant="tertiary" icon="refresh-cw">Réinitialiser</Button>
@@ -1231,6 +1720,7 @@ function QuestionnaireTab() {
               <th>Libellé</th>
               <th style={{ textAlign: "right" }}>Nombre de questions</th>
               <th>Symptômes liés</th>
+              <th style={{ textAlign: "center" }}>Matrices affectées</th>
               <th style={{ width: 48 }}></th>
             </tr>
           </thead>
@@ -1241,13 +1731,19 @@ function QuestionnaireTab() {
                 <td style={{ fontWeight: 600 }}>{q.libelle}</td>
                 <td style={{ textAlign: "right" }}>{q.nbQuestions}</td>
                 <td className="muted">{q.symptomes}</td>
+                <td style={{ textAlign: "center" }}>
+                  {q.matrices > 0 && onGoToMatrices
+                    ? <span onClick={() => onGoToMatrices(q.libelle, q.matrices)} style={{ color:"var(--kap-primary)", fontWeight:600, cursor:"pointer", textDecoration:"underline", textDecorationStyle:"dotted", textUnderlineOffset:3 }}>{q.matrices}</span>
+                    : q.matrices
+                  }
+                </td>
                 <td><Tooltip text="Voir le questionnaire" placement="top-end"><IconButton icon="eye" /></Tooltip></td>
               </tr>
             ))}
           </tbody>
         </table>
       </TableBox>
-      <Pagination page={page} totalPages={totalPages} onChange={setPage} totalItems={QUESTIONNAIRES.length} perPage={perPage} />
+      <Pagination page={page} totalPages={totalPages} onChange={setPage} totalItems={sorted.length} perPage={perPage} />
     </>
   );
 }
@@ -1281,7 +1777,7 @@ function ReglesServiceTab() {
   return (
     <>
       <Toolbar>
-        <RadioDropdown placeholder="Trier" options={["Dernière modification","Action","Type","Nom"]} value={sortBy} onChange={setSortBy} width={100} showSearch={false} showRadio={false} />
+        <RadioDropdown placeholder="Trier" options={["Dernière modification","Action","Type","Nom"]} value={sortBy} onChange={setSortBy} width={100} showSearch={false} showRadio={false} sortMode={true} />
         <Input placeholder="Rechercher par nom ou id de famille/article" width={380} />
         <RadioDropdown placeholder="Action" options={["Exclure","Dédupliquer"]} value={actionFilter} onChange={setActionFilter} width={130} showSearch={false} multiSelect={true} />
         <RadioDropdown placeholder="Type" options={["Famille","Sous-famille","Article"]} value={typeFilter} onChange={setTypeFilter} width={120} showSearch={false} multiSelect={true} />

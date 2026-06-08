@@ -52,8 +52,9 @@ const NAV = [
     { key: "adresse", label: "Adresse" },
   ]},
   { key: "administration", label: "Administration", icon: "settings",    subs: [
-    { key: "questionnaire",    label: "Questionnaire" },
-    { key: "regles-service",   label: "Règles de service" },
+    { key: "questionnaire",       label: "Questionnaire" },
+    { key: "regles-service",      label: "Règles de service" },
+    { key: "matrices-decision",   label: "Matrices de décision" },
   ]},
 ];
 
