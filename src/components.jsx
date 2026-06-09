@@ -141,6 +141,17 @@ function RadioDropdown({ placeholder, options, value, onChange, onSortChange, wi
   // En sortMode, la première option est sélectionnée par défaut visuellement
   const effectiveValue = sortMode && !value ? options[0] : value;
 
+  // Tri initial au montage
+  useEffectC(() => {
+    if (sortMode && onSortChange && options.length > 0) {
+      const firstOpt = options[0];
+      const isDateOpt = /date|créée|traitée|testée|modification|facturation|engagement|étape|statut|archivage|action/i.test(firstOpt);
+      const defaultDir = isDateOpt ? "desc" : "asc";
+      setSortDir(defaultDir);
+      onSortChange(firstOpt, defaultDir);
+    }
+  }, []); // une seule fois au montage
+
   useEffectC(() => {
     if (!open) return;
     function handleClick(e) {
@@ -215,14 +226,16 @@ function RadioDropdown({ placeholder, options, value, onChange, onSortChange, wi
                 </label>
               ) : sortMode ? (
                 <div key={o} onClick={() => {
+                  const isDateOpt = /date|créée|traitée|testée|modification|facturation|engagement|étape|statut|archivage|action/i.test(o);
                   if (effectiveValue === o) {
                     const newDir = sortDir === "asc" ? "desc" : "asc";
                     setSortDir(newDir);
                     if (onSortChange) onSortChange(o, newDir);
                   } else {
+                    const defaultDir = isDateOpt ? "desc" : "asc";
                     onChange(o);
-                    setSortDir("asc");
-                    if (onSortChange) onSortChange(o, "asc");
+                    setSortDir(defaultDir);
+                    if (onSortChange) onSortChange(o, defaultDir);
                     setOpen(false);
                   }
                 }} style={{ padding: "7px 14px", cursor: "pointer", fontSize: 13, fontFamily: "var(--kap-font-ui)", color: effectiveValue === o ? "var(--kap-primary)" : "var(--kap-fg-dark)", fontWeight: effectiveValue === o ? 600 : 400, background: effectiveValue === o ? "var(--kap-primary-soft)" : "transparent", display:"flex", alignItems:"center", justifyContent:"space-between" }}>

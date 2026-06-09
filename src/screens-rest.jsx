@@ -31,14 +31,17 @@ function OrdersTab({ onOpenDetail }) {
   const [etatFilter, setEtatFilter] = useStateCt([]);
   const [page, setPage] = useStateCt(1);
 
-  const ordersFieldMap = { "Date": "dap", "Numéro d'affaire": "numeroAffaire", "Revendeur": "revendeur", "Client": "client" };
+  const ordersFieldMap = { "Date": "dap", "Numéro d'affaire": "numeroAffaire", "Revendeur": "revendeur", "Client": "client", "État commande": "etatCommande" };
   function handleSortChange(field, dir) { setSortBy(field); setSortDir(dir); }
 
   const sorted = React.useMemo(() => {
     const key = ordersFieldMap[sortBy || "Date"];
     if (!key) return ORDERS;
+    const toSortableDate = (s) => { const p = String(s).split("/"); if (p.length < 3) return String(s); const y = p[2].split(" ")[0]; return `${y}/${p[1]}/${p[0]}`; };
     return [...ORDERS].sort((a, b) => {
-      const va = a[key] || ""; const vb = b[key] || "";
+      const isDateField = ["dap"].includes(key);
+      const va = isDateField ? toSortableDate(a[key] || "") : (a[key] || "");
+      const vb = isDateField ? toSortableDate(b[key] || "") : (b[key] || "");
       return sortDir === "asc" ? String(va).localeCompare(String(vb)) : String(vb).localeCompare(String(va));
     });
   }, [sortBy, sortDir]);
@@ -110,14 +113,21 @@ function ReportingTab() {
   const TOTAL = 4190;
   const perPage = 15;
 
-  const reportingFieldMap = { "Date de l'action": "dateAction", "Numéro d'affaire": "numeroAffaire", "Revendeur": "revendeur", "Client": "client" };
+  const reportingFieldMap = { "Date de l'action": "dateAction", "Numéro d'affaire": "numeroAffaire", "Revendeur": "revendeur", "Client": "client", "Nom de l'article": "article", "Quantité": "quantite" };
   function handleSortChange(field, dir) { setSortBy(field); setSortDir(dir); }
 
   const sorted = React.useMemo(() => {
     const key = reportingFieldMap[sortBy || "Date de l'action"];
     if (!key) return REPORTING_LOGS;
+    const toSortableDate = (s) => { const p = String(s).split("/"); if (p.length < 3) return String(s); const y = p[2].split(" ")[0]; return `${y}/${p[1]}/${p[0]}`; };
     return [...REPORTING_LOGS].sort((a, b) => {
-      const va = a[key] || ""; const vb = b[key] || "";
+      if (key === "quantite") {
+        const va = Number(a[key]) || 0; const vb = Number(b[key]) || 0;
+        return sortDir === "asc" ? va - vb : vb - va;
+      }
+      const isDateField = ["dateAction"].includes(key);
+      const va = isDateField ? toSortableDate(a[key] || "") : (a[key] || "");
+      const vb = isDateField ? toSortableDate(b[key] || "") : (b[key] || "");
       return sortDir === "asc" ? String(va).localeCompare(String(vb)) : String(vb).localeCompare(String(va));
     });
   }, [sortBy, sortDir]);
@@ -231,17 +241,26 @@ function TicketsTab({ onOpenDetail }) {
   const [page, setPage] = useStateCt(1);
   const TOTAL_TKT = 720;
 
-  const ticketFieldMap = { "Date de création": "dateCreation", "Référence": "reference", "Sujet": "sujet", "État": "etat" };
+  const ticketFieldMap = { "Date de création": "dateCreation", "Référence": "reference", "Sujet": "sujet", "État": "etat", "Criticité": "criticite", "Nature": "nature" };
   function handleSortChange(field, dir) { setSortBy(field); setSortDir(dir); }
 
   const sorted = React.useMemo(() => {
+    let data = TICKETS;
+    if (revendeurFilter) data = data.filter(t => t.revendeur === revendeurFilter);
+    if (clientFilter) data = data.filter(t => t.client === clientFilter);
+    if (etatFilter && etatFilter.length) data = data.filter(t => etatFilter.includes(t.etat));
+    if (criticiteFilter && criticiteFilter.length) data = data.filter(t => criticiteFilter.includes(t.criticite));
+    if (natureFilter && natureFilter.length) data = data.filter(t => natureFilter.includes(t.nature));
     const key = ticketFieldMap[sortBy || "Date de création"];
-    if (!key) return TICKETS;
-    return [...TICKETS].sort((a, b) => {
-      const va = a[key] || ""; const vb = b[key] || "";
+    if (!key) return data;
+    const toSortableDate = (s) => { const p = String(s).split("/"); if (p.length < 3) return String(s); const y = p[2].split(" ")[0]; return `${y}/${p[1]}/${p[0]}`; };
+    return [...data].sort((a, b) => {
+      const isDateField = ["dateCreation"].includes(key);
+      const va = isDateField ? toSortableDate(a[key] || "") : (a[key] || "");
+      const vb = isDateField ? toSortableDate(b[key] || "") : (b[key] || "");
       return sortDir === "asc" ? String(va).localeCompare(String(vb)) : String(vb).localeCompare(String(va));
     });
-  }, [sortBy, sortDir]);
+  }, [revendeurFilter, clientFilter, etatFilter, criticiteFilter, natureFilter, sortBy, sortDir]);
 
   const totalPages = Math.ceil(TOTAL_TKT / 15);
   const view = sorted.slice((page - 1) * 15, page * 15);
@@ -315,6 +334,7 @@ function TicketsTab({ onOpenDetail }) {
 function TicketsArchivesTab() {
   const [activeView, setActiveView] = useStateCt("liste");
   const [sortBy, setSortBy] = useStateCt(null);
+  const [sortDir, setSortDir] = useStateCt("asc");
   const [revendeurFilter, setRevendeurFilter] = useStateCt(null);
   const [clientFilter, setClientFilter] = useStateCt(null);
   const [etatFilter, setEtatFilter] = useStateCt([]);
@@ -322,8 +342,23 @@ function TicketsArchivesTab() {
   const [typeDITFilter, setTypeDITFilter] = useStateCt(null);
   const [page, setPage] = useStateCt(1);
   const TOTAL_ARCH = 7592;
+
+  const ticketsArchFieldMap = { "Date de création": "dateCreation", "Numéro": "numero", "Symptôme": "symptome", "Type DIT": "typeDIT" };
+  function handleSortChange(field, dir) { setSortBy(field); setSortDir(dir); }
+  const toSortableDate = (s) => { const p = String(s).split("/"); if (p.length < 3) return String(s); const y = p[2].split(" ")[0]; return `${y}/${p[1]}/${p[0]}`; };
+  const sortedArchives = React.useMemo(() => {
+    const key = ticketsArchFieldMap[sortBy || "Date de création"];
+    if (!key) return TICKETS_ARCHIVES;
+    return [...TICKETS_ARCHIVES].sort((a, b) => {
+      const isDateField = ["dateCreation"].includes(key);
+      const va = isDateField ? toSortableDate(a[key] || "") : (a[key] || "");
+      const vb = isDateField ? toSortableDate(b[key] || "") : (b[key] || "");
+      return sortDir === "asc" ? String(va).localeCompare(String(vb)) : String(vb).localeCompare(String(va));
+    });
+  }, [sortBy, sortDir]);
+
   const totalPages = Math.ceil(TOTAL_ARCH / 15);
-  const view = TICKETS_ARCHIVES.slice((page - 1) * 15, page * 15);
+  const view = sortedArchives.slice((page - 1) * 15, page * 15);
 
   const setTopbarActions = React.useContext(TopbarActionsContext);
   React.useEffect(() => {
@@ -334,7 +369,7 @@ function TicketsArchivesTab() {
   return (
     <>
       <Toolbar>
-        <RadioDropdown placeholder="Trier" options={["Date de création","Numéro","Symptôme","Type DIT"]} value={sortBy} onChange={setSortBy} width={100} showSearch={false} showRadio={false} sortMode={true} />
+        <RadioDropdown placeholder="Trier" options={["Date de création","Numéro","Symptôme","Type DIT"]} value={sortBy} onChange={setSortBy} onSortChange={handleSortChange} width={100} showSearch={false} showRadio={false} sortMode={true} />
         <Input placeholder="Rechercher par Numéro ou Code Artis" width={340} />
         <RadioDropdown placeholder="Revendeur" options={["2IT SOLUTIONS","ABC TELECOMS","ADV","AXIUM SOLUTIONS","CIS VALLEY","GROUPE TELECOMS DE L'OUEST GTO","IPNEOS","KOESIO AQUITAINE","KOESIO AURA INFO (VD)","KOESIO AURA INFO (VDI)","KOESIO AURA TELECOM","KOESIO AUSTRALIA","KOESIO CENTRE EST","KOESIO CORPORATE IT","KOESIO EST","KOESIO GRAND EST","KOESIO IDF","KOESIO MANAGED SERVICES","KOESIO MEDITERRANNEE","KOESIO NETWORKS","KOESIO NORD OUEST","KOESIO OCCITANIE","KOESIO OCCITANIE BPA","KOESIO OUEST","KOESIO PACA","KOESIO PACA TELECOMS","KOESIO SUD ALLIANCE","KOESIO SUISSE","ONE OPERATEUR","Production","S-WAN IP"]} value={revendeurFilter} onChange={setRevendeurFilter} width={180} />
         <RadioDropdown placeholder="Client" options={CLIENT_NAMES} value={clientFilter} onChange={setClientFilter} width={160} />
@@ -385,14 +420,30 @@ function TicketsArchivesTab() {
 
 function ConfigurationsTab({ onOpenDetail }) {
   const [sortBy, setSortBy] = useStateCt(null);
+  const [sortDir, setSortDir] = useStateCt("asc");
   const [statutFilter, setStatutFilter] = useStateCt(null);
   const [revendeurFilter, setRevendeurFilter] = useStateCt(null);
   const [clientFilter, setClientFilter] = useStateCt(null);
   const [siteFilter, setSiteFilter] = useStateCt(null);
   const [page, setPage] = useStateCt(1);
   const TOTAL_CFG = 320;
+
+  const cfgFieldMap = { "Date de création": "dateCreation", "Version": "version", "Statut": "statut", "Date d'archivage": "dateArchivage", "Revendeur": "revendeur", "Client": "client", "Site": "site", "Service": "service" };
+  function handleSortChange(field, dir) { setSortBy(field); setSortDir(dir); }
+  const toSortableDate = (s) => { const p = String(s).split("/"); if (p.length < 3) return String(s); const y = p[2].split(" ")[0]; return `${y}/${p[1]}/${p[0]}`; };
+  const sortedCfg = React.useMemo(() => {
+    const key = cfgFieldMap[sortBy || "Date de création"];
+    if (!key) return CONFIGURATIONS;
+    return [...CONFIGURATIONS].sort((a, b) => {
+      const isDateField = ["dateCreation","dateArchivage"].includes(key);
+      const va = isDateField ? toSortableDate(a[key] || "") : (a[key] || "");
+      const vb = isDateField ? toSortableDate(b[key] || "") : (b[key] || "");
+      return sortDir === "asc" ? String(va).localeCompare(String(vb)) : String(vb).localeCompare(String(va));
+    });
+  }, [sortBy, sortDir]);
+
   const totalPages = Math.ceil(TOTAL_CFG / 15);
-  const view = CONFIGURATIONS.slice((page - 1) * 15, page * 15);
+  const view = sortedCfg.slice((page - 1) * 15, page * 15);
 
   const setTopbarActions = React.useContext(TopbarActionsContext);
   React.useEffect(() => {
@@ -403,7 +454,7 @@ function ConfigurationsTab({ onOpenDetail }) {
   return (
     <>
       <Toolbar>
-        <RadioDropdown placeholder="Trier" options={["Date de création","Version","Statut","Date d'archivage","Revendeur","Client","Site","Service"]} value={sortBy} onChange={setSortBy} width={100} showSearch={false} showRadio={false} sortMode={true} />
+        <RadioDropdown placeholder="Trier" options={["Date de création","Version","Statut","Date d'archivage","Revendeur","Client","Site","Service"]} value={sortBy} onChange={setSortBy} onSortChange={handleSortChange} width={100} showSearch={false} showRadio={false} sortMode={true} />
         <Input placeholder="Rechercher par N° de série, Revendeur, Client, Site, Se..." width={380} />
         <RadioDropdown placeholder="Statut" options={["Active","Archivée"]} value={statutFilter} onChange={setStatutFilter} width={130} showSearch={false} />
         <RadioDropdown placeholder="Revendeur" options={["2IT SOLUTIONS","ABC TELECOMS","ADV","AXIUM SOLUTIONS","CIS VALLEY","GROUPE TELECOMS DE L'OUEST GTO","IPNEOS","KOESIO AQUITAINE","KOESIO AURA INFO (VD)","KOESIO AURA INFO (VDI)","KOESIO AURA TELECOM","KOESIO AUSTRALIA","KOESIO CENTRE EST","KOESIO CORPORATE IT","KOESIO EST","KOESIO GRAND EST","KOESIO IDF","KOESIO MANAGED SERVICES","KOESIO MEDITERRANNEE","KOESIO NETWORKS","KOESIO NORD OUEST","KOESIO OCCITANIE","KOESIO OCCITANIE BPA","KOESIO OUEST","KOESIO PACA","KOESIO PACA TELECOMS","KOESIO SUD ALLIANCE","KOESIO SUISSE","ONE OPERATEUR","Production","S-WAN IP"]} value={revendeurFilter} onChange={setRevendeurFilter} width={180} />
@@ -607,6 +658,7 @@ const DEMANDES = Array.from({ length: 80 }).map((_, i) => {
 
 function EligDemandesScreen() {
   const [sortBy, setSortBy] = useStateCt(null);
+  const [sortDir, setSortDir] = useStateCt("asc");
   const [revendeurFilter, setRevendeurFilter] = useStateCt(null);
   const [utilisateurFilter, setUtilisateurFilter] = useStateCt(false);
   const [utilisateurOpen, setUtilisateurOpen] = useStateCt(false);
@@ -623,8 +675,28 @@ function EligDemandesScreen() {
   const [page, setPage] = useStateCt(1);
   const TOTAL = 1553;
   const perPage = 15;
+
+  const eligDemFieldMap = { "Créée le": "creeLe", "Libellé": "libelle", "Statut": "statut", "Traitée le": "traiteLe" };
+  function handleSortChange(field, dir) { setSortBy(field); setSortDir(dir); }
+  const toSortableDate = (s) => { const p = String(s).split("/"); if (p.length < 3) return String(s); const y = p[2].split(" ")[0]; return `${y}/${p[1]}/${p[0]}`; };
+  const sortedDemandes = React.useMemo(() => {
+    let data = DEMANDES;
+    if (revendeurFilter) data = data.filter(d => d.utilisateur === revendeurFilter);
+    if (utilisateurFilter) data = data.filter(d => d.utilisateur === "Marie-Gabrielle Jendrian");
+    if (typeFilter) data = data.filter(d => d.type === typeFilter);
+    if (statutFilter) data = data.filter(d => d.statut === statutFilter);
+    const key = eligDemFieldMap[sortBy || "Créée le"];
+    if (!key) return data;
+    return [...data].sort((a, b) => {
+      const isDateField = ["creeLe","traiteLe"].includes(key);
+      const va = isDateField ? toSortableDate(a[key] || "") : (a[key] || "");
+      const vb = isDateField ? toSortableDate(b[key] || "") : (b[key] || "");
+      return sortDir === "asc" ? String(va).localeCompare(String(vb)) : String(vb).localeCompare(String(va));
+    });
+  }, [revendeurFilter, utilisateurFilter, typeFilter, statutFilter, sortBy, sortDir]);
+
   const totalPages = Math.ceil(TOTAL / perPage);
-  const view = DEMANDES.slice((page - 1) * perPage, page * perPage);
+  const view = sortedDemandes.slice((page - 1) * perPage, page * perPage);
 
   const setTopbarActions = React.useContext(TopbarActionsContext);
   React.useEffect(() => {
@@ -634,8 +706,9 @@ function EligDemandesScreen() {
 
   return (
     <>
+      <div className="kap-card" style={{ overflow: "hidden" }}>
       <Toolbar>
-        <RadioDropdown placeholder="Trier" options={["Créée le","Libellé","Statut","Traitée le"]} value={sortBy} onChange={setSortBy} width={100} showSearch={false} showRadio={false} sortMode={true} />
+        <RadioDropdown placeholder="Trier" options={["Créée le","Libellé","Statut","Traitée le"]} value={sortBy} onChange={setSortBy} onSortChange={handleSortChange} width={100} showSearch={false} showRadio={false} sortMode={true} />
         <Input placeholder="Rechercher un libellé" width={360} />
         <RadioDropdown placeholder="Revendeur" options={["2IT SOLUTIONS","ABC TELECOMS","ADV","AXIUM SOLUTIONS","CIS VALLEY","GROUPE TELECOMS DE L'OUEST GTO","IPNEOS","KOESIO AQUITAINE","KOESIO AURA INFO (VD)","KOESIO AURA INFO (VDI)","KOESIO AURA TELECOM","KOESIO AUSTRALIA","KOESIO CENTRE EST","KOESIO CORPORATE IT","KOESIO EST","KOESIO GRAND EST","KOESIO IDF","KOESIO MANAGED SERVICES","KOESIO MEDITERRANNEE","KOESIO NETWORKS","KOESIO NORD OUEST","KOESIO OCCITANIE","KOESIO OCCITANIE BPA","KOESIO OUEST","KOESIO PACA","KOESIO PACA TELECOMS","KOESIO SUD ALLIANCE","KOESIO SUISSE","ONE OPERATEUR","Production","S-WAN IP"]} value={revendeurFilter} onChange={setRevendeurFilter} width={180} />
         <div ref={utilisateurRef} style={{ position:"relative", display:"inline-block" }}
@@ -697,6 +770,7 @@ function EligDemandesScreen() {
         </table>
       </TableBox>
       <Pagination page={page} totalPages={totalPages} onChange={setPage} totalItems={TOTAL} perPage={perPage} />
+      </div>
     </>
   );
 }
@@ -729,6 +803,7 @@ const ADRESSES_ELIG = Array.from({ length: 80 }).map((_, i) => {
 
 function EligAdressesScreen() {
   const [sortBy, setSortBy] = useStateCt(null);
+  const [sortDir, setSortDir] = useStateCt("asc");
   const [revendeurFilter, setRevendeurFilter] = useStateCt(null);
   const [utilisateurFilter2, setUtilisateurFilter2] = useStateCt(false);
   const [utilisateurOpen2, setUtilisateurOpen2] = useStateCt(false);
@@ -745,13 +820,29 @@ function EligAdressesScreen() {
   const [page, setPage] = useStateCt(1);
   const TOTAL = 1589;
   const perPage = 15;
+
+  const eligAddrFieldMap = { "Créée le": "creeLe", "Type de recherche": "type", "Données de la recherche": "donnees", "Libellé": "libelle", "Statut": "statut", "Testée le": "testeeLe" };
+  function handleSortChange(field, dir) { setSortBy(field); setSortDir(dir); }
+  const toSortableDate = (s) => { const p = String(s).split("/"); if (p.length < 3) return String(s); const y = p[2].split(" ")[0]; return `${y}/${p[1]}/${p[0]}`; };
+  const sortedAdresses = React.useMemo(() => {
+    const key = eligAddrFieldMap[sortBy || "Créée le"];
+    if (!key) return ADRESSES_ELIG;
+    return [...ADRESSES_ELIG].sort((a, b) => {
+      const isDateField = ["creeLe","testeeLe"].includes(key);
+      const va = isDateField ? toSortableDate(a[key] || "") : (a[key] || "");
+      const vb = isDateField ? toSortableDate(b[key] || "") : (b[key] || "");
+      return sortDir === "asc" ? String(va).localeCompare(String(vb)) : String(vb).localeCompare(String(va));
+    });
+  }, [sortBy, sortDir]);
+
   const totalPages = Math.ceil(TOTAL / perPage);
-  const view = ADRESSES_ELIG.slice((page - 1) * perPage, page * perPage);
+  const view = sortedAdresses.slice((page - 1) * perPage, page * perPage);
 
   return (
     <>
+      <div className="kap-card" style={{ overflow: "hidden" }}>
       <Toolbar>
-        <RadioDropdown placeholder="Trier" options={["Créée le","Type de recherche","Données de la recherche","Libellé","Statut","Testée le"]} value={sortBy} onChange={setSortBy} width={100} showSearch={false} showRadio={false} sortMode={true} />
+        <RadioDropdown placeholder="Trier" options={["Créée le","Type de recherche","Données de la recherche","Libellé","Statut","Testée le"]} value={sortBy} onChange={setSortBy} onSortChange={handleSortChange} width={100} showSearch={false} showRadio={false} sortMode={true} />
         <Input placeholder="Rechercher une adresse ou un libellé" width={360} />
         <RadioDropdown placeholder="Revendeur" options={["2IT SOLUTIONS","ABC TELECOMS","ADV","AXIUM SOLUTIONS","CIS VALLEY","GROUPE TELECOMS DE L'OUEST GTO","IPNEOS","KOESIO AQUITAINE","KOESIO AURA INFO (VD)","KOESIO AURA INFO (VDI)","KOESIO AURA TELECOM","KOESIO AUSTRALIA","KOESIO CENTRE EST","KOESIO CORPORATE IT","KOESIO EST","KOESIO GRAND EST","KOESIO IDF","KOESIO MANAGED SERVICES","KOESIO MEDITERRANNEE","KOESIO NETWORKS","KOESIO NORD OUEST","KOESIO OCCITANIE","KOESIO OCCITANIE BPA","KOESIO OUEST","KOESIO PACA","KOESIO PACA TELECOMS","KOESIO SUD ALLIANCE","KOESIO SUISSE","ONE OPERATEUR","Production","S-WAN IP"]} value={revendeurFilter} onChange={setRevendeurFilter} width={180} />
         <div ref={utilisateurRef2} style={{ position:"relative", display:"inline-block" }}
@@ -812,6 +903,7 @@ function EligAdressesScreen() {
         </table>
       </TableBox>
       <Pagination page={page} totalPages={totalPages} onChange={setPage} totalItems={TOTAL} perPage={perPage} />
+      </div>
     </>
   );
 }
@@ -1596,13 +1688,16 @@ function MatricesDecisionTab({ questFilter, onClearFilter }) {
   function handleSortChange(field, dir) { setSortBy(field); setSortDir(dir); }
 
   const sortedFiltered = React.useMemo(() => {
+    let data = filtered;
+    if (natureFilter) data = data.filter(m => m.nature === natureFilter);
+    if (sujetFilter) data = data.filter(m => m.sujet === sujetFilter);
     const key = matricesFieldMap[sortBy];
-    if (!key) return filtered;
-    return [...filtered].sort((a, b) => {
+    if (!key) return data;
+    return [...data].sort((a, b) => {
       const va = a[key] || ""; const vb = b[key] || "";
       return sortDir === "asc" ? String(va).localeCompare(String(vb)) : String(vb).localeCompare(String(va));
     });
-  }, [filtered, sortBy, sortDir]);
+  }, [filtered, natureFilter, sujetFilter, sortBy, sortDir]);
 
   const TOTAL = questLibelle ? filtered.length : 56;
   const totalPages = Math.max(1, Math.ceil(sortedFiltered.length / perPage));
@@ -1616,6 +1711,7 @@ function MatricesDecisionTab({ questFilter, onClearFilter }) {
 
   return (
     <>
+      <div className="kap-card" style={{ overflow: "hidden" }}>
       {questLibelle && (
         <div style={{ padding:"8px 16px", background:"var(--kap-primary-soft)", borderBottom:"1px solid var(--kap-border-1)", display:"flex", alignItems:"center", gap:10, flexShrink:0, fontFamily:"var(--kap-font-ui)", fontSize:13 }}>
           <Icon name="filter" size={16} style={{ color:"var(--kap-primary)" }} />
@@ -1679,6 +1775,7 @@ function MatricesDecisionTab({ questFilter, onClearFilter }) {
         </table>
       </TableBox>
       <Pagination page={page} totalPages={totalPages} onChange={setPage} totalItems={TOTAL} perPage={perPage} />
+      </div>
     </>
   );
 }
@@ -1705,7 +1802,7 @@ function QuestionnaireTab({ onGoToMatrices }) {
   const view = sorted.slice((page - 1) * perPage, page * perPage);
 
   return (
-    <>
+    <div className="kap-card" style={{ overflow: "hidden" }}>
       <Toolbar>
         <RadioDropdown placeholder="Trier" options={["Dernière modification","Libellé"]} value={sortBy} onChange={setSortBy} onSortChange={handleSortChange} width={100} showSearch={false} showRadio={false} sortMode={true} />
         <Input placeholder="Rechercher par libellé" width={360} />
@@ -1744,7 +1841,7 @@ function QuestionnaireTab({ onGoToMatrices }) {
         </table>
       </TableBox>
       <Pagination page={page} totalPages={totalPages} onChange={setPage} totalItems={sorted.length} perPage={perPage} />
-    </>
+    </div>
   );
 }
 
@@ -1761,12 +1858,25 @@ const REGLE_DATE = "14/04/2026 - 14:02:47";
 
 function ReglesServiceTab() {
   const [sortBy, setSortBy] = useStateCt(null);
+  const [sortDir, setSortDir] = useStateCt("asc");
   const [actionFilter, setActionFilter] = useStateCt([]);
   const [typeFilter, setTypeFilter] = useStateCt([]);
   const [page, setPage] = useStateCt(1);
   const perPage = 15;
-  const totalPages = Math.max(1, Math.ceil(REGLES_SERVICE.length / perPage));
-  const view = REGLES_SERVICE.slice((page - 1) * perPage, page * perPage);
+
+  const reglesFieldMap = { "Dernière modification": "nom", "Action": "nom", "Type": "nom", "Nom": "nom" };
+  function handleSortChange(field, dir) { setSortBy(field); setSortDir(dir); }
+  const sortedRegles = React.useMemo(() => {
+    const key = reglesFieldMap[sortBy || "Nom"];
+    if (!key) return REGLES_SERVICE;
+    return [...REGLES_SERVICE].sort((a, b) => {
+      const va = a[key] || ""; const vb = b[key] || "";
+      return sortDir === "asc" ? String(va).localeCompare(String(vb)) : String(vb).localeCompare(String(va));
+    });
+  }, [sortBy, sortDir]);
+
+  const totalPages = Math.max(1, Math.ceil(sortedRegles.length / perPage));
+  const view = sortedRegles.slice((page - 1) * perPage, page * perPage);
 
   const setTopbarActions = React.useContext(TopbarActionsContext);
   React.useEffect(() => {
@@ -1776,8 +1886,9 @@ function ReglesServiceTab() {
 
   return (
     <>
+      <div className="kap-card" style={{ overflow: "hidden" }}>
       <Toolbar>
-        <RadioDropdown placeholder="Trier" options={["Dernière modification","Action","Type","Nom"]} value={sortBy} onChange={setSortBy} width={100} showSearch={false} showRadio={false} sortMode={true} />
+        <RadioDropdown placeholder="Trier" options={["Dernière modification","Action","Type","Nom"]} value={sortBy} onChange={setSortBy} onSortChange={handleSortChange} width={100} showSearch={false} showRadio={false} sortMode={true} />
         <Input placeholder="Rechercher par nom ou id de famille/article" width={380} />
         <RadioDropdown placeholder="Action" options={["Exclure","Dédupliquer"]} value={actionFilter} onChange={setActionFilter} width={130} showSearch={false} multiSelect={true} />
         <RadioDropdown placeholder="Type" options={["Famille","Sous-famille","Article"]} value={typeFilter} onChange={setTypeFilter} width={120} showSearch={false} multiSelect={true} />
@@ -1808,7 +1919,8 @@ function ReglesServiceTab() {
           </tbody>
         </table>
       </TableBox>
-      <Pagination page={page} totalPages={totalPages} onChange={setPage} totalItems={REGLES_SERVICE.length} perPage={perPage} />
+      <Pagination page={page} totalPages={totalPages} onChange={setPage} totalItems={sortedRegles.length} perPage={perPage} />
+      </div>
     </>
   );
 }

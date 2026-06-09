@@ -124,13 +124,18 @@ function ClientsTab({ onOpenDetail }) {
   function handleSortChange(field, dir) { setSortBy(field); setSortDir(dir); }
 
   const sorted = React.useMemo(() => {
+    let data = CLIENTS;
+    if (revendeurFilter) data = data.filter(c => c.revendeur === revendeurFilter);
     const key = clientFieldMap[sortBy || "Client"];
-    if (!key) return CLIENTS;
-    return [...CLIENTS].sort((a, b) => {
-      const va = a[key] || ""; const vb = b[key] || "";
+    if (!key) return data;
+    const toSortableDate = (s) => { const p = String(s).split("/"); if (p.length < 3) return String(s); const y = p[2].split(" ")[0]; return `${y}/${p[1]}/${p[0]}`; };
+    return [...data].sort((a, b) => {
+      const isDateField = ["dateCreation"].includes(key);
+      const va = isDateField ? toSortableDate(a[key] || "") : (a[key] || "");
+      const vb = isDateField ? toSortableDate(b[key] || "") : (b[key] || "");
       return sortDir === "asc" ? String(va).localeCompare(String(vb)) : String(vb).localeCompare(String(va));
     });
-  }, [sortBy, sortDir]);
+  }, [revendeurFilter, sortBy, sortDir]);
 
   const totalPages = Math.max(1, Math.ceil(sorted.length / 15));
 
@@ -204,13 +209,16 @@ function SitesTab({ onOpenDetail }) {
   function handleSortChange(field, dir) { setSortBy(field); setSortDir(dir); }
 
   const sorted = React.useMemo(() => {
+    let data = SITES;
+    if (revendeurFilter) data = data.filter(s => s.revendeur === revendeurFilter);
+    if (clientFilter) data = data.filter(s => s.client === clientFilter);
     const key = siteFieldMap[sortBy || "Site"];
-    if (!key) return SITES;
-    return [...SITES].sort((a, b) => {
+    if (!key) return data;
+    return [...data].sort((a, b) => {
       const va = a[key] || ""; const vb = b[key] || "";
       return sortDir === "asc" ? String(va).localeCompare(String(vb)) : String(vb).localeCompare(String(va));
     });
-  }, [sortBy, sortDir]);
+  }, [revendeurFilter, clientFilter, sortBy, sortDir]);
 
   const totalPages = Math.max(1, Math.ceil(sorted.length / 15));
 
@@ -280,8 +288,10 @@ function SitesTab({ onOpenDetail }) {
 // ────────────────────────────────────────────────────────────────
 function HebergementsTab({ onOpenDetail }) {
   const [sortBy, setSortBy] = React.useState(null);
+  const [sortDir, setSortDir] = React.useState("asc");
   const [revendeurFilter, setRevendeurFilter] = React.useState(null);
   const [clientFilter, setClientFilter] = React.useState(null);
+  function handleSortChange(field, dir) { setSortBy(field); setSortDir(dir); }
 
   const HEB_OPTIONS = ["Loadbalancing Apache [VM000000000283__057069]","3CX [VM000000000465__063026]","3CX [PX000000001086__101029]","3CX [VM000000001205__066339]","3CX [PX000000003526__J10022]","3CX [PX000000003641__NM300256]","3CX [PX000000003644__NM300256]","3CX 16AS [PX000000000745__901457]","SRV-RDS4 [VM000000000039__006669]","VDOM [VDOM0000000141__046376]","VDOM [VDOM0000000303__102191]","VDOM [VDOM0000001087__101029]","VDOM [VDOM0000003642__NM300256]","VDOM [VDOM0000003645__NM300256]","VDOM [VDOM0000003734__032605_8]","VDOM [VDOM0000003940__KNO444]","VLAN Client 3CX [LAN00000000302__102191]","VLAN Client DC [LAN00000000139__046376]","VLAN Client DC [LAN00000000157__035414]","VLAN Client DC [LAN00000000282__057069]","VLAN Client DC [LAN00000001085__101029]","VLAN Client DC [LAN00000003640__NM300256]","VLAN Client DC [LAN00000003643__NM300256]","VLAN Client DC [LAN00000003938__KNO444]","VM-01 [VM000000000140__046376]","site internet [VM000000003939__KNO444]","100 POUR CENT NOUS - 3CX [VM000000000110__057846]","1NCENTIVA - VDOM [VDOM0000001283__066459]","22.1 CONSULTING - EVA1 [VM000000000614__045703]","22.1 CONSULTING - PFSENSE [VM000000000107__045703]","22.1 CONSULTING - SRVAPP [VM000000000597__045703]","22.1 CONSULTING - SRVDC [VM000000000615__045703]","22.1 CONSULTING - SRVRDS01 [VM000000000617__045703]","22.1 CONSULTING - SRVRDS02 [VM000000000616__045703]","22.1 CONSULTING - SRVRDS03 [VM000000001465__05006409]","22.1 CONSULTING - VLAN Client DC [LAN00000000107__045703]","2M ASSOCIES - 3CX [PX000000001255__902045]","2MG - VDOM [VDOM0000001058__14999000]","4S - VDOM [VDOM0000000056__058902]","72-74 RUE ROYALE - 3CX [PX000000003629__1004846]","98 DELMAS - 3CX [PX000000001044__55036378]","98 DELMAS - VLAN Client DC [LAN00000001043__55036378]","A D A P E I - AVAYA HEBERGEE [VM000000003704__020707]","A D A P E I - HEBERGEMENT FIREWALL [VM000000003547__020707]","A I S M T 04 - 3cx [VM000000000289__14997148]","A VOTRE SERVICE - 3CX [PX000000003910__CPO20023]","A VOTRE SERVICE - 3CX [PX000000003911__CPO20023]","A VOTRE SERVICE - 3CX [PX000000003922__CPO20023]","A VOTRE SERVICE - 3CX [PX000000003924__CPO20023]","AAD 07 - Colocation Client DC [COL00000001181__011496]"];
   const HEB_REF_TECH = {
@@ -324,19 +334,33 @@ function HebergementsTab({ onOpenDetail }) {
   });
 
   const [page, setPage] = React.useState(1);
-  const totalPages = Math.max(1, Math.ceil(HEBERGEMENTS.length / 15));
+  const hebFieldMap = { "Nom": "nom", "Code": "code", "Réf. Technique": "refTechnique", "Type": "type", "Client": "client", "Revendeur": "revendeur" };
+  const sortedHeb = React.useMemo(() => {
+    let data = HEBERGEMENTS;
+    if (revendeurFilter) data = data.filter(h => h.revendeur === revendeurFilter);
+    if (clientFilter) data = data.filter(h => h.client === clientFilter);
+    const key = hebFieldMap[sortBy || "Nom"];
+    if (!key) return data;
+    return [...data].sort((a, b) => {
+      const va = a[key] || ""; const vb = b[key] || "";
+      return sortDir === "asc" ? String(va).localeCompare(String(vb)) : String(vb).localeCompare(String(va));
+    });
+  }, [revendeurFilter, clientFilter, sortBy, sortDir, HEBERGEMENTS]);
+  const totalPages = Math.max(1, Math.ceil(sortedHeb.length / 15));
 
   return (
     <>
       <Toolbar>
         <RadioDropdown
           placeholder="Trier"
-          options={["Nom", "Code", "Réf. Technique", "Type", "Usage"]}
+          options={["Nom", "Code", "Réf. Technique", "Type", "Client", "Revendeur"]}
           value={sortBy}
           onChange={setSortBy}
+          onSortChange={handleSortChange}
           width={130}
           showSearch={false}
           showRadio={false}
+          sortMode={true}
         />
         <Input placeholder="Rechercher par nom, Client, Code ou Réf. technique" width={360} />
         <RadioDropdown placeholder="Revendeur" options={["2IT SOLUTIONS","ABC TELECOMS","ADV","AXIUM SOLUTIONS","CIS VALLEY","GROUPE TELECOMS DE L'OUEST GTO","IPNEOS","KOESIO AQUITAINE","KOESIO AURA INFO (VD)","KOESIO AURA INFO (VDI)","KOESIO AURA TELECOM","KOESIO AUSTRALIA","KOESIO CENTRE EST","KOESIO CORPORATE IT","KOESIO EST","KOESIO GRAND EST","KOESIO IDF","KOESIO MANAGED SERVICES","KOESIO MEDITERRANNEE","KOESIO NETWORKS","KOESIO NORD OUEST","KOESIO OCCITANIE","KOESIO OCCITANIE BPA","KOESIO OUEST","KOESIO PACA","KOESIO PACA TELECOMS","KOESIO SUD ALLIANCE","KOESIO SUISSE","ONE OPERATEUR","Production","S-WAN IP"]} value={revendeurFilter} onChange={setRevendeurFilter} width={180} />
@@ -359,7 +383,7 @@ function HebergementsTab({ onOpenDetail }) {
             </tr>
           </thead>
           <tbody>
-            {HEBERGEMENTS.slice((page - 1) * 15, page * 15).map(h => (
+            {sortedHeb.slice((page - 1) * 15, page * 15).map(h => (
               <tr key={h.id} className="is-clickable" onClick={() => onOpenDetail({ kind: "hebergement", data: h })}>
                 <td style={{ fontWeight: 600 }}>{h.nom}</td>
                 <td className="mono muted">{h.code}</td>
@@ -377,7 +401,7 @@ function HebergementsTab({ onOpenDetail }) {
           </tbody>
         </table>
       </TableBox>
-      <Pagination page={page} totalPages={totalPages} onChange={setPage} totalItems={HEBERGEMENTS.length} perPage={15} />
+      <Pagination page={page} totalPages={totalPages} onChange={setPage} totalItems={sortedHeb.length} perPage={15} />
     </>
   );
 }
@@ -393,23 +417,33 @@ function ServicesTab({ onOpenDetail }) {
   const [hebFilter, setHebFilter] = React.useState(null);
   const [page, setPage] = React.useState(1);
 
-  const serviceFieldMap = { "Service": "type", "Quantité": "quantite", "Matricule": "matricule", "Revendeur": "revendeur", "Client": "client", "Site": "site" };
+  const serviceFieldMap = { "Service": "type", "Quantité": "quantite", "Matricule": "matricule", "Revendeur": "revendeur", "Client": "client", "Site": "site", "Statut": "statut.label", "Date facturation": "dateFacturation", "Fin d'engagement": "finEngagement" };
   function handleSortChange(field, dir) { setSortBy(field); setSortDir(dir); }
 
   const sorted = React.useMemo(() => {
+    let data = SERVICES;
+    if (revendeurFilter) data = data.filter(s => s.revendeur === revendeurFilter);
+    if (clientFilter) data = data.filter(s => s.client === clientFilter);
+    if (siteFilter) data = data.filter(s => s.site === siteFilter);
+    if (statutFilter && statutFilter.length) data = data.filter(s => s.statut && statutFilter.includes(s.statut.label));
     const key = serviceFieldMap[sortBy || "Service"];
-    if (!key) return SERVICES;
+    if (!key) return data;
     if (sortBy === "Quantité") {
-      return [...SERVICES].sort((a, b) => {
+      return [...data].sort((a, b) => {
         const va = Number(a[key]) || 0; const vb = Number(b[key]) || 0;
         return sortDir === "asc" ? va - vb : vb - va;
       });
     }
-    return [...SERVICES].sort((a, b) => {
-      const va = a[key] || ""; const vb = b[key] || "";
-      return sortDir === "asc" ? String(va).localeCompare(String(vb)) : String(vb).localeCompare(String(va));
+    return [...data].sort((a, b) => {
+      let va, vb;
+      if (key === "statut.label") { va = a.statut ? a.statut.label || "" : ""; vb = b.statut ? b.statut.label || "" : ""; }
+      else { va = a[key] || ""; vb = b[key] || ""; }
+      // Convertir JJ/MM/AAAA en AAAA/MM/JJ pour tri correct des dates
+      const toSortable = (s) => { const p = String(s).split("/"); return p.length === 3 ? `${p[2]}/${p[1]}/${p[0]}` : String(s); };
+      const sa = toSortable(va), sb = toSortable(vb);
+      return sortDir === "asc" ? sa.localeCompare(sb) : sb.localeCompare(sa);
     });
-  }, [sortBy, sortDir]);
+  }, [revendeurFilter, clientFilter, siteFilter, statutFilter, sortBy, sortDir]);
 
   const totalPages = Math.max(1, Math.ceil(sorted.length / 15));
 
@@ -493,13 +527,16 @@ function CataloguesTab({ onOpenDetail }) {
   function handleSortChange(field, dir) { setSortBy(field); setSortDir(dir); }
 
   const sorted = React.useMemo(() => {
+    let data = CATALOGUE;
+    if (familleFilter) data = data.filter(c => c.famille === familleFilter);
+    if (sousFamilleFilter) data = data.filter(c => c.sousFamille === sousFamilleFilter);
     const key = catFieldMap[sortBy || "Libellé"];
-    if (!key) return CATALOGUE;
-    return [...CATALOGUE].sort((a, b) => {
+    if (!key) return data;
+    return [...data].sort((a, b) => {
       const va = a[key] || ""; const vb = b[key] || "";
       return sortDir === "asc" ? String(va).localeCompare(String(vb)) : String(vb).localeCompare(String(va));
     });
-  }, [sortBy, sortDir]);
+  }, [sortBy, sortDir, familleFilter, sousFamilleFilter]);
 
   const totalPages = Math.max(1, Math.ceil(sorted.length / 15));
 

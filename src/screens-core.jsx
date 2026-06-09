@@ -139,9 +139,9 @@ function UsersScreen({ initialTab = "liste", onOpenLog, onOpenUser }) {
 
   const logFieldMap = {
     "Date de création": "dateCreation",
-    "Numéro d'affaire": "dateCreation",
+    "Nom de l'utilisateur": "nomUtilisateur",
     "Revendeur de l'utilisateur": "dateCreation",
-    "Statut": "etatCommande",
+    "Statut": "statut.code",
     "Ressources": "type",
     "Durée": "duree",
   };
@@ -151,8 +151,13 @@ function UsersScreen({ initialTab = "liste", onOpenLog, onOpenUser }) {
 
   const filtered = useMemoScA(() => {
     const n = q.trim().toLowerCase();
-    return n ? USERS.filter(u => (u.prenom + " " + u.nom + " " + u.email).toLowerCase().includes(n)) : USERS;
-  }, [q]);
+    let data = n ? USERS.filter(u => (u.prenom + " " + u.nom + " " + u.email).toLowerCase().includes(n)) : USERS;
+    if (revendeurFilter) data = data.filter(u => u.revendeur === revendeurFilter);
+    if (statutFilter) data = data.filter(u => u.statut && u.statut.label === statutFilter);
+    if (typeFilter && typeFilter.length) data = data.filter(u => typeFilter.includes(u.type));
+    if (roleFilter && roleFilter.length) data = data.filter(u => roleFilter.includes(u.role));
+    return data;
+  }, [q, revendeurFilter, statutFilter, typeFilter, roleFilter]);
 
   const sortedFiltered = useMemoScA(() => {
     const sortField = sortBy || "Date de création";
@@ -170,14 +175,36 @@ function UsersScreen({ initialTab = "liste", onOpenLog, onOpenUser }) {
   const view = sortedFiltered.slice((page - 1) * perPage, page * perPage);
 
   const sortedLogs = useMemoScA(() => {
+    // Filtrage
+    const toSortDate = (s) => { const p = String(s).split("/"); if (p.length < 3) return String(s); const y = p[2].split(" ")[0]; return `${y}/${p[1]}/${p[0]}`; };
+    let data = LOGS;
+    if (logRevendeur) data = data.filter(l => l.user && l.user.revendeur === logRevendeur);
+    if (logClient)    data = data.filter(l => l.nomUtilisateur === logClient);
+    if (logDate && (logDate.debut || logDate.fin)) {
+      data = data.filter(l => {
+        const d = toSortDate(l.dateCreation || "");
+        if (logDate.debut && d < toSortDate(logDate.debut)) return false;
+        if (logDate.fin   && d > toSortDate(logDate.fin))   return false;
+        return true;
+      });
+    }
+    if (logStatut && logStatut.length)    data = data.filter(l => l.statut && logStatut.includes(String(l.statut.code)));
+    if (logRessources && logRessources.length) data = data.filter(l => logRessources.includes(l.type));
+    // Tri
     const sortField = logSortBy || "Date de création";
     const key = logFieldMap[sortField];
-    if (!key) return LOGS;
-    return [...LOGS].sort((a, b) => {
-      const va = a[key] || ""; const vb = b[key] || "";
+    if (!key) return data;
+    return [...data].sort((a, b) => {
+      let va, vb;
+      if (key === "statut.code") {
+        va = a.statut ? Number(a.statut.code) : 0;
+        vb = b.statut ? Number(b.statut.code) : 0;
+        return logSortDir === "asc" ? va - vb : vb - va;
+      }
+      va = a[key] || ""; vb = b[key] || "";
       return logSortDir === "asc" ? String(va).localeCompare(String(vb)) : String(vb).localeCompare(String(va));
     });
-  }, [logSortBy, logSortDir]);
+  }, [logSortBy, logSortDir, logRevendeur, logClient, logDate, logStatut, logRessources]);
 
   const logTotalPages = Math.max(1, Math.ceil(sortedLogs.length / 15));
   const logView = sortedLogs.slice((logPage - 1) * 15, logPage * 15);
@@ -252,7 +279,7 @@ function UsersScreen({ initialTab = "liste", onOpenLog, onOpenUser }) {
         {isLogs && (
           <>
             <Toolbar>
-              <RadioDropdown placeholder="Trier" options={["Date de création","Numéro d'affaire","Revendeur de l'utilisateur","Statut","Ressources","Durée"]} value={logSortBy} onChange={setLogSortBy} onSortChange={handleLogSortChange} width={100} showSearch={false} showRadio={false} sortMode={true} />
+              <RadioDropdown placeholder="Trier" options={["Date de création","Nom de l'utilisateur","Revendeur de l'utilisateur","Statut","Ressources","Durée"]} value={logSortBy} onChange={setLogSortBy} onSortChange={handleLogSortChange} width={100} showSearch={false} showRadio={false} sortMode={true} />
               <Input icon="search" placeholder="Statut, Email, Nom et Prénom" width={360} />
               <RadioDropdown placeholder="Revendeur" options={["2IT SOLUTIONS","ABC TELECOMS","ADV","AXIUM SOLUTIONS","CIS VALLEY","GROUPE TELECOMS DE L'OUEST GTO","IPNEOS","KOESIO AQUITAINE","KOESIO AURA INFO (VD)","KOESIO AURA INFO (VDI)","KOESIO AURA TELECOM","KOESIO AUSTRALIA","KOESIO CENTRE EST","KOESIO CORPORATE IT","KOESIO EST","KOESIO GRAND EST","KOESIO IDF","KOESIO MANAGED SERVICES","KOESIO MEDITERRANNEE","KOESIO NETWORKS","KOESIO NORD OUEST","KOESIO OCCITANIE","KOESIO OCCITANIE BPA","KOESIO OUEST","KOESIO PACA","KOESIO PACA TELECOMS","KOESIO SUD ALLIANCE","KOESIO SUISSE","ONE OPERATEUR","Production","S-WAN IP"]} value={logRevendeur} onChange={setLogRevendeur} width={170} />
               <RadioDropdown placeholder="Client" options={CLIENT_NAMES} value={logClient} onChange={setLogClient} width={160} />

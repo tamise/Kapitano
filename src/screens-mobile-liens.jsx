@@ -31,17 +31,22 @@ function MobileSubsTab({ onOpenDetail }) {
   const [etatProdFilter, setEtatProdFilter] = useStateMb([]);
   const [page, setPage] = useStateMb(1);
 
-  const subsFieldMap = { "Revendeur": "revendeur", "Client": "client", "Numéro mobile": "msisdn", "Forfait": "forfait" };
+  const subsFieldMap = { "Revendeur": "revendeur", "Client": "client", "Numéro mobile": "msisdn", "Forfait": "forfait", "Etat abo.": "etatAbo", "Etat prod.": "etatProd" };
   function handleSortChange(field, dir) { setSortBy(field); setSortDir(dir); }
 
   const sorted = React.useMemo(() => {
+    let data = SUBSCRIBERS;
+    if (revendeurFilter) data = data.filter(s => s.revendeur === revendeurFilter);
+    if (clientFilter) data = data.filter(s => s.client === clientFilter);
+    if (etatAboFilter && etatAboFilter.length) data = data.filter(s => etatAboFilter.includes(s.etatAbo));
+    if (etatProdFilter && etatProdFilter.length) data = data.filter(s => etatProdFilter.includes(s.etatProd));
     const key = subsFieldMap[sortBy || "Revendeur"];
-    if (!key) return SUBSCRIBERS;
-    return [...SUBSCRIBERS].sort((a, b) => {
+    if (!key) return data;
+    return [...data].sort((a, b) => {
       const va = a[key] || ""; const vb = b[key] || "";
       return sortDir === "asc" ? String(va).localeCompare(String(vb)) : String(vb).localeCompare(String(va));
     });
-  }, [sortBy, sortDir]);
+  }, [revendeurFilter, clientFilter, etatAboFilter, etatProdFilter, sortBy, sortDir]);
 
   const totalPages = Math.max(1, Math.ceil(sorted.length / 15));
   const setTopbarActions = React.useContext(TopbarActionsContext);
@@ -125,17 +130,35 @@ function MobileOrdersTab({ onOpenDetail }) {
   const [etatFilter, setEtatFilter] = useStateMb([]);
   const [page, setPage] = useStateMb(1);
 
-  const mobOrderFieldMap = { "Date": "dateCommande", "Réf": "ref", "Revendeur": "revendeur", "Client": "client" };
+  const mobOrderFieldMap = { "Date": "dateCommande", "Réf": "ref", "Revendeur": "revendeur", "Client": "client", "Type de commande": "typeCommande", "Forfait": "forfait", "Type de SIM": "type", "ICCID": "iccid", "Date de portabilité": "portabilite", "Etat commande": "etatCommande" };
   function handleSortChange(field, dir) { setSortBy(field); setSortDir(dir); }
 
   const sorted = React.useMemo(() => {
+    let data = MOBILE_ORDERS;
+    if (revendeurFilter) data = data.filter(o => o.revendeur === revendeurFilter);
+    if (clientFilter) data = data.filter(o => o.client === clientFilter);
+    if (typeFilter && typeFilter.length) data = data.filter(o => typeFilter.includes(o.typeCommande));
+    if (etatFilter && etatFilter.length) data = data.filter(o => etatFilter.includes(o.etatCommande));
+    if (portabiliteFilter === "Oui") data = data.filter(o => o.portabilite !== "Non");
+    if (portabiliteFilter === "Non") data = data.filter(o => o.portabilite === "Non");
     const key = mobOrderFieldMap[sortBy || "Date"];
-    if (!key) return MOBILE_ORDERS;
-    return [...MOBILE_ORDERS].sort((a, b) => {
-      const va = a[key] || ""; const vb = b[key] || "";
+    if (!key) return data;
+    const toSortableDate = (s) => { const p = String(s).split("/"); if (p.length < 3) return String(s); const y = p[2].split(" ")[0]; return `${y}/${p[1]}/${p[0]}`; };
+    return [...data].sort((a, b) => {
+      let va, vb;
+      if (key === "portabilite") {
+        // "Non" = 0, date remplie = 1 (Oui)
+        va = a[key] === "Non" ? "Non" : "Oui";
+        vb = b[key] === "Non" ? "Non" : "Oui";
+      } else if (["dateCommande"].includes(key)) {
+        va = toSortableDate(a[key] || "");
+        vb = toSortableDate(b[key] || "");
+      } else {
+        va = a[key] || ""; vb = b[key] || "";
+      }
       return sortDir === "asc" ? String(va).localeCompare(String(vb)) : String(vb).localeCompare(String(va));
     });
-  }, [sortBy, sortDir]);
+  }, [revendeurFilter, clientFilter, typeFilter, etatFilter, portabiliteFilter, sortBy, sortDir]);
   const setTopbarActions = React.useContext(TopbarActionsContext);
   React.useEffect(() => {
     setTopbarActions(<><Button variant="primary" icon="plus">Nouvelle commande</Button><Button variant="primary" icon="cloud-upload">Import en masse</Button><a href="https://xenomcloud.sharepoint.com/:p:/r/sites/NET_Networks-Dokumentation/_layouts/15/doc2.aspx?sourcedoc=%7B622B2A6B-3281-4C99-BFF6-73DF287B0C9D%7D&file=KAPITANO%20-%20Mobile%20-%20Gestion%20des%20commandes%20et%20abonnements.pptx&action=edit&mobileredirect=true" target="_blank" rel="noreferrer" className="kap-btn kap-btn--primary" style={{ color: "#fff" }}>?</a></>);
@@ -334,6 +357,29 @@ function OrderTimeline({ statutLabel }) {
 // ════════════════════════════════════════════════════════════════
 // DISPATCHER
 // ════════════════════════════════════════════════════════════════
+const DISP_CLIENTS = ["Cabinet Mercier & Associés","Logitrans Express","Logitrans Express","Logitrans Express","Logitrans Express","Logitrans Express","Optique Vision Plus","Optique Vision Plus","Optique Vision Plus","Optique Vision Plus","Boulangerie Dupuis","Crèche les Lutins"];
+const DISPATCHER_ORDERS = {
+  completer: [
+    { id:"190411956",              dateCreation:"29/04/2026 - 11:34:39", dateEtape:"29/04/2026 - 11:34:39", alerte:true,  revendeur:"KOESIO AURA TELECOM", client:"Cabinet Mercier & Associés",    lignes:1 },
+    { id:"190394344",              dateCreation:"27/02/2026 - 15:01:22", dateEtape:"27/02/2026 - 15:01:21", alerte:true,  revendeur:"KOESIO AURA TELECOM", client:"Logitrans Express",             lignes:2 },
+    { id:"190370449",              dateCreation:"20/02/2026 - 16:17:36", dateEtape:"20/02/2026 - 16:17:36", alerte:true,  revendeur:"KOESIO AURA TELECOM", client:"Logitrans Express",             lignes:3 },
+    { id:"E2E-TEST2-20260220009...",dateCreation:"20/02/2026 - 09:11:58", dateEtape:"20/02/2026 - 09:11:58", alerte:true,  revendeur:"KOESIO AURA TELECOM", client:"Logitrans Express",            lignes:3 },
+    { id:"E2E-TEST-20260220084...", dateCreation:"20/02/2026 - 08:46:01", dateEtape:"20/02/2026 - 08:46:01", alerte:true,  revendeur:"KOESIO AURA TELECOM", client:"Logitrans Express",            lignes:3 },
+    { id:"190370444",              dateCreation:"19/02/2026 - 15:34:10", dateEtape:"19/02/2026 - 15:34:10", alerte:true,  revendeur:"KOESIO AURA TELECOM", client:"Logitrans Express",             lignes:3 },
+    { id:"TEST-E2E-5540-171750...",dateCreation:"19/02/2026 - 14:38:26", dateEtape:"19/02/2026 - 14:38:26", alerte:true,  revendeur:"KOESIO AURA TELECOM", client:"Optique Vision Plus",          lignes:1 },
+    { id:"TEST-E2E-5540-17714...", dateCreation:"19/02/2026 - 11:24:08", dateEtape:"19/02/2026 - 11:24:08", alerte:true,  revendeur:"KOESIO AURA TELECOM", client:"Optique Vision Plus",          lignes:1 },
+    { id:"TEST-E2E-SUB-17714...", dateCreation:"19/02/2026 - 09:14:00", dateEtape:"19/02/2026 - 09:14:00", alerte:true,  revendeur:"KOESIO AURA TELECOM", client:"Optique Vision Plus",           lignes:1 },
+    { id:"TEST-E2E-SUB-17714...", dateCreation:"19/02/2026 - 09:10:49", dateEtape:"19/02/2026 - 09:10:49", alerte:true,  revendeur:"KOESIO AURA TELECOM", client:"Optique Vision Plus",           lignes:1 },
+    { id:"190275754",              dateCreation:"10/02/2025 - 10:07:02", dateEtape:"15/04/2025 - 18:14:39", alerte:true,  revendeur:"2IT SOLUTIONS",       client:"Boulangerie Dupuis",           lignes:1 },
+    { id:"0-12345",                dateCreation:"24/01/2025 - 10:39:00", dateEtape:"24/01/2025 - 10:39:00", alerte:true,  revendeur:"KOESIO AURA TELECOM", client:"Crèche les Lutins",            lignes:1 },
+  ],
+  imprimer:   Array.from({length:0},  () => ({})),
+  envoi:      Array.from({length:0},  () => ({})),
+  livraison:  Array.from({length:7},  (_, i) => ({ id:`19037${i}000`, dateCreation:`0${i+1}/03/2026 - 10:00:00`, dateEtape:`0${i+1}/03/2026 - 10:00:00`, alerte:true,  revendeur:"KOESIO AURA TELECOM", client:DISP_CLIENTS[i % DISP_CLIENTS.length], lignes:1 })),
+  recues:     Array.from({length:11}, (_, i) => ({ id:`19038${i}000`, dateCreation:`0${i+1}/04/2026 - 09:00:00`, dateEtape:`0${i+1}/04/2026 - 09:00:00`, alerte:false, revendeur:"KOESIO NETWORKS",     client:DISP_CLIENTS[i % DISP_CLIENTS.length], lignes:2 })),
+  incident:   Array.from({length:4},  (_, i) => ({ id:`19039${i}000`, dateCreation:`0${i+1}/05/2026 - 14:00:00`, dateEtape:`0${i+1}/05/2026 - 14:00:00`, alerte:true,  revendeur:"KOESIO PACA",         client:DISP_CLIENTS[i % DISP_CLIENTS.length], lignes:1 })),
+};
+
 const DISPATCHER_STATS = [
   { key: "completer",  label: "À compléter",          total: 12, alerte: 12, icon: "pencil" },
   { key: "imprimer",   label: "À imprimer",            total: 0,  alerte: 0,  icon: "printer" },
@@ -346,8 +392,27 @@ const DISPATCHER_STATS = [
 function DispatcherScreen() {
   const [tab, setTab] = useStateMb("dashboard");
   const [sortBy, setSortBy] = useStateMb(null);
+  const [sortDir, setSortDir] = useStateMb("asc");
   const [revendeurFilter, setRevendeurFilter] = useStateMb(null);
   const [clientFilter, setClientFilter] = useStateMb(null);
+
+  function handleSortChange(field, dir) { setSortBy(field); setSortDir(dir); }
+
+  const dispFieldMap = { "Date de création": "dateCreation", "Numéro d'affaire": "id", "Date étape": "dateEtape", "Revendeur": "revendeur", "Client": "client" };
+  const toSortableDate = (s) => { const p = String(s).split("/"); if (p.length < 3) return String(s); const y = p[2].split(" ")[0]; return `${y}/${p[1]}/${p[0]}`; };
+  const sortedDispOrders = React.useMemo(() => {
+    let rows = DISPATCHER_ORDERS[tab] || [];
+    if (revendeurFilter) rows = rows.filter(o => o.revendeur === revendeurFilter);
+    if (clientFilter) rows = rows.filter(o => o.client === clientFilter);
+    const key = dispFieldMap[sortBy || "Date de création"];
+    if (!key) return rows;
+    return [...rows].sort((a, b) => {
+      const isDate = ["dateCreation","dateEtape"].includes(key);
+      const va = isDate ? toSortableDate(a[key] || "") : (a[key] || "");
+      const vb = isDate ? toSortableDate(b[key] || "") : (b[key] || "");
+      return sortDir === "asc" ? va.localeCompare(vb) : vb.localeCompare(va);
+    });
+  }, [tab, sortBy, sortDir, revendeurFilter, clientFilter]);
 
   const setTopbarActions = React.useContext(TopbarActionsContext);
   React.useEffect(() => {
@@ -362,7 +427,7 @@ function DispatcherScreen() {
       <PageHead icon="smartphone" title="Dispatcher" subtitle="Suivez et gérez les commandes SIM en cours de traitement." />
       <div className="kap-card" style={{ overflow: "hidden", display: "flex", flexDirection: "column", flex: 1, minHeight: 0 }}>
         <Toolbar>
-          <RadioDropdown placeholder="Trier" options={["Date de création","Numéro d'affaire","Date étape"]} value={sortBy} onChange={setSortBy} width={100} showSearch={false} showRadio={false} sortMode={true} />
+          <RadioDropdown placeholder="Trier" options={["Date de création","Numéro d'affaire","Date étape"]} value={sortBy} onChange={setSortBy} onSortChange={handleSortChange} width={100} showSearch={false} showRadio={false} sortMode={true} />
           <Input placeholder="Rechercher par numéro d'affaire ou client" width={360} />
           <RadioDropdown placeholder="Revendeur" options={["2IT SOLUTIONS","ABC TELECOMS","ADV","AXIUM SOLUTIONS","CIS VALLEY","GROUPE TELECOMS DE L'OUEST GTO","IPNEOS","KOESIO AQUITAINE","KOESIO AURA INFO (VD)","KOESIO AURA INFO (VDI)","KOESIO AURA TELECOM","KOESIO AUSTRALIA","KOESIO CENTRE EST","KOESIO CORPORATE IT","KOESIO EST","KOESIO GRAND EST","KOESIO IDF","KOESIO MANAGED SERVICES","KOESIO MEDITERRANNEE","KOESIO NETWORKS","KOESIO NORD OUEST","KOESIO OCCITANIE","KOESIO OCCITANIE BPA","KOESIO OUEST","KOESIO PACA","KOESIO PACA TELECOMS","KOESIO SUD ALLIANCE","KOESIO SUISSE","ONE OPERATEUR","Production","S-WAN IP"]} value={revendeurFilter} onChange={setRevendeurFilter} width={180} />
           <RadioDropdown placeholder="Client" options={CLIENT_NAMES} value={clientFilter} onChange={setClientFilter} width={160} />
@@ -390,6 +455,43 @@ function DispatcherScreen() {
             </div>
           ))}
         </div>
+
+        {/* Tableau onglet sélectionné */}
+        {tab !== "dashboard" && (
+          <TableBox>
+            <table className="kap-table">
+              <thead>
+                <tr>
+                  <th><SortHeader active dir="desc">Numéro d'affaire</SortHeader></th>
+                  <th>Date de création</th>
+                  <th>Date étape</th>
+                  <th>Revendeur</th>
+                  <th>Client</th>
+                  <th style={{ textAlign:"right" }}>Lignes</th>
+                  <th style={{ width:48 }}></th>
+                </tr>
+              </thead>
+              <tbody>
+                {sortedDispOrders.map((o, i) => (
+                  <tr key={i} className="is-clickable">
+                    <td style={{ fontWeight:600 }}>{o.id}</td>
+                    <td className="muted">{o.dateCreation}</td>
+                    <td>
+                      <span style={{ display:"inline-flex", alignItems:"center", gap:6 }}>
+                        <span className="muted">{o.dateEtape}</span>
+                        {o.alerte && <Tooltip text="En attente"><Icon name="alert-triangle" size={14} style={{ color:"#ED6C02" }} /></Tooltip>}
+                      </span>
+                    </td>
+                    <td className="muted">{o.revendeur}</td>
+                    <td>{o.client}</td>
+                    <td style={{ textAlign:"right" }}>{o.lignes}</td>
+                    <td><IconButton icon="more-vertical" /></td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </TableBox>
+        )}
 
         {/* Dashboard */}
         {tab === "dashboard" && (
@@ -439,13 +541,34 @@ const CARTES_SIM = Array.from({ length: 36147 }).map((_, i) => ({
 
 function CartesSIMScreen() {
   const [sortBy, setSortBy] = useStateMb(null);
+  const [sortDir, setSortDir] = useStateMb("asc");
   const [revendeurFilter, setRevendeurFilter] = useStateMb(null);
   const [typeFilter, setTypeFilter] = useStateMb(null);
   const [etatFilter, setEtatFilter] = useStateMb(null);
   const [page, setPage] = useStateMb(1);
   const perPage = 15;
-  const totalPages = Math.max(1, Math.ceil(CARTES_SIM.length / perPage));
-  const view = CARTES_SIM.slice((page - 1) * perPage, page * perPage);
+
+  function handleSortChange(field, dir) { setSortBy(field); setSortDir(dir); }
+
+  const simFieldMap = { "Date du statut": "dateStatut", "Revendeur": "revendeur", "Opérateur": "operateur", "ICCID": "iccid", "Etat": "etat" };
+  const sortedSIM = React.useMemo(() => {
+    let data = CARTES_SIM;
+    if (revendeurFilter) data = data.filter(s => s.revendeur === revendeurFilter);
+    if (typeFilter) data = data.filter(s => s.type === typeFilter);
+    if (etatFilter) data = data.filter(s => s.etat === etatFilter);
+    const key = simFieldMap[sortBy || "Date du statut"];
+    if (!key) return data;
+    const toSortableDate = (s) => { const p = String(s).split("/"); if (p.length < 3) return String(s); const y = p[2].split(" ")[0]; return `${y}/${p[1]}/${p[0]}`; };
+    return [...data].sort((a, b) => {
+      const isDateField = ["dateStatut"].includes(key);
+      const va = isDateField ? toSortableDate(a[key] || "") : (a[key] || "");
+      const vb = isDateField ? toSortableDate(b[key] || "") : (b[key] || "");
+      return sortDir === "asc" ? String(va).localeCompare(String(vb)) : String(vb).localeCompare(String(va));
+    });
+  }, [revendeurFilter, typeFilter, etatFilter, sortBy, sortDir]);
+
+  const totalPages = Math.max(1, Math.ceil(sortedSIM.length / perPage));
+  const view = sortedSIM.slice((page - 1) * perPage, page * perPage);
 
   const setTopbarActions = React.useContext(TopbarActionsContext);
   React.useEffect(() => {
@@ -460,7 +583,7 @@ function CartesSIMScreen() {
       <PageHead icon="sim_card" title="Cartes SIM" subtitle="Consultez et gérez le stock de cartes SIM." />
       <div className="kap-card" style={{ overflow: "hidden" }}>
         <Toolbar>
-          <RadioDropdown placeholder="Trier" options={["Date du statut","Revendeur","Opérateur","ICCID","Etat"]} value={sortBy} onChange={setSortBy} width={100} showSearch={false} showRadio={false} sortMode={true} />
+          <RadioDropdown placeholder="Trier" options={["Date du statut","Revendeur","Opérateur","ICCID","Etat"]} value={sortBy} onChange={setSortBy} onSortChange={handleSortChange} width={100} showSearch={false} showRadio={false} sortMode={true} />
           <Input placeholder="Rechercher par ICCID" width={360} />
           <RadioDropdown placeholder="Revendeur" options={["2IT SOLUTIONS","ABC TELECOMS","ADV","AXIUM SOLUTIONS","CIS VALLEY","GROUPE TELECOMS DE L'OUEST GTO","IPNEOS","KOESIO AQUITAINE","KOESIO AURA INFO (VD)","KOESIO AURA INFO (VDI)","KOESIO AURA TELECOM","KOESIO AUSTRALIA","KOESIO CENTRE EST","KOESIO CORPORATE IT","KOESIO EST","KOESIO GRAND EST","KOESIO IDF","KOESIO MANAGED SERVICES","KOESIO MEDITERRANNEE","KOESIO NETWORKS","KOESIO NORD OUEST","KOESIO OCCITANIE","KOESIO OCCITANIE BPA","KOESIO OUEST","KOESIO PACA","KOESIO PACA TELECOMS","KOESIO SUD ALLIANCE","KOESIO SUISSE","ONE OPERATEUR","Production","S-WAN IP"]} value={revendeurFilter} onChange={setRevendeurFilter} width={200} />
           <RadioDropdown placeholder="Type" options={["SIM","eSIM","SIM 15D"]} value={typeFilter} onChange={setTypeFilter} width={120} showSearch={false} />
@@ -496,7 +619,7 @@ function CartesSIMScreen() {
             </tbody>
           </table>
         </TableBox>
-        <Pagination page={page} totalPages={totalPages} onChange={setPage} totalItems={CARTES_SIM.length} perPage={perPage} />
+        <Pagination page={page} totalPages={totalPages} onChange={setPage} totalItems={sortedSIM.length} perPage={perPage} />
       </div>
     </>
   );
@@ -508,7 +631,7 @@ function CartesSIMScreen() {
 const GF_NOMS = ["CORINNE","test2","qsdfqsdf","test","bat","batbatbat","Fonseca","Sage","Textor","ttt","Mélouki","Dupont","Martin","Lemaire","Garnier","Rousseau","Bernard","Moreau","Laurent","Simon","Michel","Lefebvre","Leroy","Roux","David","Bertrand","Morel","Fournier","Girard","Bonnet","Dubois","Thomas"];
 const GF_PRENOMS = ["FILIOLE","test","tb","test","bat test 2","bat","Paulo","Pierre","John","ttt","Léa","Jean","Marie","Pierre","Sophie","Lucas","Emma","Hugo","Camille","Thomas","Lucie","Marc","Alice","Paul","Julie","Nicolas","Isabelle","Antoine","Claire","François","Nathalie","Olivier"];
 const GF_EMAILS = ["corinne.filiol@charlesetalice.fr","battest24@ipneos.com","bat1111111@club.fr","testtesttest@ipneos.com","bat77@libertysurf.fr","bat7@libertysurf.fr","paulo@gmail.com","pierre.sage@gmail.com","john.textor@gmail.com","test@gmail.com","lea.melouki@macosite.com","jean.dupont@gmail.com","marie.martin@outlook.fr","pierre.lemaire@yahoo.fr","sophie.garnier@gmail.com","lucas.rousseau@hotmail.fr","emma.bernard@gmail.com","hugo.moreau@outlook.fr","camille.laurent@gmail.com","thomas.simon@yahoo.fr","lucie.michel@gmail.com","marc.lefebvre@outlook.fr","alice.leroy@gmail.com","paul.roux@hotmail.fr","julie.david@gmail.com","nicolas.bertrand@outlook.fr","isabelle.morel@gmail.com","antoine.fournier@yahoo.fr","claire.girard@gmail.com","francois.bonnet@outlook.fr","nathalie.dubois@gmail.com","olivier.thomas@hotmail.fr"];
-const GF_REVENDEURS = ["Koesio AURA TELECOM","Ipneos","Koesio NETWORKS","Koesio PACA","ABC TELECOMS","Koesio OCCITANIE","2IT SOLUTIONS","Koesio IDF","Koesio Grand Est","AXIUM SOLUTIONS"];
+const GF_REVENDEURS = ["KOESIO AURA TELECOM","IPNEOS","KOESIO NETWORKS","KOESIO PACA","ABC TELECOMS","KOESIO OCCITANIE","2IT SOLUTIONS","KOESIO IDF","KOESIO GRAND EST","AXIUM SOLUTIONS"];
 const GF_DATES = ["02/03/2026 - 16:27:31","27/02/2026 - 15:52:05","27/03/2025 - 22:31:42","21/03/2025 - 11:49:31","20/03/2025 - 00:11:53","19/03/2025 - 23:46:28","19/03/2025 - 23:45:44","11/03/2025 - 10:09:24","11/03/2025 - 08:11:09","06/03/2025 - 11:26:15","06/03/2025 - 10:37:19","06/03/2025 - 09:50:22","05/03/2025 - 16:50:10","05/03/2025 - 15:10:52","04/03/2025 - 09:22:11","03/03/2025 - 14:33:45","02/03/2025 - 11:05:30","01/03/2025 - 09:17:22","28/02/2025 - 16:44:01","27/02/2025 - 13:21:55","26/02/2025 - 10:08:44","25/02/2025 - 15:37:29","24/02/2025 - 09:52:13","23/02/2025 - 14:18:07","22/02/2025 - 11:43:52","21/02/2025 - 09:29:41","20/02/2025 - 16:55:30","19/02/2025 - 13:10:19","18/02/2025 - 10:27:08","17/02/2025 - 15:42:57","16/02/2025 - 09:08:46","15/02/2025 - 14:24:35"];
 
 const GESTIONNAIRES_FLOTTES = GF_NOMS.map((nom, i) => ({
@@ -523,12 +646,34 @@ const GESTIONNAIRES_FLOTTES = GF_NOMS.map((nom, i) => ({
 
 function GestionnairesFlottesScreen() {
   const [sortBy, setSortBy] = useStateMb(null);
+  const [sortDir, setSortDir] = useStateMb("asc");
   const [revendeurFilter, setRevendeurFilter] = useStateMb(null);
   const [clientFilter, setClientFilter] = useStateMb(null);
   const [page, setPage] = useStateMb(1);
   const perPage = 15;
-  const totalPages = Math.max(1, Math.ceil(GESTIONNAIRES_FLOTTES.length / perPage));
-  const view = GESTIONNAIRES_FLOTTES.slice((page - 1) * perPage, page * perPage);
+
+  function handleSortChange(field, dir) { setSortBy(field); setSortDir(dir); }
+
+  const gfFieldMap = { "Date de création": "dateCreation", "Actif": "actif", "Nom": "nom", "Prénom": "prenom", "Email": "email", "Revendeur associé": "revendeur" };
+  const toSortableDate = (s) => { const p = String(s).split("/"); if (p.length < 3) return String(s); const y = p[2].split(" ")[0]; return `${y}/${p[1]}/${p[0]}`; };
+  const sortedGF = React.useMemo(() => {
+    let data = GESTIONNAIRES_FLOTTES;
+    if (revendeurFilter) data = data.filter(g => g.revendeur === revendeurFilter);
+    if (clientFilter)    data = data.filter(g => g.email && g.email.includes(clientFilter));
+    const key = gfFieldMap[sortBy || "Date de création"];
+    if (!key) return data;
+    return [...data].sort((a, b) => {
+      const raw = key === "actif" ? String(a[key]) : (a[key] || "");
+      const rwa = key === "actif" ? String(b[key]) : (b[key] || "");
+      const va = key === "dateCreation" ? toSortableDate(raw) : raw;
+      const vb = key === "dateCreation" ? toSortableDate(rwa) : rwa;
+      return sortDir === "asc" ? va.localeCompare(vb) : vb.localeCompare(va);
+    });
+  }, [sortBy, sortDir, revendeurFilter, clientFilter]);
+
+  const totalPages = Math.max(1, Math.ceil(sortedGF.length / perPage));
+  const view = sortedGF.slice((page - 1) * perPage, page * perPage);
+
 
   const setTopbarActions = React.useContext(TopbarActionsContext);
   React.useEffect(() => {
@@ -544,7 +689,7 @@ function GestionnairesFlottesScreen() {
       <PageHead icon="smartphone" title="Gestionnaires de flottes" subtitle="Consultez et gérez les gestionnaires de flottes mobiles." />
       <div className="kap-card" style={{ overflow: "hidden" }}>
         <Toolbar>
-          <RadioDropdown placeholder="Trier" options={["Date de création","Actif","Nom","Prénom","Email","Revendeur associé"]} value={sortBy} onChange={setSortBy} width={100} showSearch={false} showRadio={false} sortMode={true} />
+          <RadioDropdown placeholder="Trier" options={["Date de création","Actif","Nom","Prénom","Email","Revendeur associé"]} value={sortBy} onChange={setSortBy} onSortChange={handleSortChange} width={100} showSearch={false} showRadio={false} sortMode={true} />
           <Input placeholder="Rechercher par nom, prénom, e-mail" width={360} />
           <RadioDropdown placeholder="Revendeur" options={["2IT SOLUTIONS","ABC TELECOMS","ADV","AXIUM SOLUTIONS","CIS VALLEY","GROUPE TELECOMS DE L'OUEST GTO","IPNEOS","KOESIO AQUITAINE","KOESIO AURA INFO (VD)","KOESIO AURA INFO (VDI)","KOESIO AURA TELECOM","KOESIO AUSTRALIA","KOESIO CENTRE EST","KOESIO CORPORATE IT","KOESIO EST","KOESIO GRAND EST","KOESIO IDF","KOESIO MANAGED SERVICES","KOESIO MEDITERRANNEE","KOESIO NETWORKS","KOESIO NORD OUEST","KOESIO OCCITANIE","KOESIO OCCITANIE BPA","KOESIO OUEST","KOESIO PACA","KOESIO PACA TELECOMS","KOESIO SUD ALLIANCE","KOESIO SUISSE","ONE OPERATEUR","Production","S-WAN IP"]} value={revendeurFilter} onChange={setRevendeurFilter} width={190} />
           <RadioDropdown placeholder="Clients" options={CLIENT_NAMES} value={clientFilter} onChange={setClientFilter} width={160} />
@@ -582,7 +727,7 @@ function GestionnairesFlottesScreen() {
             </tbody>
           </table>
         </TableBox>
-        <Pagination page={page} totalPages={totalPages} onChange={setPage} totalItems={GESTIONNAIRES_FLOTTES.length} perPage={perPage} />
+        <Pagination page={page} totalPages={totalPages} onChange={setPage} totalItems={sortedGF.length} perPage={perPage} />
       </div>
     </>
   );
@@ -726,16 +871,34 @@ function LinksScreen({ initialSub = "abonnements", onOpenDetail }) {
 
 function AccessSubsTab({ onOpenDetail }) {
   const [sortBy, setSortBy] = useStateMb(null);
+  const [sortDir, setSortDir] = useStateMb("asc");
   const [revendeurFilter, setRevendeurFilter] = useStateMb(null);
   const [clientFilter, setClientFilter] = useStateMb(null);
   const [etatAboFilter, setEtatAboFilter] = useStateMb([]);
   const [etatProdFilter, setEtatProdFilter] = useStateMb([]);
   const [page, setPage] = useStateMb(1);
-  const totalPages = Math.max(1, Math.ceil(ACCESS_LINKS.length / 15));
+
+  function handleSortChange(field, dir) { setSortBy(field); setSortDir(dir); }
+  const accessSubsFieldMap = { "Etat abo.": "etatAbo", "Revendeur": "revendeur", "Client": "client", "Site": "site", "Numéro mobile": "numero", "Offre": "offre", "Etat prod.": "etatProd" };
+  const sortedLinks = React.useMemo(() => {
+    let data = ACCESS_LINKS;
+    if (revendeurFilter) data = data.filter(l => l.revendeur === revendeurFilter);
+    if (clientFilter) data = data.filter(l => l.client === clientFilter);
+    if (etatAboFilter && etatAboFilter.length) data = data.filter(l => etatAboFilter.includes(l.etatAbo));
+    if (etatProdFilter && etatProdFilter.length) data = data.filter(l => etatProdFilter.includes(l.etatProd));
+    const key = accessSubsFieldMap[sortBy || "Etat abo."];
+    if (!key) return data;
+    return [...data].sort((a, b) => {
+      const va = a[key] || ""; const vb = b[key] || "";
+      return sortDir === "asc" ? String(va).localeCompare(String(vb)) : String(vb).localeCompare(String(va));
+    });
+  }, [revendeurFilter, clientFilter, etatAboFilter, etatProdFilter, sortBy, sortDir]);
+
+  const totalPages = Math.max(1, Math.ceil(sortedLinks.length / 15));
   return (
     <>
       <Toolbar>
-        <RadioDropdown placeholder="Trier" options={["Etat abo.","Revendeur","Client","Site","Numéro mobile","Offre","Etat prod."]} value={sortBy} onChange={setSortBy} width={100} showSearch={false} showRadio={false} sortMode={true} />
+        <RadioDropdown placeholder="Trier" options={["Etat abo.","Revendeur","Client","Site","Numéro mobile","Offre","Etat prod."]} value={sortBy} onChange={setSortBy} onSortChange={handleSortChange} width={100} showSearch={false} showRadio={false} sortMode={true} />
         <Input placeholder="Rechercher par N° ICCID, nom du lien, client, forfait" width={360} />
         <RadioDropdown placeholder="Revendeur" options={["2IT SOLUTIONS","ABC TELECOMS","ADV","AXIUM SOLUTIONS","CIS VALLEY","GROUPE TELECOMS DE L'OUEST GTO","IPNEOS","KOESIO AQUITAINE","KOESIO AURA INFO (VD)","KOESIO AURA INFO (VDI)","KOESIO AURA TELECOM","KOESIO AUSTRALIA","KOESIO CENTRE EST","KOESIO CORPORATE IT","KOESIO EST","KOESIO GRAND EST","KOESIO IDF","KOESIO MANAGED SERVICES","KOESIO MEDITERRANNEE","KOESIO NETWORKS","KOESIO NORD OUEST","KOESIO OCCITANIE","KOESIO OCCITANIE BPA","KOESIO OUEST","KOESIO PACA","KOESIO PACA TELECOMS","KOESIO SUD ALLIANCE","KOESIO SUISSE","ONE OPERATEUR","Production","S-WAN IP"]} value={revendeurFilter} onChange={setRevendeurFilter} width={180} />
         <RadioDropdown placeholder="Client" options={CLIENT_NAMES} value={clientFilter} onChange={setClientFilter} width={160} />
@@ -761,7 +924,7 @@ function AccessSubsTab({ onOpenDetail }) {
             </tr>
           </thead>
           <tbody>
-            {ACCESS_LINKS.slice((page - 1) * 15, page * 15).map(l => (
+            {sortedLinks.slice((page - 1) * 15, page * 15).map(l => (
               <tr key={l.id} className="is-clickable" onClick={() => onOpenDetail({ kind: "access", data: l })}>
                 <td className="muted">{l.revendeur}</td>
                 <td style={{ fontWeight: 600 }}>{l.client}</td>
@@ -778,23 +941,44 @@ function AccessSubsTab({ onOpenDetail }) {
           </tbody>
         </table>
       </TableBox>
-      <Pagination page={page} totalPages={totalPages} onChange={setPage} totalItems={ACCESS_LINKS.length} perPage={15} />
+      <Pagination page={page} totalPages={totalPages} onChange={setPage} totalItems={sortedLinks.length} perPage={15} />
     </>
   );
 }
 
 function AccessOrdersTab({ onOpenDetail }) {
   const [sortBy, setSortBy] = useStateMb(null);
+  const [sortDir, setSortDir] = useStateMb("asc");
   const [revendeurFilter, setRevendeurFilter] = useStateMb(null);
   const [clientFilter, setClientFilter] = useStateMb(null);
   const [typeFilter, setTypeFilter] = useStateMb([]);
   const [etatFilter, setEtatFilter] = useStateMb([]);
   const [page, setPage] = useStateMb(1);
-  const totalPages = Math.max(1, Math.ceil(ACCESS_ORDERS.length / 15));
+
+  const accessOrderFieldMap = { "Date": "dateCommande", "Réf": "ref", "Revendeur": "revendeur", "Client": "client", "Type commande": "typeCommande", "Etat commande": "etatCommande" };
+  function handleSortChange(field, dir) { setSortBy(field); setSortDir(dir); }
+  const toSortableDate = (s) => { const p = String(s).split("/"); if (p.length < 3) return String(s); const y = p[2].split(" ")[0]; return `${y}/${p[1]}/${p[0]}`; };
+  const sorted = React.useMemo(() => {
+    let data = ACCESS_ORDERS;
+    if (revendeurFilter) data = data.filter(o => o.revendeur === revendeurFilter);
+    if (clientFilter) data = data.filter(o => o.client === clientFilter);
+    if (typeFilter && typeFilter.length) data = data.filter(o => typeFilter.includes(o.typeCommande));
+    if (etatFilter && etatFilter.length) data = data.filter(o => etatFilter.includes(o.etatCommande));
+    const key = accessOrderFieldMap[sortBy || "Date"];
+    if (!key) return data;
+    return [...data].sort((a, b) => {
+      const isDateField = ["dateCommande"].includes(key);
+      const va = isDateField ? toSortableDate(a[key] || "") : (a[key] || "");
+      const vb = isDateField ? toSortableDate(b[key] || "") : (b[key] || "");
+      return sortDir === "asc" ? String(va).localeCompare(String(vb)) : String(vb).localeCompare(String(va));
+    });
+  }, [revendeurFilter, clientFilter, typeFilter, etatFilter, sortBy, sortDir]);
+
+  const totalPages = Math.max(1, Math.ceil(sorted.length / 15));
   return (
     <>
       <Toolbar>
-        <RadioDropdown placeholder="Trier" options={["Date","Réf","Revendeur","Client","Type commande","Etat commande"]} value={sortBy} onChange={setSortBy} width={100} showSearch={false} showRadio={false} sortMode={true} />
+        <RadioDropdown placeholder="Trier" options={["Date","Réf","Revendeur","Client","Type commande","Etat commande"]} value={sortBy} onChange={setSortBy} onSortChange={handleSortChange} width={100} showSearch={false} showRadio={false} sortMode={true} />
         <Input placeholder="Rechercher par Réf, Client, Numéro, ICCID, Forfait" width={360} />
         <RadioDropdown placeholder="Revendeur" options={["2IT SOLUTIONS","ABC TELECOMS","ADV","AXIUM SOLUTIONS","CIS VALLEY","GROUPE TELECOMS DE L'OUEST GTO","IPNEOS","KOESIO AQUITAINE","KOESIO AURA INFO (VD)","KOESIO AURA INFO (VDI)","KOESIO AURA TELECOM","KOESIO AUSTRALIA","KOESIO CENTRE EST","KOESIO CORPORATE IT","KOESIO EST","KOESIO GRAND EST","KOESIO IDF","KOESIO MANAGED SERVICES","KOESIO MEDITERRANNEE","KOESIO NETWORKS","KOESIO NORD OUEST","KOESIO OCCITANIE","KOESIO OCCITANIE BPA","KOESIO OUEST","KOESIO PACA","KOESIO PACA TELECOMS","KOESIO SUD ALLIANCE","KOESIO SUISSE","ONE OPERATEUR","Production","S-WAN IP"]} value={revendeurFilter} onChange={setRevendeurFilter} width={180} />
         <RadioDropdown placeholder="Client" options={CLIENT_NAMES} value={clientFilter} onChange={setClientFilter} width={160} />
@@ -820,7 +1004,7 @@ function AccessOrdersTab({ onOpenDetail }) {
             </tr>
           </thead>
           <tbody>
-            {ACCESS_ORDERS.slice((page - 1) * 15, page * 15).map(o => (
+            {sorted.slice((page - 1) * 15, page * 15).map(o => (
               <tr key={o.id} className="is-clickable" onClick={() => onOpenDetail({ kind: "access-order", data: o })}>
                 <td className="mono muted">{o.ref}</td>
                 <td className="muted">{o.dateCommande}</td>
@@ -849,7 +1033,7 @@ function AccessOrdersTab({ onOpenDetail }) {
           </tbody>
         </table>
       </TableBox>
-      <Pagination page={page} totalPages={totalPages} onChange={setPage} totalItems={ACCESS_ORDERS.length} perPage={15} />
+      <Pagination page={page} totalPages={totalPages} onChange={setPage} totalItems={sorted.length} perPage={15} />
     </>
   );
 }
