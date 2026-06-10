@@ -54,6 +54,7 @@ function RevendeursTab({ onOpenDetail }) {
 
   const revFieldMap = { "Revendeur": "nom", "Code région": "codeRegion", "Email": "email" };
   function handleSortChange(field, dir) { setSortBy(field); setSortDir(dir); }
+  function handleReset() { setSortBy(null); setSortDir("asc"); }
 
   const sorted = React.useMemo(() => {
     const key = revFieldMap[sortBy || "Revendeur"];
@@ -82,7 +83,7 @@ function RevendeursTab({ onOpenDetail }) {
         />
         <Input placeholder="Recherche par nom, SIREN, ville…" width={360} />
         <div className="grow" />
-        <Button variant="tertiary" icon="refresh-cw">Réinitialiser</Button>
+        <Button variant="tertiary" icon="refresh-cw" onClick={handleReset}>Réinitialiser</Button>
       </Toolbar>
       <TableBox>
         <table className="kap-table">
@@ -122,6 +123,7 @@ function ClientsTab({ onOpenDetail }) {
 
   const clientFieldMap = { "Client": "nom", "Code Artis": "codeArtis", "SIREN": "siren", "Revendeur": "revendeur", "Date de création": "dateCreation" };
   function handleSortChange(field, dir) { setSortBy(field); setSortDir(dir); }
+  function handleReset() { setSortBy(null); setSortDir("asc"); setRevendeurFilter(null); }
 
   const sorted = React.useMemo(() => {
     let data = CLIENTS;
@@ -162,7 +164,7 @@ function ClientsTab({ onOpenDetail }) {
         <Input placeholder="Recherche par raison sociale, SIRET…" width={360} />
         <RadioDropdown placeholder="Revendeur" options={["2IT SOLUTIONS","ABC TELECOMS","ADV","AXIUM SOLUTIONS","CIS VALLEY","GROUPE TELECOMS DE L'OUEST GTO","IPNEOS","KOESIO AQUITAINE","KOESIO AURA INFO (VD)","KOESIO AURA INFO (VDI)","KOESIO AURA TELECOM","KOESIO AUSTRALIA","KOESIO CENTRE EST","KOESIO CORPORATE IT","KOESIO EST","KOESIO GRAND EST","KOESIO IDF","KOESIO MANAGED SERVICES","KOESIO MEDITERRANNEE","KOESIO NETWORKS","KOESIO NORD OUEST","KOESIO OCCITANIE","KOESIO OCCITANIE BPA","KOESIO OUEST","KOESIO PACA","KOESIO PACA TELECOMS","KOESIO SUD ALLIANCE","KOESIO SUISSE","ONE OPERATEUR","Production","S-WAN IP"]} value={revendeurFilter} onChange={setRevendeurFilter} width={200} />
         <div className="grow" />
-        <Button variant="tertiary" icon="refresh-cw">Réinitialiser</Button>
+        <Button variant="tertiary" icon="refresh-cw" onClick={handleReset}>Réinitialiser</Button>
       </Toolbar>
       <TableBox>
         <table className="kap-table">
@@ -207,6 +209,7 @@ function SitesTab({ onOpenDetail }) {
 
   const siteFieldMap = { "Site": "label", "SIRET": "siret", "Ville": "ville", "Code postal": "cp", "Revendeur": "revendeur", "Client": "client" };
   function handleSortChange(field, dir) { setSortBy(field); setSortDir(dir); }
+  function handleReset() { setSortBy(null); setSortDir("asc"); setRevendeurFilter(null); setClientFilter(null); }
 
   const sorted = React.useMemo(() => {
     let data = SITES;
@@ -246,7 +249,7 @@ function SitesTab({ onOpenDetail }) {
         <RadioDropdown placeholder="Client" options={CLIENT_NAMES} value={clientFilter} onChange={setClientFilter} width={200} />
         <RadioDropdown placeholder="Revendeur" options={["2IT SOLUTIONS","ABC TELECOMS","ADV","AXIUM SOLUTIONS","CIS VALLEY","GROUPE TELECOMS DE L'OUEST GTO","IPNEOS","KOESIO AQUITAINE","KOESIO AURA INFO (VD)","KOESIO AURA INFO (VDI)","KOESIO AURA TELECOM","KOESIO AUSTRALIA","KOESIO CENTRE EST","KOESIO CORPORATE IT","KOESIO EST","KOESIO GRAND EST","KOESIO IDF","KOESIO MANAGED SERVICES","KOESIO MEDITERRANNEE","KOESIO NETWORKS","KOESIO NORD OUEST","KOESIO OCCITANIE","KOESIO OCCITANIE BPA","KOESIO OUEST","KOESIO PACA","KOESIO PACA TELECOMS","KOESIO SUD ALLIANCE","KOESIO SUISSE","ONE OPERATEUR","Production","S-WAN IP"]} value={revendeurFilter} onChange={setRevendeurFilter} width={200} />
         <div className="grow" />
-        <Button variant="tertiary" icon="refresh-cw">Réinitialiser</Button>
+        <Button variant="tertiary" icon="refresh-cw" onClick={handleReset}>Réinitialiser</Button>
       </Toolbar>
       <TableBox>
         <table className="kap-table">
@@ -292,6 +295,7 @@ function HebergementsTab({ onOpenDetail }) {
   const [revendeurFilter, setRevendeurFilter] = React.useState(null);
   const [clientFilter, setClientFilter] = React.useState(null);
   function handleSortChange(field, dir) { setSortBy(field); setSortDir(dir); }
+  function handleReset() { setSortBy(null); setSortDir("asc"); setRevendeurFilter(null); setClientFilter(null); }
 
   const HEB_OPTIONS = ["Loadbalancing Apache [VM000000000283__057069]","3CX [VM000000000465__063026]","3CX [PX000000001086__101029]","3CX [VM000000001205__066339]","3CX [PX000000003526__J10022]","3CX [PX000000003641__NM300256]","3CX [PX000000003644__NM300256]","3CX 16AS [PX000000000745__901457]","SRV-RDS4 [VM000000000039__006669]","VDOM [VDOM0000000141__046376]","VDOM [VDOM0000000303__102191]","VDOM [VDOM0000001087__101029]","VDOM [VDOM0000003642__NM300256]","VDOM [VDOM0000003645__NM300256]","VDOM [VDOM0000003734__032605_8]","VDOM [VDOM0000003940__KNO444]","VLAN Client 3CX [LAN00000000302__102191]","VLAN Client DC [LAN00000000139__046376]","VLAN Client DC [LAN00000000157__035414]","VLAN Client DC [LAN00000000282__057069]","VLAN Client DC [LAN00000001085__101029]","VLAN Client DC [LAN00000003640__NM300256]","VLAN Client DC [LAN00000003643__NM300256]","VLAN Client DC [LAN00000003938__KNO444]","VM-01 [VM000000000140__046376]","site internet [VM000000003939__KNO444]","100 POUR CENT NOUS - 3CX [VM000000000110__057846]","1NCENTIVA - VDOM [VDOM0000001283__066459]","22.1 CONSULTING - EVA1 [VM000000000614__045703]","22.1 CONSULTING - PFSENSE [VM000000000107__045703]","22.1 CONSULTING - SRVAPP [VM000000000597__045703]","22.1 CONSULTING - SRVDC [VM000000000615__045703]","22.1 CONSULTING - SRVRDS01 [VM000000000617__045703]","22.1 CONSULTING - SRVRDS02 [VM000000000616__045703]","22.1 CONSULTING - SRVRDS03 [VM000000001465__05006409]","22.1 CONSULTING - VLAN Client DC [LAN00000000107__045703]","2M ASSOCIES - 3CX [PX000000001255__902045]","2MG - VDOM [VDOM0000001058__14999000]","4S - VDOM [VDOM0000000056__058902]","72-74 RUE ROYALE - 3CX [PX000000003629__1004846]","98 DELMAS - 3CX [PX000000001044__55036378]","98 DELMAS - VLAN Client DC [LAN00000001043__55036378]","A D A P E I - AVAYA HEBERGEE [VM000000003704__020707]","A D A P E I - HEBERGEMENT FIREWALL [VM000000003547__020707]","A I S M T 04 - 3cx [VM000000000289__14997148]","A VOTRE SERVICE - 3CX [PX000000003910__CPO20023]","A VOTRE SERVICE - 3CX [PX000000003911__CPO20023]","A VOTRE SERVICE - 3CX [PX000000003922__CPO20023]","A VOTRE SERVICE - 3CX [PX000000003924__CPO20023]","AAD 07 - Colocation Client DC [COL00000001181__011496]"];
   const HEB_REF_TECH = {
@@ -366,7 +370,7 @@ function HebergementsTab({ onOpenDetail }) {
         <RadioDropdown placeholder="Revendeur" options={["2IT SOLUTIONS","ABC TELECOMS","ADV","AXIUM SOLUTIONS","CIS VALLEY","GROUPE TELECOMS DE L'OUEST GTO","IPNEOS","KOESIO AQUITAINE","KOESIO AURA INFO (VD)","KOESIO AURA INFO (VDI)","KOESIO AURA TELECOM","KOESIO AUSTRALIA","KOESIO CENTRE EST","KOESIO CORPORATE IT","KOESIO EST","KOESIO GRAND EST","KOESIO IDF","KOESIO MANAGED SERVICES","KOESIO MEDITERRANNEE","KOESIO NETWORKS","KOESIO NORD OUEST","KOESIO OCCITANIE","KOESIO OCCITANIE BPA","KOESIO OUEST","KOESIO PACA","KOESIO PACA TELECOMS","KOESIO SUD ALLIANCE","KOESIO SUISSE","ONE OPERATEUR","Production","S-WAN IP"]} value={revendeurFilter} onChange={setRevendeurFilter} width={180} />
         <RadioDropdown placeholder="Client" options={CLIENT_NAMES} value={clientFilter} onChange={setClientFilter} width={170} />
         <div className="grow" />
-        <Button variant="tertiary" icon="refresh-cw">Réinitialiser</Button>
+        <Button variant="tertiary" icon="refresh-cw" onClick={handleReset}>Réinitialiser</Button>
       </Toolbar>
       <TableBox>
         <table className="kap-table">
@@ -419,6 +423,7 @@ function ServicesTab({ onOpenDetail }) {
 
   const serviceFieldMap = { "Service": "type", "Quantité": "quantite", "Matricule": "matricule", "Revendeur": "revendeur", "Client": "client", "Site": "site", "Statut": "statut.label", "Date facturation": "dateFacturation", "Fin d'engagement": "finEngagement" };
   function handleSortChange(field, dir) { setSortBy(field); setSortDir(dir); }
+  function handleReset() { setSortBy(null); setSortDir("asc"); setStatutFilter([]); setRevendeurFilter(null); setClientFilter(null); setSiteFilter(null); setHebFilter(null); }
 
   const sorted = React.useMemo(() => {
     let data = SERVICES;
@@ -468,7 +473,7 @@ function ServicesTab({ onOpenDetail }) {
         <RadioDropdown placeholder="Statut" options={["Actif","Inactif","En cours d'activation (à activer)","En cours d'activation","En cours de désactivation"]} value={statutFilter} onChange={setStatutFilter} width={160} showSearch={false} multiSelect={true} />
         <RadioDropdown placeholder="Hébergement" options={["Loadbalancing Apache [VM000000000283__057069]","3CX [VM000000000465__063026]","3CX [PX000000001086__101029]","3CX [VM000000001205__066339]","3CX [PX000000003526__J10022]","3CX [PX000000003641__NM300256]","3CX [PX000000003644__NM300256]","3CX 16AS [PX000000000745__901457]","SRV-RDS4 [VM000000000039__006669]","VDOM [VDOM0000000141__046376]","VDOM [VDOM0000000303__102191]","VDOM [VDOM0000001087__101029]","VDOM [VDOM0000003642__NM300256]","VDOM [VDOM0000003645__NM300256]","VDOM [VDOM0000003734__032605_8]","VDOM [VDOM0000003940__KNO444]","VLAN Client 3CX [LAN00000000302__102191]","VLAN Client DC [LAN00000000139__046376]","VLAN Client DC [LAN00000000157__035414]","VLAN Client DC [LAN00000000282__057069]","VLAN Client DC [LAN00000001085__101029]","VLAN Client DC [LAN00000003640__NM300256]","VLAN Client DC [LAN00000003643__NM300256]","VLAN Client DC [LAN00000003938__KNO444]","VM-01 [VM000000000140__046376]","site internet [VM000000003939__KNO444]","100 POUR CENT NOUS - 3CX [VM000000000110__057846]","1NCENTIVA - VDOM [VDOM0000001283__066459]","22.1 CONSULTING - EVA1 [VM000000000614__045703]","22.1 CONSULTING - PFSENSE [VM000000000107__045703]","22.1 CONSULTING - SRVAPP [VM000000000597__045703]","22.1 CONSULTING - SRVDC [VM000000000615__045703]","22.1 CONSULTING - SRVRDS01 [VM000000000617__045703]","22.1 CONSULTING - SRVRDS02 [VM000000000616__045703]","22.1 CONSULTING - SRVRDS03 [VM000000001465__05006409]","22.1 CONSULTING - VLAN Client DC [LAN00000000107__045703]","2M ASSOCIES - 3CX [PX000000001255__902045]","2MG - VDOM [VDOM0000001058__14999000]","4S - VDOM [VDOM0000000056__058902]","72-74 RUE ROYALE - 3CX [PX000000003629__1004846]","98 DELMAS - 3CX [PX000000001044__55036378]","98 DELMAS - VLAN Client DC [LAN00000001043__55036378]","A D A P E I - AVAYA HEBERGEE [VM000000003704__020707]","A D A P E I - HEBERGEMENT FIREWALL [VM000000003547__020707]","A I S M T 04 - 3cx [VM000000000289__14997148]","A VOTRE SERVICE - 3CX [PX000000003910__CPO20023]","A VOTRE SERVICE - 3CX [PX000000003911__CPO20023]","A VOTRE SERVICE - 3CX [PX000000003922__CPO20023]","A VOTRE SERVICE - 3CX [PX000000003924__CPO20023]","AAD 07 - Colocation Client DC [COL00000001181__011496]"]} value={hebFilter} onChange={setHebFilter} width={170} />
         <div className="grow" />
-        <Button variant="tertiary" icon="refresh-cw">Réinitialiser</Button>
+        <Button variant="tertiary" icon="refresh-cw" onClick={handleReset}>Réinitialiser</Button>
       </Toolbar>
       <TableBox>
         <table className="kap-table">
@@ -525,6 +530,7 @@ function CataloguesTab({ onOpenDetail }) {
 
   const catFieldMap = { "Libellé": "designation" };
   function handleSortChange(field, dir) { setSortBy(field); setSortDir(dir); }
+  function handleReset() { setSortBy(null); setSortDir("asc"); setFamilleFilter(null); setSousFamilleFilter(null); }
 
   const sorted = React.useMemo(() => {
     let data = CATALOGUE;
@@ -558,7 +564,7 @@ function CataloguesTab({ onOpenDetail }) {
         <RadioDropdown placeholder="Famille" options={["Centrex","Cinet","Colocation","Connectivité","Cvoice","Cvpn","Détail matériel centrex","Hébergement","Lien ADSL","Lien FON","Lien FTTE","Lien FTTH","Lien FTTO","Lien SDSL","Mobile","Option centrex","Option Cinet","Option Cvoice","Option lien","Option routeur","Option VM","Parefeu","Passerelle","Portabilité","Routeur","SDA IP","SDA RNIS","Service VOIP","Services SAAS","Stochage","VGA","VM"]} value={familleFilter} onChange={setFamilleFilter} width={160} />
         <RadioDropdown placeholder="Sous-famille" options={["ADSL Orange","Centrex Enove","Centrex Enreah","Centrex Unyc","Cinet","Colocation","Connectivité","CROSS-CONNECT","Cvpn","Détail matériel centrex","FON Koesio","FORTIGATE","FTTE Axione","FTTE Covage","FTTE Orange LAN","FTTE Orange O2E","FTTE SIEA","FTTH Axione","FTTH Bouygues","FTTH Covage","FTTH Orange","FTTH SFR","FTTH SIEA","FTTO Axione","FTTO Bouygues","FTTO Covage","FTTO IELO","FTTO Koesio","FTTO Orange C2E","FTTO Orange CELAN","FTTO SFR","Hébergement","Mobile Koesio","Option Centrex Enove","Option Centrex Enreach","Option Centrex Unyc","Option Cvoice","Option lien","Option routeur","Option VM","Passerelle","Portabilité Alphalink","Portabilité Koesio","Portabilité Unyc","Routeur","SDA IP","SDA RNIS","SDSL Orange C2E","SDSL Orange CELAN","Service VOIP","Services SAAS","Stockage","Trunk SIP Alphlink","Trunk SIP Cvoice","VDOM FORTINET","VGA Sewan","VL PROXMOX","VM VMWARE"]} value={sousFamilleFilter} onChange={setSousFamilleFilter} width={180} />
         <div className="grow" />
-        <Button variant="tertiary" icon="refresh-cw">Réinitialiser</Button>
+        <Button variant="tertiary" icon="refresh-cw" onClick={handleReset}>Réinitialiser</Button>
       </Toolbar>
       <TableBox>
         <table className="kap-table">

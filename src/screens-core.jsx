@@ -149,6 +149,26 @@ function UsersScreen({ initialTab = "liste", onOpenLog, onOpenUser }) {
   function handleSortChange(field, dir) { setSortBy(field); setSortDir(dir); }
   function handleLogSortChange(field, dir) { setLogSortBy(field); setLogSortDir(dir); }
 
+  function handleReset() {
+    setQ("");
+    setRevendeurFilter(null);
+    setStatutFilter(null);
+    setTypeFilter([]);
+    setRoleFilter([]);
+    setSortBy(null);
+    setSortDir("asc");
+  }
+
+  function handleLogReset() {
+    setLogRevendeur(null);
+    setLogClient(null);
+    setLogDate(null);
+    setLogStatut([]);
+    setLogRessources([]);
+    setLogSortBy(null);
+    setLogSortDir("asc");
+  }
+
   const filtered = useMemoScA(() => {
     const n = q.trim().toLowerCase();
     let data = n ? USERS.filter(u => (u.prenom + " " + u.nom + " " + u.email).toLowerCase().includes(n)) : USERS;
@@ -239,7 +259,7 @@ function UsersScreen({ initialTab = "liste", onOpenLog, onOpenUser }) {
               <RadioDropdown placeholder="Type" options={["AUTH0","OKTA"]} value={typeFilter} onChange={setTypeFilter} width={140} showSearch={false} multiSelect={true} />
               <RadioDropdown placeholder="Rôle" options={["Administrateur","Manager","Support N1","Lecture seule","Support N2","Opérateur"]} value={roleFilter} onChange={setRoleFilter} width={150} showSearch={false} multiSelect={true} />
               <div className="grow" />
-              <Button variant="tertiary" icon="refresh-cw">Réinitialiser</Button>
+              <Button variant="tertiary" icon="refresh-cw" onClick={handleReset}>Réinitialiser</Button>
             </Toolbar>
             <TableBox>
               <table className="kap-table">
@@ -263,7 +283,7 @@ function UsersScreen({ initialTab = "liste", onOpenLog, onOpenUser }) {
                       <td style={{ fontWeight: 600 }}>{u.nom}</td>
                       <td>{u.prenom}</td>
                       <td className="muted">{u.email}</td>
-                      <td><span className="kap-pill kap-pill--soft" style={{ "--bg": "#F0E6F9", "--fg": "var(--kap-primary)" }}>{u.type}</span></td>
+                      <td><span className="kap-pill kap-pill--soft" style={u.type === "AUTH0" ? { "--bg": "#FFF3E0", "--fg": "#E65100" } : { "--bg": "#F5F5F5", "--fg": "#212121" }}>{u.type}</span></td>
                       <td>{u.role}</td>
                       <td className="muted">{u.revendeur}</td>
                       <td className="muted">{u.dateCreation}</td>
@@ -287,7 +307,7 @@ function UsersScreen({ initialTab = "liste", onOpenLog, onOpenUser }) {
               <RadioDropdown placeholder="Statut" options={["200","201","400","403","404","409","422","500","501","502"]} value={logStatut} onChange={setLogStatut} width={160} showSearch={false} multiSelect={true} />
               <RadioDropdown placeholder="Ressources" options={["configuration_ninja_conf","data_reference_client","dispatcher","eligibility","mobile","order","portability","ticket","unidentified resource","user"]} value={logRessources} onChange={setLogRessources} width={160} showSearch={false} multiSelect={true} />
               <div className="grow" />
-              <Button variant="tertiary" icon="refresh-cw">Réinitialiser</Button>
+              <Button variant="tertiary" icon="refresh-cw" onClick={handleLogReset}>Réinitialiser</Button>
             </Toolbar>
             <TableBox>
               <table className="kap-table">

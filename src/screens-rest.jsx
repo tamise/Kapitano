@@ -33,18 +33,32 @@ function OrdersTab({ onOpenDetail }) {
 
   const ordersFieldMap = { "Date": "dap", "Numéro d'affaire": "numeroAffaire", "Revendeur": "revendeur", "Client": "client", "État commande": "etatCommande" };
   function handleSortChange(field, dir) { setSortBy(field); setSortDir(dir); }
+  function handleReset() {
+    setSourceFilter([]);
+    setRevendeurFilter(null);
+    setClientFilter(null);
+    setEtatFilter([]);
+    setSortBy(null);
+    setSortDir("asc");
+  }
 
   const sorted = React.useMemo(() => {
+    const lc = s => (s || '').toLowerCase();
+    let data = ORDERS;
+    if (sourceFilter && sourceFilter.length) data = data.filter(o => sourceFilter.some(f => lc(f) === lc(o.source)));
+    if (revendeurFilter) data = data.filter(o => lc(o.revendeur) === lc(revendeurFilter));
+    if (clientFilter) data = data.filter(o => lc(o.client) === lc(clientFilter));
+    if (etatFilter && etatFilter.length) data = data.filter(o => etatFilter.some(f => lc(f) === lc(o.etatCommande)));
     const key = ordersFieldMap[sortBy || "Date"];
-    if (!key) return ORDERS;
+    if (!key) return data;
     const toSortableDate = (s) => { const p = String(s).split("/"); if (p.length < 3) return String(s); const y = p[2].split(" ")[0]; return `${y}/${p[1]}/${p[0]}`; };
-    return [...ORDERS].sort((a, b) => {
+    return [...data].sort((a, b) => {
       const isDateField = ["dap"].includes(key);
       const va = isDateField ? toSortableDate(a[key] || "") : (a[key] || "");
       const vb = isDateField ? toSortableDate(b[key] || "") : (b[key] || "");
       return sortDir === "asc" ? String(va).localeCompare(String(vb)) : String(vb).localeCompare(String(va));
     });
-  }, [sortBy, sortDir]);
+  }, [sortBy, sortDir, sourceFilter, revendeurFilter, clientFilter, etatFilter]);
 
   const totalPages = Math.max(1, Math.ceil(sorted.length / 15));
   return (
@@ -57,7 +71,7 @@ function OrdersTab({ onOpenDetail }) {
         <RadioDropdown placeholder="Client" options={CLIENT_NAMES} value={clientFilter} onChange={setClientFilter} width={160} />
         <RadioDropdown placeholder="État commande" options={["Créée","Distribution en cours","Envoyée","Reçue par le client","À activer","En cours d'activation","En production","Incident en cours","Annulée"]} value={etatFilter} onChange={setEtatFilter} width={170} showSearch={false} multiSelect={true} />
         <div className="grow" />
-        <Button variant="tertiary" icon="refresh-cw">Réinitialiser</Button>
+        <Button variant="tertiary" icon="refresh-cw" onClick={handleReset}>Réinitialiser</Button>
       </Toolbar>
       <TableBox>
         <table className="kap-table">
@@ -115,24 +129,43 @@ function ReportingTab() {
 
   const reportingFieldMap = { "Date de l'action": "dateAction", "Numéro d'affaire": "numeroAffaire", "Revendeur": "revendeur", "Client": "client", "Nom de l'article": "article", "Quantité": "quantite" };
   function handleSortChange(field, dir) { setSortBy(field); setSortDir(dir); }
+  function handleReset() {
+    setRevendeurFilter(null);
+    setClientFilter(null);
+    setTypeProdFilter(null);
+    setTypeActionFilter([]);
+    setDateFilter(null);
+    setSortBy(null);
+    setSortDir("asc");
+  }
 
+  const TYPE_PROD_MAP = { "Abonnement mobile": "abo-mobile", "Abonnement mobile data": "abo-mobile-data", "Trunk SIP": "trunk" };
   const sorted = React.useMemo(() => {
+    const lc = s => (s || '').toLowerCase();
+    let data = REPORTING_LOGS;
+    if (revendeurFilter) data = data.filter(r => lc(r.revendeur) === lc(revendeurFilter));
+    if (clientFilter) data = data.filter(r => lc(r.client) === lc(clientFilter));
+    if (typeProdFilter) { const k = TYPE_PROD_MAP[typeProdFilter]; if (k) data = data.filter(r => r.typeProd === k); }
+    if (typeActionFilter && typeActionFilter.length) data = data.filter(r => typeActionFilter.some(f => lc(f) === lc(r.typeAction)));
+    if (dateFilter && (dateFilter.debut || dateFilter.fin)) {
+      const parseDateNum = (s) => { const parts = String(s).split("/"); if (parts.length < 3) return NaN; const d = parseInt(parts[0],10), m = parseInt(parts[1],10), y = parseInt(parts[2].split(" ")[0],10); if (isNaN(d)||isNaN(m)||isNaN(y)) return NaN; return y*10000+m*100+d; };
+      const debNum = dateFilter.debut ? parseDateNum(dateFilter.debut) : NaN;
+      const finNum = dateFilter.fin ? parseDateNum(dateFilter.fin) : NaN;
+      data = data.filter(r => { const d = parseDateNum(r.dateAction||""); if(isNaN(d)) return true; if(!isNaN(debNum)&&d<debNum) return false; if(!isNaN(finNum)&&d>finNum) return false; return true; });
+    }
     const key = reportingFieldMap[sortBy || "Date de l'action"];
-    if (!key) return REPORTING_LOGS;
+    if (!key) return data;
     const toSortableDate = (s) => { const p = String(s).split("/"); if (p.length < 3) return String(s); const y = p[2].split(" ")[0]; return `${y}/${p[1]}/${p[0]}`; };
-    return [...REPORTING_LOGS].sort((a, b) => {
-      if (key === "quantite") {
-        const va = Number(a[key]) || 0; const vb = Number(b[key]) || 0;
-        return sortDir === "asc" ? va - vb : vb - va;
-      }
+    return [...data].sort((a, b) => {
+      if (key === "quantite") { const va = Number(a[key])||0, vb = Number(b[key])||0; return sortDir === "asc" ? va-vb : vb-va; }
       const isDateField = ["dateAction"].includes(key);
       const va = isDateField ? toSortableDate(a[key] || "") : (a[key] || "");
       const vb = isDateField ? toSortableDate(b[key] || "") : (b[key] || "");
       return sortDir === "asc" ? String(va).localeCompare(String(vb)) : String(vb).localeCompare(String(va));
     });
-  }, [sortBy, sortDir]);
+  }, [sortBy, sortDir, dateFilter, revendeurFilter, clientFilter, typeProdFilter, typeActionFilter]);
 
-  const totalPages = Math.ceil(TOTAL / perPage);
+  const totalPages = Math.max(1, Math.ceil(sorted.length / perPage));
   const view = sorted.slice((page - 1) * perPage, page * perPage);
 
   const setTopbarActions = React.useContext(TopbarActionsContext);
@@ -152,7 +185,7 @@ function ReportingTab() {
         <RadioDropdown placeholder="Type de production" options={["Abonnement mobile","Abonnement mobile data","Trunk SIP"]} value={typeProdFilter} onChange={setTypeProdFilter} width={180} showSearch={false} />
         <RadioDropdown placeholder="Type d'action" options={["Création","Modification","Résiliation"]} value={typeActionFilter} onChange={setTypeActionFilter} width={160} showSearch={false} multiSelect={true} />
         <div className="grow" />
-        <Button variant="tertiary" icon="refresh-cw">Réinitialiser</Button>
+        <Button variant="tertiary" icon="refresh-cw" onClick={handleReset}>Réinitialiser</Button>
       </Toolbar>
       <TableBox>
         <table className="kap-table">
@@ -194,7 +227,7 @@ function ReportingTab() {
           </tbody>
         </table>
       </TableBox>
-      <Pagination page={page} totalPages={totalPages} onChange={setPage} totalItems={TOTAL} perPage={perPage} />
+      <Pagination page={page} totalPages={totalPages} onChange={setPage} totalItems={sorted.length} perPage={perPage} />
     </>
   );
 }
@@ -220,7 +253,7 @@ function TechniqueScreen({ initialSub = "tickets", onOpenDetail }) {
 }
 
 const CRITICITE_CHIP = {
-  "Bloqué":  <span style={{ display:"inline-flex",alignItems:"center",gap:4,padding:"2px 8px",borderRadius:99,border:"1px solid #D32F2F",color:"#D32F2F",fontSize:12,fontFamily:"var(--kap-font-ui)",fontWeight:600,whiteSpace:"nowrap" }}><Icon name="ban" size={13}/>Bloqué</span>,
+  "Bloquant": <span style={{ display:"inline-flex",alignItems:"center",gap:4,padding:"2px 8px",borderRadius:99,border:"1px solid #D32F2F",color:"#D32F2F",fontSize:12,fontFamily:"var(--kap-font-ui)",fontWeight:600,whiteSpace:"nowrap" }}><Icon name="ban" size={13}/>Bloquant</span>,
   "Critique": <span style={{ display:"inline-flex",alignItems:"center",gap:4,padding:"2px 8px",borderRadius:99,border:"1px solid #616161",color:"#616161",fontSize:12,fontFamily:"var(--kap-font-ui)",fontWeight:600,whiteSpace:"nowrap" }}><Icon name="skull" size={13}/>Critique</span>,
   "Mineur":   <span style={{ display:"inline-flex",alignItems:"center",gap:4,padding:"2px 8px",borderRadius:99,border:"1px solid #0288D1",color:"#0288D1",fontSize:12,fontFamily:"var(--kap-font-ui)",fontWeight:600,whiteSpace:"nowrap" }}><Icon name="info" size={13}/>Mineur</span>,
   "Majeur":   <span style={{ display:"inline-flex",alignItems:"center",gap:4,padding:"2px 8px",borderRadius:99,border:"1px solid #ED6C02",color:"#ED6C02",fontSize:12,fontFamily:"var(--kap-font-ui)",fontWeight:600,whiteSpace:"nowrap" }}><Icon name="alert-triangle" size={13}/>Majeur</span>,
@@ -243,14 +276,24 @@ function TicketsTab({ onOpenDetail }) {
 
   const ticketFieldMap = { "Date de création": "dateCreation", "Référence": "reference", "Sujet": "sujet", "État": "etat", "Criticité": "criticite", "Nature": "nature" };
   function handleSortChange(field, dir) { setSortBy(field); setSortDir(dir); }
+  function handleReset() {
+    setRevendeurFilter(null);
+    setClientFilter(null);
+    setEtatFilter([]);
+    setCriticiteFilter([]);
+    setNatureFilter([]);
+    setSortBy(null);
+    setSortDir("asc");
+  }
 
   const sorted = React.useMemo(() => {
+    const lc = s => (s || '').toLowerCase();
     let data = TICKETS;
-    if (revendeurFilter) data = data.filter(t => t.revendeur === revendeurFilter);
-    if (clientFilter) data = data.filter(t => t.client === clientFilter);
-    if (etatFilter && etatFilter.length) data = data.filter(t => etatFilter.includes(t.etat));
-    if (criticiteFilter && criticiteFilter.length) data = data.filter(t => criticiteFilter.includes(t.criticite));
-    if (natureFilter && natureFilter.length) data = data.filter(t => natureFilter.includes(t.nature));
+    if (revendeurFilter) data = data.filter(t => lc(t.revendeur) === lc(revendeurFilter));
+    if (clientFilter) data = data.filter(t => lc(t.client) === lc(clientFilter));
+    if (etatFilter && etatFilter.length) data = data.filter(t => etatFilter.some(f => lc(f) === lc(t.etat)));
+    if (criticiteFilter && criticiteFilter.length) data = data.filter(t => criticiteFilter.some(f => lc(f) === lc(t.criticite)));
+    if (natureFilter && natureFilter.length) data = data.filter(t => natureFilter.some(f => lc(f) === lc(t.nature)));
     const key = ticketFieldMap[sortBy || "Date de création"];
     if (!key) return data;
     const toSortableDate = (s) => { const p = String(s).split("/"); if (p.length < 3) return String(s); const y = p[2].split(" ")[0]; return `${y}/${p[1]}/${p[0]}`; };
@@ -262,7 +305,7 @@ function TicketsTab({ onOpenDetail }) {
     });
   }, [revendeurFilter, clientFilter, etatFilter, criticiteFilter, natureFilter, sortBy, sortDir]);
 
-  const totalPages = Math.ceil(TOTAL_TKT / 15);
+  const totalPages = Math.max(1, Math.ceil(sorted.length / 15));
   const view = sorted.slice((page - 1) * 15, page * 15);
 
   const setTopbarActions = React.useContext(TopbarActionsContext);
@@ -285,7 +328,7 @@ function TicketsTab({ onOpenDetail }) {
         <RadioDropdown placeholder="Criticité" options={["Critique","Bloquant","Majeur","Mineur"]} value={criticiteFilter} onChange={setCriticiteFilter} width={140} showSearch={false} multiSelect={true} />
         <RadioDropdown placeholder="Nature" options={["Incident","Demande","Assistance","Production","Avant-vente","Administratif"]} value={natureFilter} onChange={setNatureFilter} width={130} showSearch={false} multiSelect={true} />
         <div className="grow" />
-        <Button variant="tertiary" icon="refresh-cw">Réinitialiser</Button>
+        <Button variant="tertiary" icon="refresh-cw" onClick={handleReset}>Réinitialiser</Button>
       </Toolbar>
       <TableBox>
         <table className="kap-table">
@@ -326,7 +369,7 @@ function TicketsTab({ onOpenDetail }) {
           </tbody>
         </table>
       </TableBox>
-      <Pagination page={page} totalPages={totalPages} onChange={setPage} totalItems={TOTAL_TKT} perPage={15} />
+      <Pagination page={page} totalPages={totalPages} onChange={setPage} totalItems={sorted.length} perPage={15} />
     </>
   );
 }
@@ -345,19 +388,35 @@ function TicketsArchivesTab() {
 
   const ticketsArchFieldMap = { "Date de création": "dateCreation", "Numéro": "numero", "Symptôme": "symptome", "Type DIT": "typeDIT" };
   function handleSortChange(field, dir) { setSortBy(field); setSortDir(dir); }
+  function handleReset() {
+    setRevendeurFilter(null);
+    setClientFilter(null);
+    setEtatFilter([]);
+    setSymptomeFilter(null);
+    setTypeDITFilter(null);
+    setSortBy(null);
+    setSortDir("asc");
+  }
   const toSortableDate = (s) => { const p = String(s).split("/"); if (p.length < 3) return String(s); const y = p[2].split(" ")[0]; return `${y}/${p[1]}/${p[0]}`; };
   const sortedArchives = React.useMemo(() => {
+    const lc = s => (s || '').toLowerCase();
+    let data = TICKETS_ARCHIVES;
+    if (revendeurFilter) data = data.filter(t => lc(t.revendeur) === lc(revendeurFilter));
+    if (clientFilter) data = data.filter(t => lc(t.client) === lc(clientFilter));
+    if (etatFilter && etatFilter.length) data = data.filter(t => etatFilter.some(f => lc(f) === lc(t.etat)));
+    if (symptomeFilter) data = data.filter(t => lc(t.symptome) === lc(symptomeFilter));
+    if (typeDITFilter) data = data.filter(t => lc(t.typeDIT) === lc(typeDITFilter));
     const key = ticketsArchFieldMap[sortBy || "Date de création"];
-    if (!key) return TICKETS_ARCHIVES;
-    return [...TICKETS_ARCHIVES].sort((a, b) => {
+    if (!key) return data;
+    return [...data].sort((a, b) => {
       const isDateField = ["dateCreation"].includes(key);
       const va = isDateField ? toSortableDate(a[key] || "") : (a[key] || "");
       const vb = isDateField ? toSortableDate(b[key] || "") : (b[key] || "");
       return sortDir === "asc" ? String(va).localeCompare(String(vb)) : String(vb).localeCompare(String(va));
     });
-  }, [sortBy, sortDir]);
+  }, [sortBy, sortDir, revendeurFilter, clientFilter, etatFilter, symptomeFilter, typeDITFilter]);
 
-  const totalPages = Math.ceil(TOTAL_ARCH / 15);
+  const totalPages = Math.max(1, Math.ceil(sortedArchives.length / 15));
   const view = sortedArchives.slice((page - 1) * 15, page * 15);
 
   const setTopbarActions = React.useContext(TopbarActionsContext);
@@ -377,7 +436,7 @@ function TicketsArchivesTab() {
         <RadioDropdown placeholder="Symptôme" options={["LIEN coupure totale","TEL appels entrants","LIEN Configuration Routeur","Autre"]} value={symptomeFilter} onChange={setSymptomeFilter} width={170} showSearch={false} />
         <RadioDropdown placeholder="Type DIT" options={["Sollicitation Portail client","Sollicitation mail","Proactivité","Autre"]} value={typeDITFilter} onChange={setTypeDITFilter} width={160} showSearch={false} />
         <div className="grow" />
-        <Button variant="tertiary" icon="refresh-cw">Réinitialiser</Button>
+        <Button variant="tertiary" icon="refresh-cw" onClick={handleReset}>Réinitialiser</Button>
       </Toolbar>
       <TableBox>
         <table className="kap-table">
@@ -413,7 +472,7 @@ function TicketsArchivesTab() {
           </tbody>
         </table>
       </TableBox>
-      <Pagination page={page} totalPages={totalPages} onChange={setPage} totalItems={TOTAL_ARCH} perPage={15} />
+      <Pagination page={page} totalPages={totalPages} onChange={setPage} totalItems={sortedArchives.length} perPage={15} />
     </>
   );
 }
@@ -430,19 +489,33 @@ function ConfigurationsTab({ onOpenDetail }) {
 
   const cfgFieldMap = { "Date de création": "dateCreation", "Version": "version", "Statut": "statut", "Date d'archivage": "dateArchivage", "Revendeur": "revendeur", "Client": "client", "Site": "site", "Service": "service" };
   function handleSortChange(field, dir) { setSortBy(field); setSortDir(dir); }
+  function handleReset() {
+    setStatutFilter(null);
+    setRevendeurFilter(null);
+    setClientFilter(null);
+    setSiteFilter(null);
+    setSortBy(null);
+    setSortDir("asc");
+  }
   const toSortableDate = (s) => { const p = String(s).split("/"); if (p.length < 3) return String(s); const y = p[2].split(" ")[0]; return `${y}/${p[1]}/${p[0]}`; };
   const sortedCfg = React.useMemo(() => {
+    const lc = s => (s || '').toLowerCase();
+    let data = CONFIGURATIONS;
+    if (statutFilter) data = data.filter(c => lc(c.statut) === lc(statutFilter));
+    if (revendeurFilter) data = data.filter(c => lc(c.revendeur) === lc(revendeurFilter));
+    if (clientFilter) data = data.filter(c => lc(c.client) === lc(clientFilter));
+    if (siteFilter) data = data.filter(c => lc(c.site) === lc(siteFilter));
     const key = cfgFieldMap[sortBy || "Date de création"];
-    if (!key) return CONFIGURATIONS;
-    return [...CONFIGURATIONS].sort((a, b) => {
+    if (!key) return data;
+    return [...data].sort((a, b) => {
       const isDateField = ["dateCreation","dateArchivage"].includes(key);
       const va = isDateField ? toSortableDate(a[key] || "") : (a[key] || "");
       const vb = isDateField ? toSortableDate(b[key] || "") : (b[key] || "");
       return sortDir === "asc" ? String(va).localeCompare(String(vb)) : String(vb).localeCompare(String(va));
     });
-  }, [sortBy, sortDir]);
+  }, [sortBy, sortDir, statutFilter, revendeurFilter, clientFilter, siteFilter]);
 
-  const totalPages = Math.ceil(TOTAL_CFG / 15);
+  const totalPages = Math.max(1, Math.ceil(sortedCfg.length / 15));
   const view = sortedCfg.slice((page - 1) * 15, page * 15);
 
   const setTopbarActions = React.useContext(TopbarActionsContext);
@@ -461,7 +534,7 @@ function ConfigurationsTab({ onOpenDetail }) {
         <RadioDropdown placeholder="Client" options={CLIENT_NAMES} value={clientFilter} onChange={setClientFilter} width={160} />
         <RadioDropdown placeholder="Site" options={SITES.map(s => s.label)} value={siteFilter} onChange={setSiteFilter} width={150} />
         <div className="grow" />
-        <Button variant="tertiary" icon="refresh-cw">Réinitialiser</Button>
+        <Button variant="tertiary" icon="refresh-cw" onClick={handleReset}>Réinitialiser</Button>
       </Toolbar>
       <TableBox>
         <table className="kap-table">
@@ -504,7 +577,7 @@ function ConfigurationsTab({ onOpenDetail }) {
           </tbody>
         </table>
       </TableBox>
-      <Pagination page={page} totalPages={totalPages} onChange={setPage} totalItems={TOTAL_CFG} perPage={15} />
+      <Pagination page={page} totalPages={totalPages} onChange={setPage} totalItems={sortedCfg.length} perPage={15} />
     </>
   );
 }
@@ -678,6 +751,15 @@ function EligDemandesScreen() {
 
   const eligDemFieldMap = { "Créée le": "creeLe", "Libellé": "libelle", "Statut": "statut", "Traitée le": "traiteLe" };
   function handleSortChange(field, dir) { setSortBy(field); setSortDir(dir); }
+  function handleReset() {
+    setRevendeurFilter(null);
+    setUtilisateurFilter(false);
+    setDateFilter(null);
+    setTypeFilter(null);
+    setStatutFilter(null);
+    setSortBy(null);
+    setSortDir("asc");
+  }
   const toSortableDate = (s) => { const p = String(s).split("/"); if (p.length < 3) return String(s); const y = p[2].split(" ")[0]; return `${y}/${p[1]}/${p[0]}`; };
   const sortedDemandes = React.useMemo(() => {
     let data = DEMANDES;
@@ -685,6 +767,12 @@ function EligDemandesScreen() {
     if (utilisateurFilter) data = data.filter(d => d.utilisateur === "Marie-Gabrielle Jendrian");
     if (typeFilter) data = data.filter(d => d.type === typeFilter);
     if (statutFilter) data = data.filter(d => d.statut === statutFilter);
+    if (dateFilter) {
+      const pdn = (s) => { const p = String(s).split("/"); if (p.length < 3) return NaN; return parseInt(p[2].split(" ")[0],10)*10000+parseInt(p[1],10)*100+parseInt(p[0],10); };
+      const deb = dateFilter.debut ? pdn(dateFilter.debut) : NaN;
+      const fin = dateFilter.fin ? pdn(dateFilter.fin) : NaN;
+      data = data.filter(d => { const n = pdn(d.creeLe||""); if(isNaN(n)) return true; if(!isNaN(deb)&&n<deb) return false; if(!isNaN(fin)&&n>fin) return false; return true; });
+    }
     const key = eligDemFieldMap[sortBy || "Créée le"];
     if (!key) return data;
     return [...data].sort((a, b) => {
@@ -693,9 +781,9 @@ function EligDemandesScreen() {
       const vb = isDateField ? toSortableDate(b[key] || "") : (b[key] || "");
       return sortDir === "asc" ? String(va).localeCompare(String(vb)) : String(vb).localeCompare(String(va));
     });
-  }, [revendeurFilter, utilisateurFilter, typeFilter, statutFilter, sortBy, sortDir]);
+  }, [revendeurFilter, utilisateurFilter, typeFilter, statutFilter, dateFilter, sortBy, sortDir]);
 
-  const totalPages = Math.ceil(TOTAL / perPage);
+  const totalPages = Math.max(1, Math.ceil(sortedDemandes.length / perPage));
   const view = sortedDemandes.slice((page - 1) * perPage, page * perPage);
 
   const setTopbarActions = React.useContext(TopbarActionsContext);
@@ -736,7 +824,7 @@ function EligDemandesScreen() {
         <RadioDropdown placeholder="Type de demande" options={["Unitaire","En masse"]} value={typeFilter} onChange={setTypeFilter} width={170} showSearch={false} />
         <RadioDropdown placeholder="Statut" options={["Créée","En cours","Terminée","En erreur","Annulée"]} value={statutFilter} onChange={setStatutFilter} width={130} showSearch={false} />
         <div className="grow" />
-        <Button variant="tertiary" icon="refresh-cw">Réinitialiser</Button>
+        <Button variant="tertiary" icon="refresh-cw" onClick={handleReset}>Réinitialiser</Button>
       </Toolbar>
       <TableBox>
         <table className="kap-table">
@@ -753,7 +841,7 @@ function EligDemandesScreen() {
           <tbody>
             {view.map(d => (
               <tr key={d.id} className="is-clickable">
-                <td style={{ color:"var(--kap-primary)", fontWeight:500 }}>{d.utilisateur}</td>
+                <td style={{ fontWeight:500 }}>{d.utilisateur}</td>
                 <td className="muted">{d.creeLe}</td>
                 <td>{d.libelle}</td>
                 <td>
@@ -823,19 +911,39 @@ function EligAdressesScreen() {
 
   const eligAddrFieldMap = { "Créée le": "creeLe", "Type de recherche": "type", "Données de la recherche": "donnees", "Libellé": "libelle", "Statut": "statut", "Testée le": "testeeLe" };
   function handleSortChange(field, dir) { setSortBy(field); setSortDir(dir); }
+  function handleReset() {
+    setRevendeurFilter(null);
+    setUtilisateurFilter2(false);
+    setDateFilter(null);
+    setTypeFilter(null);
+    setStatutFilter(null);
+    setSortBy(null);
+    setSortDir("asc");
+  }
   const toSortableDate = (s) => { const p = String(s).split("/"); if (p.length < 3) return String(s); const y = p[2].split(" ")[0]; return `${y}/${p[1]}/${p[0]}`; };
   const sortedAdresses = React.useMemo(() => {
+    let data = ADRESSES_ELIG;
+    if (revendeurFilter) data = data.filter(d => d.revendeur === revendeurFilter);
+    if (utilisateurFilter2) data = data.filter(d => d.utilisateur === "Marie-Gabrielle Jendrian");
+    if (typeFilter) data = data.filter(d => d.type === typeFilter);
+    if (statutFilter) data = data.filter(d => d.statut === statutFilter);
+    if (dateFilter) {
+      const pdn = (s) => { const p = String(s).split("/"); if (p.length < 3) return NaN; return parseInt(p[2].split(" ")[0],10)*10000+parseInt(p[1],10)*100+parseInt(p[0],10); };
+      const deb = dateFilter.debut ? pdn(dateFilter.debut) : NaN;
+      const fin = dateFilter.fin ? pdn(dateFilter.fin) : NaN;
+      data = data.filter(d => { const n = pdn(d.creeLe||""); if(isNaN(n)) return true; if(!isNaN(deb)&&n<deb) return false; if(!isNaN(fin)&&n>fin) return false; return true; });
+    }
     const key = eligAddrFieldMap[sortBy || "Créée le"];
-    if (!key) return ADRESSES_ELIG;
-    return [...ADRESSES_ELIG].sort((a, b) => {
+    if (!key) return data;
+    return [...data].sort((a, b) => {
       const isDateField = ["creeLe","testeeLe"].includes(key);
       const va = isDateField ? toSortableDate(a[key] || "") : (a[key] || "");
       const vb = isDateField ? toSortableDate(b[key] || "") : (b[key] || "");
       return sortDir === "asc" ? String(va).localeCompare(String(vb)) : String(vb).localeCompare(String(va));
     });
-  }, [sortBy, sortDir]);
+  }, [revendeurFilter, utilisateurFilter2, typeFilter, statutFilter, dateFilter, sortBy, sortDir]);
 
-  const totalPages = Math.ceil(TOTAL / perPage);
+  const totalPages = Math.max(1, Math.ceil(sortedAdresses.length / perPage));
   const view = sortedAdresses.slice((page - 1) * perPage, page * perPage);
 
   return (
@@ -870,7 +978,7 @@ function EligAdressesScreen() {
         <RadioDropdown placeholder="Type de recherche" options={["NDI","Code immeuble","Adresse","GPS"]} value={typeFilter} onChange={setTypeFilter} width={180} showSearch={false} />
         <RadioDropdown placeholder="Statut" options={["Créée","En cours","Terminée","En erreur","Annulée"]} value={statutFilter} onChange={setStatutFilter} width={130} showSearch={false} />
         <div className="grow" />
-        <Button variant="tertiary" icon="refresh-cw">Réinitialiser</Button>
+        <Button variant="tertiary" icon="refresh-cw" onClick={handleReset}>Réinitialiser</Button>
       </Toolbar>
       <TableBox>
         <table className="kap-table">
@@ -889,7 +997,7 @@ function EligAdressesScreen() {
           <tbody>
             {view.map(d => (
               <tr key={d.id} className="is-clickable">
-                <td style={{ color:"var(--kap-primary)", fontWeight:500 }}>{d.utilisateur}</td>
+                <td style={{ fontWeight:500 }}>{d.utilisateur}</td>
                 <td className="muted">{d.creeLe}</td>
                 <td className="muted">{d.type}</td>
                 <td className="mono muted">{d.donnees}</td>
@@ -1686,18 +1794,30 @@ function MatricesDecisionTab({ questFilter, onClearFilter }) {
 
   const matricesFieldMap = { "Nature": "nature", "Sujet": "sujet", "Type de cible": "cible", "Code catégorie Kali": "codeKali" };
   function handleSortChange(field, dir) { setSortBy(field); setSortDir(dir); }
+  function handleReset() {
+    setNatureFilter(null);
+    setSujetFilter(null);
+    setQuestionnaireFilter(null);
+    setSortBy(null);
+    setSortDir("asc");
+  }
 
   const sortedFiltered = React.useMemo(() => {
+    const lc = s => (s || "").toLowerCase();
     let data = filtered;
-    if (natureFilter) data = data.filter(m => m.nature === natureFilter);
-    if (sujetFilter) data = data.filter(m => m.sujet === sujetFilter);
+    if (natureFilter) data = data.filter(m => lc(m.nature) === lc(natureFilter));
+    if (sujetFilter) data = data.filter(m => lc(m.sujet) === lc(sujetFilter));
+    if (questionnaireFilter && typeof questionnaireFilter === "string") {
+      const q = QUESTIONNAIRES.find(q => q.libelle === questionnaireFilter);
+      if (q) data = data.slice(0, q.matrices);
+    }
     const key = matricesFieldMap[sortBy];
     if (!key) return data;
     return [...data].sort((a, b) => {
       const va = a[key] || ""; const vb = b[key] || "";
       return sortDir === "asc" ? String(va).localeCompare(String(vb)) : String(vb).localeCompare(String(va));
     });
-  }, [filtered, natureFilter, sujetFilter, sortBy, sortDir]);
+  }, [filtered, natureFilter, sujetFilter, questionnaireFilter, sortBy, sortDir]);
 
   const TOTAL = questLibelle ? filtered.length : 56;
   const totalPages = Math.max(1, Math.ceil(sortedFiltered.length / perPage));
@@ -1728,7 +1848,7 @@ function MatricesDecisionTab({ questFilter, onClearFilter }) {
         <RadioDropdown placeholder="Sujet" options={["Outil","Service","Commande"]} value={sujetFilter} onChange={setSujetFilter} width={130} showSearch={false} />
         <RadioDropdown placeholder="Questionnaire" options={QUESTIONNAIRES.map(q => q.libelle)} value={questionnaireFilter} onChange={setQuestionnaireFilter} width={170} />
         <div className="grow" />
-        <Button variant="tertiary" icon="refresh-cw">Réinitialiser</Button>
+        <Button variant="tertiary" icon="refresh-cw" onClick={handleReset}>Réinitialiser</Button>
       </Toolbar>
       <TableBox>
         <table className="kap-table">
@@ -1788,6 +1908,10 @@ function QuestionnaireTab({ onGoToMatrices }) {
 
   const questFieldMap = { "Libellé": "libelle" };
   function handleSortChange(field, dir) { setSortBy(field); setSortDir(dir); }
+  function handleReset() {
+    setSortBy(null);
+    setSortDir("asc");
+  }
 
   const sorted = React.useMemo(() => {
     const key = questFieldMap[sortBy];
@@ -1807,7 +1931,7 @@ function QuestionnaireTab({ onGoToMatrices }) {
         <RadioDropdown placeholder="Trier" options={["Dernière modification","Libellé"]} value={sortBy} onChange={setSortBy} onSortChange={handleSortChange} width={100} showSearch={false} showRadio={false} sortMode={true} />
         <Input placeholder="Rechercher par libellé" width={360} />
         <div className="grow" />
-        <Button variant="tertiary" icon="refresh-cw">Réinitialiser</Button>
+        <Button variant="tertiary" icon="refresh-cw" onClick={handleReset}>Réinitialiser</Button>
       </Toolbar>
       <TableBox>
         <table className="kap-table">
@@ -1846,13 +1970,27 @@ function QuestionnaireTab({ onGoToMatrices }) {
 }
 
 const REGLES_SERVICE = [
-  { nom: "2 - Cinet" },      { nom: "3 - Cvoice" },       { nom: "43 - Colocation" },
-  { nom: "44 - Connectivité" }, { nom: "10 - Option Centrex" }, { nom: "11 - Option Cinet" },
-  { nom: "23 - Option Cvoice" }, { nom: "12 - Option Lien" },  { nom: "21 - Option routeur" },
-  { nom: "30 - Option VM" }, { nom: "8 - SDA IP" },        { nom: "9 - SDA RNIS" },
-  { nom: "98 - Services SAAS" }, { nom: "45 - Stockage" },  { nom: "7 - Voix fixe" },
-  { nom: "5 - Mobile" },    { nom: "6 - Hébergement" },    { nom: "13 - Option VM Pro" },
-  { nom: "14 - Option Cloud" }, { nom: "15 - Trunk SIP" },  { nom: "16 - Centrex" },
+  { nom: "2 - Cinet",            action: "Exclure",     type: "Famille" },
+  { nom: "3 - Cvoice",           action: "Exclure",     type: "Famille" },
+  { nom: "43 - Colocation",      action: "Dédupliquer", type: "Sous-famille" },
+  { nom: "44 - Connectivité",    action: "Dédupliquer", type: "Famille" },
+  { nom: "10 - Option Centrex",  action: "Exclure",     type: "Article" },
+  { nom: "11 - Option Cinet",    action: "Exclure",     type: "Article" },
+  { nom: "23 - Option Cvoice",   action: "Dédupliquer", type: "Article" },
+  { nom: "12 - Option Lien",     action: "Exclure",     type: "Sous-famille" },
+  { nom: "21 - Option routeur",  action: "Dédupliquer", type: "Article" },
+  { nom: "30 - Option VM",       action: "Exclure",     type: "Article" },
+  { nom: "8 - SDA IP",           action: "Exclure",     type: "Famille" },
+  { nom: "9 - SDA RNIS",         action: "Dédupliquer", type: "Famille" },
+  { nom: "98 - Services SAAS",   action: "Exclure",     type: "Sous-famille" },
+  { nom: "45 - Stockage",        action: "Dédupliquer", type: "Sous-famille" },
+  { nom: "7 - Voix fixe",        action: "Exclure",     type: "Famille" },
+  { nom: "5 - Mobile",           action: "Dédupliquer", type: "Famille" },
+  { nom: "6 - Hébergement",      action: "Exclure",     type: "Sous-famille" },
+  { nom: "13 - Option VM Pro",   action: "Dédupliquer", type: "Article" },
+  { nom: "14 - Option Cloud",    action: "Exclure",     type: "Article" },
+  { nom: "15 - Trunk SIP",       action: "Exclure",     type: "Famille" },
+  { nom: "16 - Centrex",         action: "Dédupliquer", type: "Famille" },
 ];
 const REGLE_DATE = "14/04/2026 - 14:02:47";
 
@@ -1866,14 +2004,23 @@ function ReglesServiceTab() {
 
   const reglesFieldMap = { "Dernière modification": "nom", "Action": "nom", "Type": "nom", "Nom": "nom" };
   function handleSortChange(field, dir) { setSortBy(field); setSortDir(dir); }
+  function handleReset() {
+    setActionFilter([]);
+    setTypeFilter([]);
+    setSortBy(null);
+    setSortDir("asc");
+  }
   const sortedRegles = React.useMemo(() => {
+    let data = REGLES_SERVICE;
+    if (actionFilter && actionFilter.length > 0) data = data.filter(r => actionFilter.includes(r.action));
+    if (typeFilter && typeFilter.length > 0) data = data.filter(r => typeFilter.includes(r.type));
     const key = reglesFieldMap[sortBy || "Nom"];
-    if (!key) return REGLES_SERVICE;
-    return [...REGLES_SERVICE].sort((a, b) => {
+    if (!key) return data;
+    return [...data].sort((a, b) => {
       const va = a[key] || ""; const vb = b[key] || "";
       return sortDir === "asc" ? String(va).localeCompare(String(vb)) : String(vb).localeCompare(String(va));
     });
-  }, [sortBy, sortDir]);
+  }, [actionFilter, typeFilter, sortBy, sortDir]);
 
   const totalPages = Math.max(1, Math.ceil(sortedRegles.length / perPage));
   const view = sortedRegles.slice((page - 1) * perPage, page * perPage);
@@ -1893,7 +2040,7 @@ function ReglesServiceTab() {
         <RadioDropdown placeholder="Action" options={["Exclure","Dédupliquer"]} value={actionFilter} onChange={setActionFilter} width={130} showSearch={false} multiSelect={true} />
         <RadioDropdown placeholder="Type" options={["Famille","Sous-famille","Article"]} value={typeFilter} onChange={setTypeFilter} width={120} showSearch={false} multiSelect={true} />
         <div className="grow" />
-        <Button variant="tertiary" icon="refresh-cw">Réinitialiser</Button>
+        <Button variant="tertiary" icon="refresh-cw" onClick={handleReset}>Réinitialiser</Button>
       </Toolbar>
       <TableBox>
         <table className="kap-table">
@@ -1910,8 +2057,8 @@ function ReglesServiceTab() {
             {view.map((r, i) => (
               <tr key={i} className="is-clickable">
                 <td className="muted">{REGLE_DATE}</td>
-                <td className="muted">Exclure</td>
-                <td className="muted">Famille</td>
+                <td className="muted">{r.action}</td>
+                <td className="muted">{r.type}</td>
                 <td>{r.nom}</td>
                 <td><Tooltip text="Supprimer la règle" placement="top-end"><IconButton icon="x" /></Tooltip></td>
               </tr>

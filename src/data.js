@@ -51,6 +51,38 @@ const CLIENT_NAMES = [
   "Domaine de Belair","SARL Briques & Bâtiments","Restaurant Le Glacier","Crèche les Lutins",
 ];
 
+const CLIENT_SITE_MAP = {
+  "Cabinet Mercier & Associés":     "Siège Bordeaux",
+  "Boulangerie Dupuis":              "Agence Paris",
+  "Logitrans Express":               "Boutique Lyon",
+  "Pharmacie de la Gare":            "Entrepôt Marseille",
+  "Studio Aurore":                   "Bureaux Rennes",
+  "Atelier Métal Bleu":              "Showroom Strasbourg",
+  "Cuisines Vallée":                 "Atelier Nantes",
+  "ImmoConcept":                     "Dépôt Lille",
+  "Garage Saint-Michel":             "Siège Toulouse",
+  "SCI Les Pléiades":                "Agence Nice",
+  "Hôtel Beauséjour":                "Boutique Montpellier",
+  "Clinique vétérinaire Lavoisier":  "Entrepôt Saint-Étienne",
+  "Optique Vision Plus":             "Bureaux Reims",
+  "Boucherie Charcuterie Lemoine":   "Showroom Dijon",
+  "Maison Verte Paysagiste":         "Atelier Angers",
+  "Cabinet Notarial Vasseur":        "Dépôt Le Mans",
+  "Domaine de Belair":               "Siège Tours",
+  "SARL Briques & Bâtiments":        "Agence Pau",
+  "Restaurant Le Glacier":           "Boutique Versailles",
+  "Crèche les Lutins":               "Entrepôt Le Havre",
+};
+
+const SITES_FIXED = [
+  "Siège Bordeaux","Agence Paris","Boutique Lyon","Entrepôt Marseille",
+  "Bureaux Rennes","Showroom Strasbourg","Atelier Nantes","Dépôt Lille",
+  "Siège Toulouse","Agence Nice","Boutique Montpellier","Entrepôt Saint-Étienne",
+  "Bureaux Reims","Showroom Dijon","Atelier Angers","Dépôt Le Mans",
+  "Siège Tours","Agence Pau","Boutique Versailles","Entrepôt Le Havre",
+  "Bureaux Bordeaux","Showroom Paris","Atelier Lyon","Dépôt Marseille",
+];
+
 const SITES_LABELS = ["Siège","Agence","Boutique","Entrepôt","Bureaux","Showroom","Atelier","Dépôt"];
 const VILLES_CP = [
   { ville: "Bordeaux",      cp: "33000" },
@@ -189,6 +221,7 @@ const CLIENTS = CLIENT_NAMES.flatMap((nom, i) => ({
   codeArtis: `${pad(100000 + i * 37, 6)}`,
   codesArtisSecondaires: i % 3 === 0 ? "" : [`${pad(200000 + i * 13, 6)}`, ...(i % 3 === 2 ? [`${pad(300000 + i * 7, 6)}`] : [])].join(", "),
   revendeur: REVENDEURS[i % REVENDEURS.length].nom,
+  site: CLIENT_SITE_MAP[nom],
   ville: VILLES[i % VILLES.length],
   sites: 1 + (i % 5),
   services: 2 + ((i * 3) % 18),
@@ -201,7 +234,7 @@ const SITES = Array.from({ length: 24 }).map((_, i) => {
   const loc = VILLES_CP[i % VILLES_CP.length];
   return {
     id: `${pad(10000 + i, 5)}`,
-    label: `${SITES_LABELS[i % SITES_LABELS.length]} ${loc.ville}`,
+    label: SITES_FIXED[i],
     client: c.nom,
     siret: c.siret,
     revendeur: c.revendeur,
@@ -233,7 +266,7 @@ const SERVICES = Array.from({ length: 18 }).map((_, i) => {
     ][i % 7],
     revendeur: c.revendeur,
     client: c.nom,
-    site: s.label,
+    site: CLIENT_SITE_MAP[c.nom],
     reference: `KP-${pad(50000 + i * 13, 6)}`,
     debit: pick(["100 Mb/s","1 Gb/s","20 Mb/s","500 Mb/s","2 Gb/s","—"]),
     statut: [
@@ -284,7 +317,7 @@ const SUBSCRIBERS = Array.from({ length: 18 }).map((_, i) => {
     revendeur: c.revendeur,
     utilisateur: `${pick(FIRST)} ${pick(LAST).toUpperCase()}`,
     type: MOB_TYPES[i % MOB_TYPES.length],
-    site: `${SITES_LABELS[i % SITES_LABELS.length]} ${VILLES[i % VILLES.length]}`,
+    site: CLIENT_SITE_MAP[c.nom],
     forfait: FORFAITS[i % FORFAITS.length],
     etatAbo: ETAT_ABO[i % ETAT_ABO.length],
     etatProd: ETAT_PROD[i % ETAT_PROD.length],
@@ -339,7 +372,7 @@ const ACCESS_LINKS = Array.from({ length: 16 }).map((_, i) => {
     reference: `KP-LIN-${pad(50000 + i, 6)}`,
     client: c.nom,
     revendeur: c.revendeur,
-    site: `${SITES_LABELS[i % SITES_LABELS.length]} ${VILLES[i % VILLES.length]}`,
+    site: CLIENT_SITE_MAP[c.nom],
     numero: `+33 6 ${pad(10 + (i*7) % 89)} ${pad(20 + (i*3) % 79)} ${pad(30 + (i*11) % 69)} ${pad(40 + (i*5) % 59)}`,
     iccid: `8933 0123 4567 ${pad(9200 + i, 4)}`,
     nomLien: NOMS_LIEN[i % NOMS_LIEN.length],
@@ -369,7 +402,7 @@ const ACCESS_ORDERS = Array.from({ length: 12 }).map((_, i) => {
     iccid: `8933 0123 4567 ${pad(9300 + i, 4)}`,
     numero: `+33 6 ${pad(10 + (i*7) % 89)} ${pad(20 + (i*3) % 79)} ${pad(30 + (i*11) % 69)} ${pad(40 + (i*5) % 59)}`,
     etatCommande: ETAT_COMMANDES[i % ETAT_COMMANDES.length],
-    site: `${SITES_LABELS[i % SITES_LABELS.length]} ${VILLES[i % VILLES.length]}`,
+    site: CLIENT_SITE_MAP[c.nom],
     technologie: pick(["FTTH","FTTO","SDSL","4G FWA"]),
     statut: i % 4 === 0 ? { label: "Livrée",     color: "#2E7D32" }
           : i % 4 === 1 ? { label: "Étude",      color: "#0288D1" }
@@ -410,7 +443,7 @@ const TRUNK_SIP = Array.from({ length: 14 }).map((_, i) => {
     id: `TRK-${pad(5000 + i, 5)}`,
     client: c.nom,
     revendeur: c.revendeur,
-    site: s.label,
+    site: CLIENT_SITE_MAP[c.nom],
     numeroDeCharge: `09 ${pad(10 + (i*7) % 89)} ${pad(20 + (i*3) % 79)} ${pad(30 + (i*11) % 69)} ${pad(40 + (i*5) % 59)}`,
     offre: OFFRES_TRUNK[i % OFFRES_TRUNK.length],
     canaux: pick([4, 8, 8, 16, 32]),
@@ -461,7 +494,7 @@ const PORTABILITES = Array.from({ length: 18 }).map((_, i) => {
     revendeur: c.revendeur,
     typeCommande: ["—","Partielle simple","Partielle simple","Complète","—","Partielle simple","Complète","Partielle simple"][i % 8],
     numero: `0${[4,4,2,4,4,9][i % 6]} ${pad(70 + (i*7)%20)} ${pad(78 + i%10)} ${pad(70 + i%20)} ${pad(10 + i%40)}`,
-    datePortabilite: `${pad(15+(i%14))}/${pad(2+(i%10))}/2026 - 10:${pad(10+i*3%50)}`,
+    datePortabilite: `${pad(15+(i%14))}/${pad(2+(i%10))}/2025 - 10:${pad(10+i*3%50)}`,
     etatCommande: etat,
     hasPortType: i % 3 !== 2,
     statutPortabilite: PORT_STATUTS[i % PORT_STATUTS.length],
@@ -548,7 +581,7 @@ const REPORTING_LOGS = Array.from({ length: 100 }).map((_, i) => ({
   numeroAffaire: i % 5 === 0 ? `${190000000 + i * 4343}` : "—",
   dateAction: `${pad(1+(i%28))}/${pad(1+(i%12))}/2026 - ${pad(2+(i*7)%22)}:${pad(i*3%60)}:${pad(10+i%50)}`,
   revendeur: RPT_REVENDEURS[i % RPT_REVENDEURS.length],
-  client: RPT_CLIENTS[i % RPT_CLIENTS.length],
+  client: CLIENT_NAMES[i % CLIENT_NAMES.length],
   utilisateur: RPT_USERS[i % RPT_USERS.length],
   telephone: RPT_TEL[i % RPT_TEL.length],
   article: RPT_ARTICLES[i % RPT_ARTICLES.length],
@@ -568,7 +601,7 @@ const TKT_SUJETS = [
   "Demande de SDA supplémentaire","Migration carte SIM","Reconfiguration VLAN","Trafic mobile bloqué",
 ];
 const TKT_ETATS = ["Nouveau","Assigné","Pris en compte","Clôturé - résolu","En cours","En attente d'informations"];
-const TKT_CRITICITES = ["Bloqué","Critique","Mineur","Majeur","Majeur","Mineur","Critique","Mineur"];
+const TKT_CRITICITES = ["Bloquant","Critique","Mineur","Majeur","Majeur","Mineur","Critique","Mineur"];
 const TKT_NATURES = ["Incident","Incident","Incident","Demande","Incident","Incident","Incident","Demande"];
 const TKT_REVENDEURS = ["2IT Solutions","Koesio AURA TELECOM","Koesio NETWORKS","Koesio PACA","2IT Solutions"];
 const TKT_CLIENTS = ["2IT SOLUTION","1DEPENDANCE IMMOBILIER","CTC","ACTIFORGE","KOESIO NETWORKS","DEPARTEMENT DE LA DROME","DEPARTEMENT DE L ARDECHE","SDIS 07","CROIX ROUGE FRANCAISE","CE COUCOU...","CE STE EUL..."];
@@ -583,8 +616,8 @@ const TICKETS = Array.from({ length: 50 }).map((_, i) => ({
   nature: TKT_NATURES[i % TKT_NATURES.length],
   origineAuto: TKT_SUJETS[i % TKT_SUJETS.length].includes("[PROAC]") ? true : i % 3 === 1,
   revendeur: TKT_REVENDEURS[i % TKT_REVENDEURS.length],
-  client: TKT_CLIENTS[i % TKT_CLIENTS.length],
-  site: TKT_SITES[i % TKT_SITES.length],
+  client: CLIENT_NAMES[i % CLIENT_NAMES.length],
+  site: CLIENT_SITE_MAP[CLIENT_NAMES[i % CLIENT_NAMES.length]],
   dateCreation: `${pad(1+(i%28))}/05/2026 - ${pad(7+(i*7)%16)}:${pad(i*3%60)}:${pad(10+i%50)}`,
   sla: pick(["4 h","8 h","24 h","48 h","—"]),
 }));
@@ -595,7 +628,7 @@ const EQUIPMENTS = Array.from({ length: 14 }).map((_, i) => {
     id: `EQP-${pad(13000 + i, 5)}`,
     nom: pick(["Routeur Cisco ISR","Switch HP","Borne wifi","Box Pro","Firewall Fortinet","ONT","IPBX"]) + ` #${1+i}`,
     client: c.nom,
-    site: `${SITES_LABELS[i % SITES_LABELS.length]} ${VILLES[i % VILLES.length]}`,
+    site: CLIENT_SITE_MAP[c.nom],
     ip: `10.${pad(1+i)}.${pad(10+i*3 % 250)}.${pad(1+i*7 % 250)}`,
     firmware: `v${pad(1+i%9)}.${pad(2+i%9)}.${pad(0+i%30)}`,
     etat: i % 11 === 10 ? { label: "Hors ligne", color: "#D32F2F" }
@@ -623,8 +656,8 @@ const CONFIGURATIONS = Array.from({ length: 100 }).map((_, i) => {
     statut: archived ? "Archivée" : "Active",
     dateArchivage: archived ? `${pad(1+(i%28))}/${pad(1+(i%3))}/202${5+(i%2)} - ${pad(10+(i%6))}:${pad(i*2%60)}` : "",
     revendeur: CFG_REVENDEURS[i % CFG_REVENDEURS.length],
-    client: CFG_CLIENTS[i % CFG_CLIENTS.length],
-    site: CFG_SITES[i % CFG_SITES.length],
+    client: CLIENT_NAMES[i % CLIENT_NAMES.length],
+    site: CLIENT_SITE_MAP[CLIENT_NAMES[i % CLIENT_NAMES.length]],
     service: CFG_SERVICES[i % CFG_SERVICES.length],
   };
 });
@@ -646,9 +679,9 @@ const TICKETS_ARCHIVES = Array.from({ length: 100 }).map((_, i) => ({
   symptome: ARCH_SYMPTOMES[i % ARCH_SYMPTOMES.length],
   etat: ARCH_ETATS[i % ARCH_ETATS.length],
   revendeur: ARCH_REVENDEURS[i % ARCH_REVENDEURS.length],
-  client: ARCH_CLIENTS[i % ARCH_CLIENTS.length],
+  client: CLIENT_NAMES[i % CLIENT_NAMES.length],
   codeArtis: ARCH_CODES_ARTIS[i % ARCH_CODES_ARTIS.length],
-  site: ARCH_SITES[i % ARCH_SITES.length],
+  site: CLIENT_SITE_MAP[CLIENT_NAMES[i % CLIENT_NAMES.length]],
   typeDIT: ARCH_TYPES_DIT[i % ARCH_TYPES_DIT.length],
 }));
 
@@ -671,8 +704,10 @@ Object.assign(window, {
   SUBSCRIBERS, MOBILE_ORDERS,
   ACCESS_LINKS, ACCESS_ORDERS,
   VOICE_SPACES, TRUNK_SIP, TRUNK_ORDERS, PORTABILITES, NUMBERS,
-  ORDERS, REPORTING_KPIS,
-  TICKETS, EQUIPMENTS,
+  ORDERS, REPORTING_KPIS, REPORTING_LOGS,
+  TICKETS, TICKETS_ARCHIVES, EQUIPMENTS,
+  CONFIGURATIONS,
   ELIGIBILITY_RESULTS,
   STATUTS_HTTP,
+  CLIENT_SITE_MAP,
 });

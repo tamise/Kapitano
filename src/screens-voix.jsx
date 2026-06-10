@@ -35,18 +35,21 @@ function EspacesTab({ onOpenDetail }) {
 
   const espacesFieldMap = { "Date de création": "dateCreation", "ID": "id", "Revendeur": "revendeur", "Client": "client", "Nom client Enove": "nomClientEnove" };
   function handleSortChange(field, dir) { setSortBy(field); setSortDir(dir); }
+  function handleReset() { setSortBy(null); setSortDir("asc"); setRevendeurFilter(null); }
 
   const sorted = React.useMemo(() => {
+    let data = VOICE_SPACES;
+    if (revendeurFilter) data = data.filter(v => v.revendeur === revendeurFilter);
     const key = espacesFieldMap[sortBy || "Date de création"];
-    if (!key) return VOICE_SPACES;
+    if (!key) return data;
     const toSortableDate = (s) => { const p = String(s).split("/"); if (p.length < 3) return String(s); const y = p[2].split(" ")[0]; return `${y}/${p[1]}/${p[0]}`; };
-    return [...VOICE_SPACES].sort((a, b) => {
+    return [...data].sort((a, b) => {
       const isDateField = ["dateCreation"].includes(key);
       const va = isDateField ? toSortableDate(a[key] || "") : (a[key] || "");
       const vb = isDateField ? toSortableDate(b[key] || "") : (b[key] || "");
       return sortDir === "asc" ? String(va).localeCompare(String(vb)) : String(vb).localeCompare(String(va));
     });
-  }, [sortBy, sortDir]);
+  }, [sortBy, sortDir, revendeurFilter]);
 
   const totalPages = Math.max(1, Math.ceil(sorted.length / 15));
   return (
@@ -56,7 +59,7 @@ function EspacesTab({ onOpenDetail }) {
         <Input placeholder="Rechercher par client ou id de production" width={360} />
         <RadioDropdown placeholder="Revendeur" options={["2IT SOLUTIONS","ABC TELECOMS","ADV","AXIUM SOLUTIONS","CIS VALLEY","GROUPE TELECOMS DE L'OUEST GTO","IPNEOS","KOESIO AQUITAINE","KOESIO AURA INFO (VD)","KOESIO AURA INFO (VDI)","KOESIO AURA TELECOM","KOESIO AUSTRALIA","KOESIO CENTRE EST","KOESIO CORPORATE IT","KOESIO EST","KOESIO GRAND EST","KOESIO IDF","KOESIO MANAGED SERVICES","KOESIO MEDITERRANNEE","KOESIO NETWORKS","KOESIO NORD OUEST","KOESIO OCCITANIE","KOESIO OCCITANIE BPA","KOESIO OUEST","KOESIO PACA","KOESIO PACA TELECOMS","KOESIO SUD ALLIANCE","KOESIO SUISSE","ONE OPERATEUR","Production","S-WAN IP"]} value={revendeurFilter} onChange={setRevendeurFilter} width={190} />
         <div className="grow" />
-        <Button variant="tertiary" icon="refresh-cw">Réinitialiser</Button>
+        <Button variant="tertiary" icon="refresh-cw" onClick={handleReset}>Réinitialiser</Button>
       </Toolbar>
       <TableBox>
         <table className="kap-table">
@@ -106,6 +109,7 @@ function TrunkTab({ onOpenDetail }) {
 
   const trunkFieldMap = { "Revendeur": "revendeur", "Client": "client", "Site": "site", "Numéro de charge": "numeroDeCharge", "Offre": "offre", "Canaux": "canaux", "État prod.": "etatProd", "État facturation": "etatFactu" };
   function handleSortChange(field, dir) { setSortBy(field); setSortDir(dir); }
+  function handleReset() { setSortBy(null); setSortDir("asc"); setRevendeurFilter(null); setClientFilter(null); setOffreFilter(null); setEtatFactuFilter(null); setEtatProdFilter([]); }
 
   const sorted = React.useMemo(() => {
     let data = TRUNK_SIP;
@@ -148,7 +152,7 @@ function TrunkTab({ onOpenDetail }) {
         <RadioDropdown placeholder="Etat factu." options={["Actif","Inactif","En cours d'activation","En cours de désactivation"]} value={etatFactuFilter} onChange={setEtatFactuFilter} width={140} showSearch={false} />
         <RadioDropdown placeholder="État prod." options={["Commandé","Création en cours","Actif","Résilié"]} value={etatProdFilter} onChange={setEtatProdFilter} width={150} showSearch={false} multiSelect={true} />
         <div className="grow" />
-        <Button variant="tertiary" icon="refresh-cw">Réinitialiser</Button>
+        <Button variant="tertiary" icon="refresh-cw" onClick={handleReset}>Réinitialiser</Button>
       </Toolbar>
       <TableBox>
         <table className="kap-table">
@@ -218,17 +222,24 @@ function TrunkOrdersTab({ onOpenDetail }) {
 
   const trunkOrderFieldMap = { "Date": "dateCommande", "Réf": "ref", "Revendeur": "revendeur", "Client": "client", "Type commande": "typeCommande", "Numéro de charge": "numeroDeCharge", "État commande": "etatCommande" };
   function handleSortChange(field, dir) { setSortBy(field); setSortDir(dir); }
+  function handleReset() { setSortBy(null); setSortDir("asc"); setRevendeurFilter(null); setClientFilter(null); setOffreFilter(null); setTypeFilter([]); setEtatFilter([]); }
   const toSortableDate = (s) => { const p = String(s).split("/"); if (p.length < 3) return String(s); const y = p[2].split(" ")[0]; return `${y}/${p[1]}/${p[0]}`; };
   const sorted = React.useMemo(() => {
+    let data = TRUNK_ORDERS;
+    if (revendeurFilter) data = data.filter(o => o.revendeur === revendeurFilter);
+    if (clientFilter) data = data.filter(o => o.client === clientFilter);
+    if (offreFilter) data = data.filter(o => o.typeOffre === offreFilter);
+    if (typeFilter && typeFilter.length) data = data.filter(o => typeFilter.includes(o.typeCommande));
+    if (etatFilter && etatFilter.length) data = data.filter(o => etatFilter.includes(o.etatCommande));
     const key = trunkOrderFieldMap[sortBy || "Date"];
-    if (!key) return TRUNK_ORDERS;
-    return [...TRUNK_ORDERS].sort((a, b) => {
+    if (!key) return data;
+    return [...data].sort((a, b) => {
       const isDateField = ["dateCommande"].includes(key);
       const va = isDateField ? toSortableDate(a[key] || "") : (a[key] || "");
       const vb = isDateField ? toSortableDate(b[key] || "") : (b[key] || "");
       return sortDir === "asc" ? String(va).localeCompare(String(vb)) : String(vb).localeCompare(String(va));
     });
-  }, [sortBy, sortDir]);
+  }, [sortBy, sortDir, revendeurFilter, clientFilter, offreFilter, typeFilter, etatFilter]);
 
   const totalPages = Math.max(1, Math.ceil(sorted.length / 15));
   return (
@@ -242,7 +253,7 @@ function TrunkOrdersTab({ onOpenDetail }) {
         <RadioDropdown placeholder="Type commande" options={["Création","Modification","Résiliation"]} value={typeFilter} onChange={setTypeFilter} width={170} showSearch={false} multiSelect={true} />
         <RadioDropdown placeholder="État commande" options={["En brouillon","Programmée","Crée","Annulation en cours","Annulée","En cours","En cours (erreur)","Incident en cours","En attente","Terminée avec succès","Terminée avec erreur"]} value={etatFilter} onChange={setEtatFilter} width={170} showSearch={false} multiSelect={true} />
         <div className="grow" />
-        <Button variant="tertiary" icon="refresh-cw">Réinitialiser</Button>
+        <Button variant="tertiary" icon="refresh-cw" onClick={handleReset}>Réinitialiser</Button>
       </Toolbar>
       <TableBox>
         <table className="kap-table">
@@ -288,7 +299,7 @@ function TrunkOrdersTab({ onOpenDetail }) {
           </tbody>
         </table>
       </TableBox>
-      <Pagination page={page} totalPages={totalPages} onChange={setPage} totalItems={TRUNK_ORDERS.length} perPage={15} />
+      <Pagination page={page} totalPages={totalPages} onChange={setPage} totalItems={sorted.length} perPage={15} />
     </>
   );
 }
@@ -340,18 +351,46 @@ function PortabiliteTab({ onOpenDetail }) {
 
   const portFieldMap = { "Créée le": "dateCreation", "Réf": "ref", "Revendeur": "revendeur", "Client": "client", "Type commande": "typeCommande", "Date de portabilité": "datePortabilite", "État commande": "etatCommande" };
   function handleSortChange(field, dir) { setSortBy(field); setSortDir(dir); }
+  function handleReset() { setSortBy(null); setSortDir("asc"); setDateFilter(null); setRevendeurFilter(null); setClientFilter(null); setFiabilisationOn(false); setUtilisateurFilter(null); }
   const toSortableDate = (s) => { const p = String(s).split("/"); if (p.length < 3) return String(s); const y = p[2].split(" ")[0]; return `${y}/${p[1]}/${p[0]}`; };
-  const filtered = PORTABILITES.filter(p => p.etatCommande === activeTab);
+  const parseDateNum = (s) => {
+    const parts = String(s).split("/");
+    if (parts.length < 3) return NaN;
+    const d = parseInt(parts[0], 10), m = parseInt(parts[1], 10), y = parseInt(parts[2].split(" ")[0], 10);
+    if (isNaN(d) || isNaN(m) || isNaN(y)) return NaN;
+    return y * 10000 + m * 100 + d;
+  };
+
+  const filteredAll = React.useMemo(() => {
+    let data = PORTABILITES;
+    if (revendeurFilter) data = data.filter(p => p.revendeur === revendeurFilter);
+    if (clientFilter) data = data.filter(p => p.client === clientFilter);
+    if (utilisateurFilter) data = data.filter(p => p.initiales === utilisateurFilter);
+    if (dateFilter && (dateFilter.debut || dateFilter.fin)) {
+      const debNum = dateFilter.debut ? parseDateNum(dateFilter.debut) : NaN;
+      const finNum = dateFilter.fin ? parseDateNum(dateFilter.fin) : NaN;
+      data = data.filter(p => {
+        const d = parseDateNum(p.datePortabilite || "");
+        if (isNaN(d)) return true;
+        if (!isNaN(debNum) && d < debNum) return false;
+        if (!isNaN(finNum) && d > finNum) return false;
+        return true;
+      });
+    }
+    return data;
+  }, [revendeurFilter, clientFilter, utilisateurFilter, dateFilter]);
+
   const sorted = React.useMemo(() => {
+    let data = filteredAll.filter(p => p.etatCommande === activeTab);
     const key = portFieldMap[sortBy || "Créée le"];
-    if (!key) return filtered;
-    return [...filtered].sort((a, b) => {
+    if (!key) return data;
+    return [...data].sort((a, b) => {
       const isDateField = ["dateCreation","datePortabilite"].includes(key);
       const va = isDateField ? toSortableDate(a[key] || "") : (a[key] || "");
       const vb = isDateField ? toSortableDate(b[key] || "") : (b[key] || "");
       return sortDir === "asc" ? String(va).localeCompare(String(vb)) : String(vb).localeCompare(String(va));
     });
-  }, [filtered, sortBy, sortDir]);
+  }, [filteredAll, activeTab, sortBy, sortDir]);
 
   const totalPages = Math.max(1, Math.ceil(sorted.length / 15));
   const view = sorted.slice((page - 1) * 15, page * 15);
@@ -385,7 +424,7 @@ function PortabiliteTab({ onOpenDetail }) {
         </div>
         <RadioDropdown placeholder="Utilisateur" options={["BP","DH","MC","AL","RP"]} value={utilisateurFilter} onChange={setUtilisateurFilter} width={140} showSearch={false} />
         <div className="grow" />
-        <Button variant="tertiary" icon="refresh-cw">Réinitialiser</Button>
+        <Button variant="tertiary" icon="refresh-cw" onClick={handleReset}>Réinitialiser</Button>
       </Toolbar>
 
       {/* Onglets */}
@@ -397,7 +436,7 @@ function PortabiliteTab({ onOpenDetail }) {
             <Icon name={t.icon} size={15} />
             {t.label}
             <span style={{ background: "var(--kap-primary)", color: "#fff", borderRadius: 99, padding: "1px 6px", fontSize: 11, fontWeight: 700 }}>
-              {PORTABILITES.filter(p => p.etatCommande === t.label).length}
+              {filteredAll.filter(p => p.etatCommande === t.label).length}
             </span>
           </div>
         ))}
@@ -448,7 +487,7 @@ function PortabiliteTab({ onOpenDetail }) {
           </tbody>
         </table>
       </TableBox>
-      <Pagination page={page} totalPages={totalPages} onChange={setPage} totalItems={filtered.length} perPage={15} />
+      <Pagination page={page} totalPages={totalPages} onChange={setPage} totalItems={sorted.length} perPage={15} />
     </>
   );
 }
@@ -462,11 +501,15 @@ function NumbersTab({ onOpenDetail, variant }) {
 
   const numbersFieldMap = { "Date de création": "dateCreation", "Taille de la plage": "taillePlage" };
   function handleSortChange(field, dir) { setSortBy(field); setSortDir(dir); }
+  function handleReset() { setSortBy(null); setSortDir("asc"); setRevendeurFilter(null); setClientFilter(null); }
   const toSortableDate = (s) => { const p = String(s).split("/"); if (p.length < 3) return String(s); const y = p[2].split(" ")[0]; return `${y}/${p[1]}/${p[0]}`; };
   const sorted = React.useMemo(() => {
+    let data = NUMBERS;
+    if (revendeurFilter) data = data.filter(n => n.revendeur === revendeurFilter);
+    if (clientFilter) data = data.filter(n => n.client === clientFilter);
     const key = numbersFieldMap[sortBy || "Date de création"];
-    if (!key) return NUMBERS;
-    return [...NUMBERS].sort((a, b) => {
+    if (!key) return data;
+    return [...data].sort((a, b) => {
       const isDateField = ["dateCreation"].includes(key);
       if (key === "taillePlage") {
         const va = Number(a[key]) || 0; const vb = Number(b[key]) || 0;
@@ -476,7 +519,7 @@ function NumbersTab({ onOpenDetail, variant }) {
       const vb = isDateField ? toSortableDate(b[key] || "") : (b[key] || "");
       return sortDir === "asc" ? String(va).localeCompare(String(vb)) : String(vb).localeCompare(String(va));
     });
-  }, [sortBy, sortDir]);
+  }, [sortBy, sortDir, revendeurFilter, clientFilter]);
 
   const totalPages = Math.max(1, Math.ceil(sorted.length / 15));
   const setTopbarActions = React.useContext(TopbarActionsContext);
@@ -494,7 +537,7 @@ function NumbersTab({ onOpenDetail, variant }) {
         <RadioDropdown placeholder="Revendeur" options={["2IT SOLUTIONS","ABC TELECOMS","ADV","AXIUM SOLUTIONS","CIS VALLEY","GROUPE TELECOMS DE L'OUEST GTO","IPNEOS","KOESIO AQUITAINE","KOESIO AURA INFO (VD)","KOESIO AURA INFO (VDI)","KOESIO AURA TELECOM","KOESIO AUSTRALIA","KOESIO CENTRE EST","KOESIO CORPORATE IT","KOESIO EST","KOESIO GRAND EST","KOESIO IDF","KOESIO MANAGED SERVICES","KOESIO MEDITERRANNEE","KOESIO NETWORKS","KOESIO NORD OUEST","KOESIO OCCITANIE","KOESIO OCCITANIE BPA","KOESIO OUEST","KOESIO PACA","KOESIO PACA TELECOMS","KOESIO SUD ALLIANCE","KOESIO SUISSE","ONE OPERATEUR","Production","S-WAN IP"]} value={revendeurFilter} onChange={setRevendeurFilter} width={180} />
         {variant === "clients" && <RadioDropdown placeholder="Client" options={CLIENT_NAMES} value={clientFilter} onChange={setClientFilter} width={160} />}
         <div className="grow" />
-        <Button variant="tertiary" icon="refresh-cw">Réinitialiser</Button>
+        <Button variant="tertiary" icon="refresh-cw" onClick={handleReset}>Réinitialiser</Button>
       </Toolbar>
       <TableBox>
         <table className="kap-table">

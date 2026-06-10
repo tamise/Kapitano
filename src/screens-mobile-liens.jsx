@@ -33,6 +33,7 @@ function MobileSubsTab({ onOpenDetail }) {
 
   const subsFieldMap = { "Revendeur": "revendeur", "Client": "client", "Numéro mobile": "msisdn", "Forfait": "forfait", "Etat abo.": "etatAbo", "Etat prod.": "etatProd" };
   function handleSortChange(field, dir) { setSortBy(field); setSortDir(dir); }
+  function handleReset() { setSortBy(null); setSortDir("asc"); setRevendeurFilter(null); setClientFilter(null); setEtatAboFilter([]); setEtatProdFilter([]); }
 
   const sorted = React.useMemo(() => {
     let data = SUBSCRIBERS;
@@ -76,6 +77,8 @@ function MobileSubsTab({ onOpenDetail }) {
         <RadioDropdown placeholder="Client" options={CLIENT_NAMES} value={clientFilter} onChange={setClientFilter} width={170} />
         <RadioDropdown placeholder="Etat abo." options={["Actif","Inactif","À activer","En cours d'activation","En cours de désactivation"]} value={etatAboFilter} onChange={setEtatAboFilter} width={150} showSearch={false} multiSelect={true} />
         <RadioDropdown placeholder="Etat prod." options={["Commandé","Création en cours","Actif","Résilié"]} value={etatProdFilter} onChange={setEtatProdFilter} width={150} showSearch={false} multiSelect={true} />
+        <div className="grow" />
+        <Button variant="tertiary" icon="refresh-cw" onClick={handleReset}>Réinitialiser</Button>
       </Toolbar>
       <TableBox>
         <table className="kap-table">
@@ -164,6 +167,8 @@ function MobileOrdersTab({ onOpenDetail }) {
     setTopbarActions(<><Button variant="primary" icon="plus">Nouvelle commande</Button><Button variant="primary" icon="cloud-upload">Import en masse</Button><a href="https://xenomcloud.sharepoint.com/:p:/r/sites/NET_Networks-Dokumentation/_layouts/15/doc2.aspx?sourcedoc=%7B622B2A6B-3281-4C99-BFF6-73DF287B0C9D%7D&file=KAPITANO%20-%20Mobile%20-%20Gestion%20des%20commandes%20et%20abonnements.pptx&action=edit&mobileredirect=true" target="_blank" rel="noreferrer" className="kap-btn kap-btn--primary" style={{ color: "#fff" }}>?</a></>);
     return () => setTopbarActions(null);
   }, []);
+  function handleReset() { setSortBy(null); setSortDir("asc"); setRevendeurFilter(null); setClientFilter(null); setTypeFilter([]); setPortabiliteFilter(null); setEtatFilter([]); }
+
   const totalPages = Math.max(1, Math.ceil(sorted.length / 15));
   return (
     <>
@@ -186,7 +191,7 @@ function MobileOrdersTab({ onOpenDetail }) {
         <RadioDropdown placeholder="Portabilité" options={["Oui","Non"]} value={portabiliteFilter} onChange={setPortabiliteFilter} width={140} showSearch={false} />
         <RadioDropdown placeholder="Etat commande" options={["En brouillon","Programmée","Crée","Annulation en cours","Annulée","En cours","En cours (erreur)","Incident en cours","En attente","Terminée avec succès","Terminée avec erreur"]} value={etatFilter} onChange={setEtatFilter} width={160} showSearch={false} multiSelect={true} />
         <div className="grow" />
-        <Button variant="tertiary" icon="refresh-cw">Réinitialiser</Button>
+        <Button variant="tertiary" icon="refresh-cw" onClick={handleReset}>Réinitialiser</Button>
       </Toolbar>
       <TableBox>
         <table className="kap-table">
@@ -380,6 +385,10 @@ const DISPATCHER_ORDERS = {
   incident:   Array.from({length:4},  (_, i) => ({ id:`19039${i}000`, dateCreation:`0${i+1}/05/2026 - 14:00:00`, dateEtape:`0${i+1}/05/2026 - 14:00:00`, alerte:true,  revendeur:"KOESIO PACA",         client:DISP_CLIENTS[i % DISP_CLIENTS.length], lignes:1 })),
 };
 
+const ALL_DISPATCHER_FLAT = Object.entries(DISPATCHER_ORDERS).flatMap(([tabKey, rows]) =>
+  rows.map(o => ({ ...o, _tab: tabKey }))
+);
+
 const DISPATCHER_STATS = [
   { key: "completer",  label: "À compléter",          total: 12, alerte: 12, icon: "pencil" },
   { key: "imprimer",   label: "À imprimer",            total: 0,  alerte: 0,  icon: "printer" },
@@ -400,10 +409,27 @@ function DispatcherScreen() {
 
   const dispFieldMap = { "Date de création": "dateCreation", "Numéro d'affaire": "id", "Date étape": "dateEtape", "Revendeur": "revendeur", "Client": "client" };
   const toSortableDate = (s) => { const p = String(s).split("/"); if (p.length < 3) return String(s); const y = p[2].split(" ")[0]; return `${y}/${p[1]}/${p[0]}`; };
+
+  const filteredAll = React.useMemo(() => {
+    let data = ALL_DISPATCHER_FLAT;
+    if (revendeurFilter) data = data.filter(o => o.revendeur === revendeurFilter);
+    if (clientFilter) data = data.filter(o => o.client === clientFilter);
+    return data;
+  }, [revendeurFilter, clientFilter]);
+
+  const dispCounts = React.useMemo(() => {
+    const r = {};
+    DISPATCHER_STATS.forEach(s => {
+      r[s.key] = {
+        total: filteredAll.filter(o => o._tab === s.key).length,
+        alerte: filteredAll.filter(o => o._tab === s.key && o.alerte).length,
+      };
+    });
+    return r;
+  }, [filteredAll]);
+
   const sortedDispOrders = React.useMemo(() => {
-    let rows = DISPATCHER_ORDERS[tab] || [];
-    if (revendeurFilter) rows = rows.filter(o => o.revendeur === revendeurFilter);
-    if (clientFilter) rows = rows.filter(o => o.client === clientFilter);
+    let rows = filteredAll.filter(o => o._tab === tab);
     const key = dispFieldMap[sortBy || "Date de création"];
     if (!key) return rows;
     return [...rows].sort((a, b) => {
@@ -412,7 +438,9 @@ function DispatcherScreen() {
       const vb = isDate ? toSortableDate(b[key] || "") : (b[key] || "");
       return sortDir === "asc" ? va.localeCompare(vb) : vb.localeCompare(va);
     });
-  }, [tab, sortBy, sortDir, revendeurFilter, clientFilter]);
+  }, [filteredAll, tab, sortBy, sortDir]);
+
+  function handleReset() { setSortBy(null); setSortDir("asc"); setRevendeurFilter(null); setClientFilter(null); }
 
   const setTopbarActions = React.useContext(TopbarActionsContext);
   React.useEffect(() => {
@@ -432,7 +460,7 @@ function DispatcherScreen() {
           <RadioDropdown placeholder="Revendeur" options={["2IT SOLUTIONS","ABC TELECOMS","ADV","AXIUM SOLUTIONS","CIS VALLEY","GROUPE TELECOMS DE L'OUEST GTO","IPNEOS","KOESIO AQUITAINE","KOESIO AURA INFO (VD)","KOESIO AURA INFO (VDI)","KOESIO AURA TELECOM","KOESIO AUSTRALIA","KOESIO CENTRE EST","KOESIO CORPORATE IT","KOESIO EST","KOESIO GRAND EST","KOESIO IDF","KOESIO MANAGED SERVICES","KOESIO MEDITERRANNEE","KOESIO NETWORKS","KOESIO NORD OUEST","KOESIO OCCITANIE","KOESIO OCCITANIE BPA","KOESIO OUEST","KOESIO PACA","KOESIO PACA TELECOMS","KOESIO SUD ALLIANCE","KOESIO SUISSE","ONE OPERATEUR","Production","S-WAN IP"]} value={revendeurFilter} onChange={setRevendeurFilter} width={180} />
           <RadioDropdown placeholder="Client" options={CLIENT_NAMES} value={clientFilter} onChange={setClientFilter} width={160} />
           <div className="grow" />
-          <Button variant="tertiary" icon="refresh-cw">Réinitialiser</Button>
+          <Button variant="tertiary" icon="refresh-cw" onClick={handleReset}>Réinitialiser</Button>
         </Toolbar>
 
         {/* Onglets */}
@@ -449,8 +477,8 @@ function DispatcherScreen() {
             >
               <Icon name={s.icon} size={16} />{s.label}
               <span style={{ display: "inline-flex", gap: 3, marginLeft: 2 }}>
-                <span style={{ background: "var(--kap-primary)", color: "#fff", borderRadius: 99, padding: "1px 6px", fontSize: 11, fontWeight: 700 }}>{s.total}</span>
-                <span style={{ background: s.alerte > 0 ? "#ED6C02" : "#E0E0E0", color: s.alerte > 0 ? "#fff" : "#9E9E9E", borderRadius: 99, padding: "1px 6px", fontSize: 11, fontWeight: 700 }}>{s.alerte}</span>
+                <span style={{ background: "var(--kap-primary)", color: "#fff", borderRadius: 99, padding: "1px 6px", fontSize: 11, fontWeight: 700 }}>{dispCounts[s.key] ? dispCounts[s.key].total : 0}</span>
+                <span style={{ background: dispCounts[s.key] && dispCounts[s.key].alerte > 0 ? "#ED6C02" : "#E0E0E0", color: dispCounts[s.key] && dispCounts[s.key].alerte > 0 ? "#fff" : "#9E9E9E", borderRadius: 99, padding: "1px 6px", fontSize: 11, fontWeight: 700 }}>{dispCounts[s.key] ? dispCounts[s.key].alerte : 0}</span>
               </span>
             </div>
           ))}
@@ -500,16 +528,16 @@ function DispatcherScreen() {
               <div key={s.key} onClick={() => setTab(s.key)} style={{ background: "#fff", borderRadius: 10, boxShadow: "var(--kap-shadow-card)", cursor: "pointer", overflow: "hidden", display: "flex", flexDirection: "column", border: "1px solid var(--kap-border-1)" }}>
                 <div style={{ padding: "16px 16px 8px", flex: 1, display: "flex", flexDirection: "column", gap: 8 }}>
                   <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-                    <span style={{ background: "var(--kap-primary)", color: "#fff", borderRadius: 8, minWidth: 36, height: 36, display: "flex", alignItems: "center", justifyContent: "center", fontFamily: "var(--kap-font-display)", fontWeight: 700, fontSize: 17, padding: "0 8px" }}>{s.total}</span>
+                    <span style={{ background: "var(--kap-primary)", color: "#fff", borderRadius: 8, minWidth: 36, height: 36, display: "flex", alignItems: "center", justifyContent: "center", fontFamily: "var(--kap-font-display)", fontWeight: 700, fontSize: 17, padding: "0 8px" }}>{dispCounts[s.key] ? dispCounts[s.key].total : 0}</span>
                     <span style={{ fontFamily: "var(--kap-font-ui)", fontSize: 13, fontWeight: 600, color: "var(--kap-fg-dark)" }}>{s.label}</span>
                   </div>
                   <div style={{ flex: 1, display: "flex", alignItems: "center", justifyContent: "center", padding: "16px 0" }}>
                     <Icon name={s.icon} size={64} style={{ color: "#D8CFF0" }} />
                   </div>
                 </div>
-                <div style={{ background: s.alerte > 0 ? "#FFF3E0" : "#F5F5F5", padding: "8px 14px", display: "flex", alignItems: "center", gap: 6, fontFamily: "var(--kap-font-ui)", fontSize: 13, color: s.alerte > 0 ? "#ED6C02" : "#9E9E9E" }}>
-                  {s.alerte > 0 && <Icon name="alert-triangle" size={14} />}
-                  <span style={{ fontWeight: 700 }}>{s.alerte}</span>
+                <div style={{ background: dispCounts[s.key] && dispCounts[s.key].alerte > 0 ? "#FFF3E0" : "#F5F5F5", padding: "8px 14px", display: "flex", alignItems: "center", gap: 6, fontFamily: "var(--kap-font-ui)", fontSize: 13, color: dispCounts[s.key] && dispCounts[s.key].alerte > 0 ? "#ED6C02" : "#9E9E9E" }}>
+                  {dispCounts[s.key] && dispCounts[s.key].alerte > 0 && <Icon name="alert-triangle" size={14} />}
+                  <span style={{ fontWeight: 700 }}>{dispCounts[s.key] ? dispCounts[s.key].alerte : 0}</span>
                   <span>En alerte</span>
                 </div>
               </div>
@@ -567,6 +595,8 @@ function CartesSIMScreen() {
     });
   }, [revendeurFilter, typeFilter, etatFilter, sortBy, sortDir]);
 
+  function handleReset() { setSortBy(null); setSortDir("asc"); setRevendeurFilter(null); setTypeFilter(null); setEtatFilter(null); }
+
   const totalPages = Math.max(1, Math.ceil(sortedSIM.length / perPage));
   const view = sortedSIM.slice((page - 1) * perPage, page * perPage);
 
@@ -589,7 +619,7 @@ function CartesSIMScreen() {
           <RadioDropdown placeholder="Type" options={["SIM","eSIM","SIM 15D"]} value={typeFilter} onChange={setTypeFilter} width={120} showSearch={false} />
           <RadioDropdown placeholder="État" options={["Créée","Disponible","Réservée","Utilisée","Archivée"]} value={etatFilter} onChange={setEtatFilter} width={140} showSearch={false} />
           <div className="grow" />
-          <Button variant="tertiary" icon="refresh-cw">Réinitialiser</Button>
+          <Button variant="tertiary" icon="refresh-cw" onClick={handleReset}>Réinitialiser</Button>
         </Toolbar>
         <TableBox>
           <table className="kap-table">
@@ -671,6 +701,8 @@ function GestionnairesFlottesScreen() {
     });
   }, [sortBy, sortDir, revendeurFilter, clientFilter]);
 
+  function handleReset() { setSortBy(null); setSortDir("asc"); setRevendeurFilter(null); setClientFilter(null); }
+
   const totalPages = Math.max(1, Math.ceil(sortedGF.length / perPage));
   const view = sortedGF.slice((page - 1) * perPage, page * perPage);
 
@@ -694,7 +726,7 @@ function GestionnairesFlottesScreen() {
           <RadioDropdown placeholder="Revendeur" options={["2IT SOLUTIONS","ABC TELECOMS","ADV","AXIUM SOLUTIONS","CIS VALLEY","GROUPE TELECOMS DE L'OUEST GTO","IPNEOS","KOESIO AQUITAINE","KOESIO AURA INFO (VD)","KOESIO AURA INFO (VDI)","KOESIO AURA TELECOM","KOESIO AUSTRALIA","KOESIO CENTRE EST","KOESIO CORPORATE IT","KOESIO EST","KOESIO GRAND EST","KOESIO IDF","KOESIO MANAGED SERVICES","KOESIO MEDITERRANNEE","KOESIO NETWORKS","KOESIO NORD OUEST","KOESIO OCCITANIE","KOESIO OCCITANIE BPA","KOESIO OUEST","KOESIO PACA","KOESIO PACA TELECOMS","KOESIO SUD ALLIANCE","KOESIO SUISSE","ONE OPERATEUR","Production","S-WAN IP"]} value={revendeurFilter} onChange={setRevendeurFilter} width={190} />
           <RadioDropdown placeholder="Clients" options={CLIENT_NAMES} value={clientFilter} onChange={setClientFilter} width={160} />
           <div className="grow" />
-          <Button variant="tertiary" icon="refresh-cw">Réinitialiser</Button>
+          <Button variant="tertiary" icon="refresh-cw" onClick={handleReset}>Réinitialiser</Button>
         </Toolbar>
         <TableBox>
           <table className="kap-table">
@@ -894,6 +926,8 @@ function AccessSubsTab({ onOpenDetail }) {
     });
   }, [revendeurFilter, clientFilter, etatAboFilter, etatProdFilter, sortBy, sortDir]);
 
+  function handleReset() { setSortBy(null); setSortDir("asc"); setRevendeurFilter(null); setClientFilter(null); setEtatAboFilter([]); setEtatProdFilter([]); }
+
   const totalPages = Math.max(1, Math.ceil(sortedLinks.length / 15));
   return (
     <>
@@ -905,7 +939,7 @@ function AccessSubsTab({ onOpenDetail }) {
         <RadioDropdown placeholder="Etat abo." options={["Actif","Inactif","À activer","En cours d'activation","En cours de désactivation"]} value={etatAboFilter} onChange={setEtatAboFilter} width={150} showSearch={false} multiSelect={true} />
         <RadioDropdown placeholder="Etat prod." options={["Commandé","Création en cours","Actif","Résilié"]} value={etatProdFilter} onChange={setEtatProdFilter} width={150} showSearch={false} multiSelect={true} />
         <div className="grow" />
-        <Button variant="tertiary" icon="refresh-cw">Réinitialiser</Button>
+        <Button variant="tertiary" icon="refresh-cw" onClick={handleReset}>Réinitialiser</Button>
       </Toolbar>
       <TableBox>
         <table className="kap-table">
@@ -974,6 +1008,8 @@ function AccessOrdersTab({ onOpenDetail }) {
     });
   }, [revendeurFilter, clientFilter, typeFilter, etatFilter, sortBy, sortDir]);
 
+  function handleReset() { setSortBy(null); setSortDir("asc"); setRevendeurFilter(null); setClientFilter(null); setTypeFilter([]); setEtatFilter([]); }
+
   const totalPages = Math.max(1, Math.ceil(sorted.length / 15));
   return (
     <>
@@ -985,7 +1021,7 @@ function AccessOrdersTab({ onOpenDetail }) {
         <RadioDropdown placeholder="Type commande" options={["Création","Modification","Résiliation","Portabilité sortante"]} value={typeFilter} onChange={setTypeFilter} width={170} showSearch={false} multiSelect={true} />
         <RadioDropdown placeholder="Etat commande" options={["En brouillon","Programmée","Crée","Annulation en cours","Annulée","En cours","En cours (erreur)","Incident en cours","En attente","Terminée avec succès","Terminée avec erreur"]} value={etatFilter} onChange={setEtatFilter} width={170} showSearch={false} multiSelect={true} />
         <div className="grow" />
-        <Button variant="tertiary" icon="refresh-cw">Réinitialiser</Button>
+        <Button variant="tertiary" icon="refresh-cw" onClick={handleReset}>Réinitialiser</Button>
       </Toolbar>
       <TableBox>
         <table className="kap-table">
