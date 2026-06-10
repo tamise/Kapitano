@@ -65,9 +65,50 @@ button { font-family: inherit; }
   transition: flex-basis 220ms var(--kap-ease-standard), width 220ms var(--kap-ease-standard);
   z-index: 5;
 }
-.kap-sidebar.is-collapsed { width: 64px; flex-basis: 64px; }
-.kap-sidebar.is-collapsed .kap-side-label { opacity: 0; pointer-events: none; }
-.kap-sidebar.is-collapsed .kap-side-item { justify-content: center; padding: 0; }
+.kap-sidebar.is-collapsed { width: 64px; flex-basis: 64px; overflow: visible; }
+.kap-sidebar.is-collapsed .kap-side-label { display: none; }
+.kap-sidebar.is-collapsed .kap-side-item { justify-content: center; padding: 0; width: 48px; margin: 0 auto; }
+.kap-sidebar.is-collapsed .kap-side-items { overflow: visible; }
+
+.kap-side-flyout {
+  position: fixed;
+  left: 64px;
+  min-width: 210px;
+  background: #fff;
+  border-radius: 8px;
+  box-shadow: 0 6px 24px rgba(0,0,0,0.13), 0 1px 4px rgba(0,0,0,0.08);
+  border: 1px solid var(--kap-border-1);
+  z-index: 200;
+  overflow: hidden;
+}
+.kap-side-flyout-title {
+  padding: 10px 16px 9px;
+  font-family: var(--kap-font-display);
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.3px;
+  color: var(--kap-primary);
+  border-bottom: 1px solid var(--kap-border-1);
+  background: rgba(126,65,163,.04);
+}
+.kap-side-flyout-item {
+  height: 34px;
+  padding: 0 16px 0 18px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-family: var(--kap-font-display);
+  font-size: 12px;
+  font-weight: 400;
+  color: var(--kap-fg-dark);
+  cursor: pointer;
+  transition: background 100ms;
+  white-space: nowrap;
+}
+.kap-side-flyout-item:hover { background: rgba(126,65,163,.06); color: var(--kap-primary); }
+.kap-side-flyout-item:hover .kap-sub-dot { background: var(--kap-primary); }
+.kap-side-flyout-item.is-active { background: var(--kap-primary); color: #fff; font-weight: 700; }
+.kap-side-flyout-item.is-active:hover { background: var(--kap-primary-dark); }
 
 .kap-side-logo {
   height: 68px;
@@ -172,24 +213,6 @@ button { font-family: inherit; }
   border-radius: 1px;
 }
 
-/* tooltip in collapsed mode */
-.kap-sidebar.is-collapsed .kap-side-item:hover::after {
-  content: attr(data-label);
-  position: absolute;
-  left: calc(100% + 8px);
-  top: 50%;
-  transform: translateY(-50%);
-  background: var(--kap-fg-dark);
-  color: #fff;
-  font-family: var(--kap-font-ui);
-  font-size: 12px;
-  font-weight: 500;
-  padding: 6px 10px;
-  border-radius: 4px;
-  white-space: nowrap;
-  pointer-events: none;
-  z-index: 20;
-}
 
 /* ============================================================
    Main area + topbar
@@ -719,7 +742,7 @@ button { font-family: inherit; }
   color: var(--kap-fg-1);
 }
 .kap-pag button:hover { background: rgba(126,65,163,.08); }
-.kap-pag button.is-active { color: #fff; background: var(--kap-primary); font-weight: 700; }
+.kap-pag button.is-active { color: #fff; background: var(--kap-primary); font-weight: 700; width: 40px; height: 40px; min-width: 40px; padding: 0; border-radius: 6px; }
 .kap-pag button[disabled] { opacity: .35; cursor: not-allowed; }
 
 /* ============================================================

@@ -82,6 +82,24 @@ const SCREEN_CRUMBS = {
 };
 
 function Sidebar({ activeScreen, activeSub, onNavigate, collapsed, onToggle, onLogout }) {
+  const [flyout, setFlyout] = useStateSh(null); // { item, top }
+  const flyoutTimer = React.useRef(null);
+
+  function openFlyout(e, navItem) {
+    if (!collapsed) return;
+    clearTimeout(flyoutTimer.current);
+    const rect = e.currentTarget.getBoundingClientRect();
+    setFlyout({ item: navItem, top: rect.top });
+  }
+
+  function scheduleFlyoutClose() {
+    flyoutTimer.current = setTimeout(() => setFlyout(null), 120);
+  }
+
+  function cancelFlyoutClose() {
+    clearTimeout(flyoutTimer.current);
+  }
+
   return (
     <aside className={"kap-sidebar" + (collapsed ? " is-collapsed" : "")}>
       <div className="kap-side-logo" onClick={() => onNavigate("accueil")} style={{ cursor: "pointer" }}>
@@ -93,12 +111,13 @@ function Sidebar({ activeScreen, activeSub, onNavigate, collapsed, onToggle, onL
           const isActive = activeScreen === n.key;
           const hasSubs = n.subs.length > 0;
           return (
-            <div key={n.key}>
-              {/* Parent item */}
+            <div key={n.key}
+              onMouseEnter={(e) => openFlyout(e, n)}
+              onMouseLeave={scheduleFlyoutClose}
+            >
               <div
                 className={"kap-side-item" + (isActive && !hasSubs ? " is-active" : "") + (isActive && hasSubs ? " is-open" : "")}
-                onClick={() => onNavigate(n.key, hasSubs ? (DEFAULT_SUB[n.key] || n.subs[0].key) : null)}
-                data-label={n.label}
+                onClick={() => { if (!collapsed || !hasSubs) onNavigate(n.key, hasSubs ? (DEFAULT_SUB[n.key] || n.subs[0].key) : null); }}
               >
                 <span className="kap-icon material-symbols-outlined" style={{ fontSize: 20, width: 20, height: 20 }}>{n.icon}</span>
                 <span className="kap-side-label" style={{ flex: 1 }}>{n.label}</span>
@@ -109,7 +128,6 @@ function Sidebar({ activeScreen, activeSub, onNavigate, collapsed, onToggle, onL
                 )}
               </div>
 
-              {/* Sub-items — visible when parent is active and sidebar is expanded */}
               {isActive && hasSubs && !collapsed && (
                 <div className="kap-sub-items">
                   {n.subs.map(s => (
@@ -133,22 +151,43 @@ function Sidebar({ activeScreen, activeSub, onNavigate, collapsed, onToggle, onL
         <div
           className={"kap-side-item" + (activeScreen === "profil" ? " is-active" : "")}
           onClick={() => onNavigate("profil")}
-          data-label="Profil"
         >
           <span className="kap-icon material-symbols-outlined" style={{ fontSize: 20, width: 20, height: 20 }}>person</span>
           <span className="kap-side-label">Profil</span>
         </div>
-        <div className="kap-side-item" onClick={onLogout} data-label="Déconnexion">
+        <div className="kap-side-item" onClick={onLogout}>
           <span className="kap-icon material-symbols-outlined" style={{ fontSize: 20, width: 20, height: 20 }}>logout</span>
           <span className="kap-side-label">Déconnexion</span>
         </div>
-        <div className="kap-side-item" onClick={onToggle} data-label={collapsed ? "Étendre" : "Réduire"}>
+        <div className="kap-side-item" onClick={onToggle}>
           <span className="kap-icon material-symbols-outlined" style={{ fontSize: 20, width: 20, height: 20 }}>
             {collapsed ? "chevron_right" : "chevron_left"}
           </span>
           <span className="kap-side-label">Réduire</span>
         </div>
       </div>
+
+      {/* Flyout panel — mode réduit */}
+      {collapsed && flyout && (
+        <div
+          className="kap-side-flyout"
+          style={{ top: flyout.top }}
+          onMouseEnter={cancelFlyoutClose}
+          onMouseLeave={scheduleFlyoutClose}
+        >
+          <div className="kap-side-flyout-title">{flyout.item.label}</div>
+          {flyout.item.subs.map(s => (
+            <div
+              key={s.key}
+              className={"kap-side-flyout-item" + (activeSub === s.key && activeScreen === flyout.item.key ? " is-active" : "")}
+              onClick={() => { onNavigate(flyout.item.key, s.key); setFlyout(null); }}
+            >
+              <span className="kap-sub-dot" style={{ background: activeSub === s.key && activeScreen === flyout.item.key ? "#fff" : undefined }} />
+              {s.label}
+            </div>
+          ))}
+        </div>
+      )}
     </aside>
   );
 }
