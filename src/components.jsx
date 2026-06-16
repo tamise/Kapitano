@@ -548,6 +548,115 @@ function SortHeader({ children, active, dir = "desc" }) {
   );
 }
 
+// ── Tooltip copie de cellule ──────────────────────────────────────
+function extractCellText(td) {
+  // Si la cellule contient un Tooltip noir (wrapper position:relative + display:inline-flex), on l'ignore
+  for (const span of td.querySelectorAll("span")) {
+    if (span.style.position === "relative" && span.style.display === "inline-flex") return null;
+  }
+  const clone = td.cloneNode(true);
+  // Icônes Material Symbols
+  clone.querySelectorAll(".material-symbols-outlined, .kap-icon, .kap-icon-tile").forEach(el => el.remove());
+  // Boutons (IconButton, actions)
+  clone.querySelectorAll("button").forEach(el => el.remove());
+  // Images et SVG
+  clone.querySelectorAll("img, svg").forEach(el => el.remove());
+  // Popups de Tooltip (spans positionnés en absolute via style inline)
+  clone.querySelectorAll("span[style*='position: absolute'], span[style*='position:absolute']").forEach(el => el.remove());
+  // Chips / badges / statuts (classes CSS)
+  clone.querySelectorAll(".kap-dot-status, .kap-chip, .kap-pill, .kap-http, .kap-method").forEach(el => el.remove());
+  // Chips inline-styled (borderRadius:99 → border-radius: 99px dans le DOM)
+  clone.querySelectorAll("span[style*='border-radius: 99']").forEach(el => el.remove());
+  const text = (clone.textContent || "").trim().replace(/\s+/g, " ");
+  return (text && text !== "—" && text.length > 0) ? text : null;
+}
+
+function CopyTooltip() {
+  const [tip, setTip] = React.useState(null); // { x, y, text }
+  const [copied, setCopied] = React.useState(false);
+  const timerRef = React.useRef(null);
+  const currentTdRef = React.useRef(null);
+  const mousePosRef = React.useRef({ x: 0, y: 0 });
+  const tooltipRef = React.useRef(null);
+
+  React.useEffect(() => {
+    function clearTimer() {
+      if (timerRef.current) { clearTimeout(timerRef.current); timerRef.current = null; }
+    }
+    function handleMouseMove(e) {
+      if (tooltipRef.current && tooltipRef.current.contains(e.target)) return;
+      mousePosRef.current = { x: e.clientX, y: e.clientY };
+      const td = e.target.closest("td");
+      if (td === currentTdRef.current) return;
+      clearTimer();
+      setTip(null);
+      setCopied(false);
+      currentTdRef.current = td;
+      if (td) {
+        const text = extractCellText(td);
+        if (text) {
+          timerRef.current = setTimeout(() => {
+            const { x, y } = mousePosRef.current;
+            setTip({ x, y, text });
+          }, 2000);
+        }
+      }
+    }
+    document.addEventListener("mousemove", handleMouseMove);
+    return () => { document.removeEventListener("mousemove", handleMouseMove); clearTimer(); };
+  }, []);
+
+  if (!tip) return null;
+
+  function fallbackCopy(text) {
+    const el = document.createElement("textarea");
+    el.value = text; el.style.cssText = "position:fixed;opacity:0";
+    document.body.appendChild(el); el.focus(); el.select();
+    try { document.execCommand("copy"); } catch (_) {}
+    document.body.removeChild(el);
+  }
+  function handleCopy() {
+    if (navigator.clipboard) navigator.clipboard.writeText(tip.text).catch(() => fallbackCopy(tip.text));
+    else fallbackCopy(tip.text);
+    setCopied(true);
+    setTimeout(() => { setTip(null); setCopied(false); }, 900);
+  }
+
+  const W = 260;
+  const left = Math.min(tip.x + 10, window.innerWidth - W - 8);
+  return (
+    <div ref={tooltipRef}
+      onMouseLeave={() => { setTip(null); setCopied(false); }}
+      style={{
+        position: "fixed", left, top: tip.y,
+        transform: "translateY(calc(-100% - 10px))",
+        width: W, background: "#fff",
+        border: "1px solid var(--kap-border-2)", borderRadius: 8,
+        boxShadow: "0 8px 24px rgba(0,0,0,0.13)",
+        padding: "10px 12px 8px",
+        zIndex: 9999, fontFamily: "var(--kap-font-ui)", fontSize: 13,
+      }}>
+      <div style={{
+        color: "var(--kap-fg-1)", marginBottom: 8, lineHeight: 1.4,
+        maxHeight: 72, overflow: "hidden", wordBreak: "break-word",
+      }}>{tip.text}</div>
+      <button onClick={handleCopy} style={{
+        display: "flex", alignItems: "center", justifyContent: "center", gap: 6,
+        width: "100%", padding: "5px 10px",
+        border: `1px solid ${copied ? "#2E7D32" : "var(--kap-border-2)"}`,
+        borderRadius: 6, background: copied ? "#E8F5E9" : "#fff",
+        cursor: copied ? "default" : "pointer",
+        fontFamily: "var(--kap-font-ui)", fontSize: 12, fontWeight: 600,
+        color: copied ? "#2E7D32" : "var(--kap-fg-2)",
+        transition: "all 150ms",
+      }}>
+        <Icon name={copied ? "check" : "copy"} size={14} />
+        {copied ? "Copié !" : "Copier"}
+      </button>
+    </div>
+  );
+}
+
 // ──────────────────────────────────────────────────────────────────
 function Drawer({ title, subtitle, onClose, children, footer }) {
   useEffectC(() => {

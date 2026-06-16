@@ -33,9 +33,22 @@ function EspacesTab({ onOpenDetail }) {
     return () => setTopbarActions(null);
   }, []);
 
-  const espacesFieldMap = { "Date de création": "dateCreation", "ID": "id", "Revendeur": "revendeur", "Client": "client", "Nom client Enove": "nomClientEnove" };
+  const espacesFieldMap = { "Date de création": "dateCreation", "ID": "id", "Revendeur": "revendeur", "Client": "client", "Nom client Enove": "nomClientEnove", "ID production": "idProduction", "État de l'espace voix": "statut.label" };
   function handleSortChange(field, dir) { setSortBy(field); setSortDir(dir); }
   function handleReset() { setSortBy(null); setSortDir("asc"); setRevendeurFilter(null); }
+
+  function handleColSort(label) {
+    if (sortBy === label || (sortBy === null && label === "Date de création")) {
+      setSortDir(d => d === "asc" ? "desc" : "asc");
+    } else {
+      setSortBy(label);
+      setSortDir("asc");
+    }
+  }
+
+  function colActive(label) {
+    return sortBy === label || (sortBy === null && label === "Date de création");
+  }
 
   const sorted = React.useMemo(() => {
     let data = VOICE_SPACES;
@@ -45,8 +58,9 @@ function EspacesTab({ onOpenDetail }) {
     const toSortableDate = (s) => { const p = String(s).split("/"); if (p.length < 3) return String(s); const y = p[2].split(" ")[0]; return `${y}/${p[1]}/${p[0]}`; };
     return [...data].sort((a, b) => {
       const isDateField = ["dateCreation"].includes(key);
-      const va = isDateField ? toSortableDate(a[key] || "") : (a[key] || "");
-      const vb = isDateField ? toSortableDate(b[key] || "") : (b[key] || "");
+      let va, vb;
+      if (key === "statut.label") { va = a.statut ? a.statut.label || "" : ""; vb = b.statut ? b.statut.label || "" : ""; }
+      else { va = isDateField ? toSortableDate(a[key] || "") : (a[key] || ""); vb = isDateField ? toSortableDate(b[key] || "") : (b[key] || ""); }
       return sortDir === "asc" ? String(va).localeCompare(String(vb)) : String(vb).localeCompare(String(va));
     });
   }, [sortBy, sortDir, revendeurFilter]);
@@ -65,12 +79,12 @@ function EspacesTab({ onOpenDetail }) {
         <table className="kap-table">
           <thead>
             <tr>
-              <th><SortHeader active dir="desc">Date de création</SortHeader></th>
-              <th>Revendeur</th>
-              <th>Client</th>
-              <th>Nom client Enove</th>
-              <th>ID production</th>
-              <th>État de l'espace voix</th>
+              <th onClick={() => handleColSort("Date de création")} style={{ cursor: "pointer", userSelect: "none" }}><SortHeader active={colActive("Date de création")} dir={sortDir}>Date de création</SortHeader></th>
+              <th onClick={() => handleColSort("Revendeur")} style={{ cursor: "pointer", userSelect: "none" }}><SortHeader active={colActive("Revendeur")} dir={sortDir}>Revendeur</SortHeader></th>
+              <th onClick={() => handleColSort("Client")} style={{ cursor: "pointer", userSelect: "none" }}><SortHeader active={colActive("Client")} dir={sortDir}>Client</SortHeader></th>
+              <th onClick={() => handleColSort("Nom client Enove")} style={{ cursor: "pointer", userSelect: "none" }}><SortHeader active={colActive("Nom client Enove")} dir={sortDir}>Nom client Enove</SortHeader></th>
+              <th onClick={() => handleColSort("ID production")} style={{ cursor: "pointer", userSelect: "none" }}><SortHeader active={colActive("ID production")} dir={sortDir}>ID production</SortHeader></th>
+              <th onClick={() => handleColSort("État de l'espace voix")} style={{ cursor: "pointer", userSelect: "none" }}><SortHeader active={colActive("État de l'espace voix")} dir={sortDir}>État de l'espace voix</SortHeader></th>
               <th style={{ width: 60 }}></th>
             </tr>
           </thead>
@@ -110,6 +124,19 @@ function TrunkTab({ onOpenDetail }) {
   const trunkFieldMap = { "Revendeur": "revendeur", "Client": "client", "Site": "site", "Numéro de charge": "numeroDeCharge", "Offre": "offre", "Canaux": "canaux", "État prod.": "etatProd", "État facturation": "etatFactu" };
   function handleSortChange(field, dir) { setSortBy(field); setSortDir(dir); }
   function handleReset() { setSortBy(null); setSortDir("asc"); setRevendeurFilter(null); setClientFilter(null); setOffreFilter(null); setEtatFactuFilter(null); setEtatProdFilter([]); }
+
+  function handleColSort(label) {
+    if (sortBy === label || (sortBy === null && label === "Revendeur")) {
+      setSortDir(d => d === "asc" ? "desc" : "asc");
+    } else {
+      setSortBy(label);
+      setSortDir("asc");
+    }
+  }
+
+  function colActive(label) {
+    return sortBy === label || (sortBy === null && label === "Revendeur");
+  }
 
   const sorted = React.useMemo(() => {
     let data = TRUNK_SIP;
@@ -158,14 +185,14 @@ function TrunkTab({ onOpenDetail }) {
         <table className="kap-table">
           <thead>
             <tr>
-              <th>Revendeur</th>
-              <th><SortHeader active dir="asc">Client</SortHeader></th>
-              <th>Site</th>
-              <th>N° de charge</th>
-              <th>Offre</th>
-              <th style={{ textAlign: "right" }}>Canaux</th>
-              <th>Etat factu.</th>
-              <th>Etat prod.</th>
+              <th onClick={() => handleColSort("Revendeur")} style={{ cursor: "pointer", userSelect: "none" }}><SortHeader active={colActive("Revendeur")} dir={sortDir}>Revendeur</SortHeader></th>
+              <th onClick={() => handleColSort("Client")} style={{ cursor: "pointer", userSelect: "none" }}><SortHeader active={colActive("Client")} dir={sortDir}>Client</SortHeader></th>
+              <th onClick={() => handleColSort("Site")} style={{ cursor: "pointer", userSelect: "none" }}><SortHeader active={colActive("Site")} dir={sortDir}>Site</SortHeader></th>
+              <th onClick={() => handleColSort("Numéro de charge")} style={{ cursor: "pointer", userSelect: "none" }}><SortHeader active={colActive("Numéro de charge")} dir={sortDir}>N° de charge</SortHeader></th>
+              <th onClick={() => handleColSort("Offre")} style={{ cursor: "pointer", userSelect: "none" }}><SortHeader active={colActive("Offre")} dir={sortDir}>Offre</SortHeader></th>
+              <th onClick={() => handleColSort("Canaux")} style={{ cursor: "pointer", userSelect: "none", textAlign: "right" }}><SortHeader active={colActive("Canaux")} dir={sortDir}>Canaux</SortHeader></th>
+              <th onClick={() => handleColSort("État facturation")} style={{ cursor: "pointer", userSelect: "none" }}><SortHeader active={colActive("État facturation")} dir={sortDir}>Etat factu.</SortHeader></th>
+              <th onClick={() => handleColSort("État prod.")} style={{ cursor: "pointer", userSelect: "none" }}><SortHeader active={colActive("État prod.")} dir={sortDir}>Etat prod.</SortHeader></th>
               <th style={{ width: 60 }}></th>
             </tr>
           </thead>
@@ -201,6 +228,20 @@ function TrunkTab({ onOpenDetail }) {
   );
 }
 
+const TRUNK_ETAT_CFG = {
+  "En brouillon":         { icon: "edit_note",      fg: "#616161", bg: "#F5F5F5" },
+  "Programmée":           { icon: "schedule",        fg: "#0277BD", bg: "#E1F5FE" },
+  "Crée":                 { icon: "add_circle",      fg: "#1565C0", bg: "#E3F2FD" },
+  "Annulation en cours":  { icon: "ban",             fg: "#E65100", bg: "#FFF3E0" },
+  "Annulée":              { icon: "x-circle",        fg: "#C62828", bg: "#FFEBEE" },
+  "En cours":             { icon: "hourglass_full",  fg: "#1565C0", bg: "#E3F2FD" },
+  "En cours (erreur)":    { icon: "hourglass_empty", fg: "#E65100", bg: "#FFF3E0" },
+  "Incident en cours":    { icon: "alert-triangle",  fg: "#E65100", bg: "#FFF3E0" },
+  "En attente":           { icon: "pause_circle",    fg: "#0277BD", bg: "#E1F5FE" },
+  "Terminée avec succès": { icon: "check-circle-2",  fg: "#2E7D32", bg: "#E8F5E9" },
+  "Terminée avec erreur": { icon: "x-circle",        fg: "#C62828", bg: "#FFEBEE" },
+};
+
 function TrunkOrdersTab({ onOpenDetail }) {
   const [page, setPage] = useStateVx(1);
   const setTopbarActions = React.useContext(TopbarActionsContext);
@@ -223,6 +264,19 @@ function TrunkOrdersTab({ onOpenDetail }) {
   const trunkOrderFieldMap = { "Date": "dateCommande", "Réf": "ref", "Revendeur": "revendeur", "Client": "client", "Type commande": "typeCommande", "Numéro de charge": "numeroDeCharge", "État commande": "etatCommande" };
   function handleSortChange(field, dir) { setSortBy(field); setSortDir(dir); }
   function handleReset() { setSortBy(null); setSortDir("asc"); setRevendeurFilter(null); setClientFilter(null); setOffreFilter(null); setTypeFilter([]); setEtatFilter([]); }
+
+  function handleColSort(label) {
+    if (sortBy === label || (sortBy === null && label === "Date")) {
+      setSortDir(d => d === "asc" ? "desc" : "asc");
+    } else {
+      setSortBy(label);
+      setSortDir("asc");
+    }
+  }
+
+  function colActive(label) {
+    return sortBy === label || (sortBy === null && label === "Date");
+  }
   const toSortableDate = (s) => { const p = String(s).split("/"); if (p.length < 3) return String(s); const y = p[2].split(" ")[0]; return `${y}/${p[1]}/${p[0]}`; };
   const sorted = React.useMemo(() => {
     let data = TRUNK_ORDERS;
@@ -259,14 +313,14 @@ function TrunkOrdersTab({ onOpenDetail }) {
         <table className="kap-table">
           <thead>
             <tr>
-              <th>Réf</th>
-              <th>Date</th>
-              <th>Revendeur</th>
-              <th><SortHeader active dir="asc">Client</SortHeader></th>
+              <th onClick={() => handleColSort("Réf")} style={{ cursor: "pointer", userSelect: "none" }}><SortHeader active={colActive("Réf")} dir={sortDir}>Réf</SortHeader></th>
+              <th onClick={() => handleColSort("Date")} style={{ cursor: "pointer", userSelect: "none" }}><SortHeader active={colActive("Date")} dir={sortDir}>Date</SortHeader></th>
+              <th onClick={() => handleColSort("Revendeur")} style={{ cursor: "pointer", userSelect: "none" }}><SortHeader active={colActive("Revendeur")} dir={sortDir}>Revendeur</SortHeader></th>
+              <th onClick={() => handleColSort("Client")} style={{ cursor: "pointer", userSelect: "none" }}><SortHeader active={colActive("Client")} dir={sortDir}>Client</SortHeader></th>
               <th>Type d'offre</th>
-              <th>Type commande</th>
-              <th>N° de charge</th>
-              <th>État commande</th>
+              <th onClick={() => handleColSort("Type commande")} style={{ cursor: "pointer", userSelect: "none" }}><SortHeader active={colActive("Type commande")} dir={sortDir}>Type commande</SortHeader></th>
+              <th onClick={() => handleColSort("Numéro de charge")} style={{ cursor: "pointer", userSelect: "none" }}><SortHeader active={colActive("Numéro de charge")} dir={sortDir}>N° de charge</SortHeader></th>
+              <th onClick={() => handleColSort("État commande")} style={{ cursor: "pointer", userSelect: "none" }}><SortHeader active={colActive("État commande")} dir={sortDir}>État commande</SortHeader></th>
               <th style={{ width: 60 }}></th>
             </tr>
           </thead>
@@ -280,19 +334,7 @@ function TrunkOrdersTab({ onOpenDetail }) {
                 <td className="muted">{o.typeOffre}</td>
                 <td className="muted">{o.typeCommande}</td>
                 <td className="mono muted">{o.numeroDeCharge}</td>
-                <td>{{
-                  "En brouillon":         <Tooltip text="En brouillon"><Icon name="edit_note" size={18} style={{ color: "#616161" }} /></Tooltip>,
-                  "Programmée":           <Tooltip text="Programmée"><Icon name="schedule" size={18} style={{ color: "#0288D1" }} /></Tooltip>,
-                  "Crée":                 <Tooltip text="Crée"><Icon name="add_circle" size={18} style={{ color: "#1976D2" }} /></Tooltip>,
-                  "Annulation en cours":  <Tooltip text="Annulation en cours"><Icon name="ban" size={18} style={{ color: "#ED6C02" }} /></Tooltip>,
-                  "Annulée":              <Tooltip text="Annulée"><Icon name="x-circle" size={18} style={{ color: "#D32F2F" }} /></Tooltip>,
-                  "En cours":             <Tooltip text="En cours"><Icon name="hourglass_full" size={18} style={{ color: "#1976D2" }} /></Tooltip>,
-                  "En cours (erreur)":    <Tooltip text="En cours (erreur)"><Icon name="hourglass_empty" size={18} style={{ color: "#ED6C02" }} /></Tooltip>,
-                  "Incident en cours":    <Tooltip text="Incident en cours"><Icon name="alert-triangle" size={18} style={{ color: "#ED6C02" }} /></Tooltip>,
-                  "En attente":           <Tooltip text="En attente"><Icon name="pause_circle" size={18} style={{ color: "#0288D1" }} /></Tooltip>,
-                  "Terminée avec succès": <Tooltip text="Terminée avec succès"><Icon name="check-circle-2" size={18} style={{ color: "#2E7D32" }} /></Tooltip>,
-                  "Terminée avec erreur": <Tooltip text="Terminée avec erreur"><Icon name="x-circle" size={18} style={{ color: "#D32F2F" }} /></Tooltip>,
-                }[o.etatCommande]}</td>
+                <td>{(() => { const cfg = TRUNK_ETAT_CFG[o.etatCommande]; return cfg ? <span className="kap-pill kap-pill--soft" style={{ "--bg": cfg.bg, "--fg": cfg.fg, display:"inline-flex", alignItems:"center", gap:4 }}><Icon name={cfg.icon} size={13} style={{ color: cfg.fg }} />{o.etatCommande}</span> : o.etatCommande; })()}</td>
                 <td><IconButton icon="more-vertical" /></td>
               </tr>
             ))}
@@ -349,9 +391,22 @@ function PortabiliteTab({ onOpenDetail }) {
     return () => setTopbarActions(null);
   }, []);
 
-  const portFieldMap = { "Créée le": "dateCreation", "Réf": "ref", "Revendeur": "revendeur", "Client": "client", "Type commande": "typeCommande", "Date de portabilité": "datePortabilite", "État commande": "etatCommande" };
+  const portFieldMap = { "Créée le": "dateCreation", "Réf": "ref", "Revendeur": "revendeur", "Client": "client", "Type commande": "typeCommande", "Numéro": "numero", "Date de portabilité": "datePortabilite", "État commande": "etatCommande", "Pilotée": "hasPortType", "Statut de la portabilité": "statutPortabilite", "Note": "note" };
   function handleSortChange(field, dir) { setSortBy(field); setSortDir(dir); }
   function handleReset() { setSortBy(null); setSortDir("asc"); setDateFilter(null); setRevendeurFilter(null); setClientFilter(null); setFiabilisationOn(false); setUtilisateurFilter(null); }
+
+  function handleColSort(label) {
+    if (sortBy === label || (sortBy === null && label === "Créée le")) {
+      setSortDir(d => d === "asc" ? "desc" : "asc");
+    } else {
+      setSortBy(label);
+      setSortDir("asc");
+    }
+  }
+
+  function colActive(label) {
+    return sortBy === label || (sortBy === null && label === "Créée le");
+  }
   const toSortableDate = (s) => { const p = String(s).split("/"); if (p.length < 3) return String(s); const y = p[2].split(" ")[0]; return `${y}/${p[1]}/${p[0]}`; };
   const parseDateNum = (s) => {
     const parts = String(s).split("/");
@@ -385,6 +440,14 @@ function PortabiliteTab({ onOpenDetail }) {
     const key = portFieldMap[sortBy || "Créée le"];
     if (!key) return data;
     return [...data].sort((a, b) => {
+      if (key === "hasPortType") {
+        const va = a.hasPortType ? 1 : 0; const vb = b.hasPortType ? 1 : 0;
+        return sortDir === "asc" ? va - vb : vb - va;
+      }
+      if (key === "note") {
+        const va = (a.note && a.note !== "—") ? 1 : 0; const vb = (b.note && b.note !== "—") ? 1 : 0;
+        return sortDir === "asc" ? va - vb : vb - va;
+      }
       const isDateField = ["dateCreation","datePortabilite"].includes(key);
       const va = isDateField ? toSortableDate(a[key] || "") : (a[key] || "");
       const vb = isDateField ? toSortableDate(b[key] || "") : (b[key] || "");
@@ -447,17 +510,17 @@ function PortabiliteTab({ onOpenDetail }) {
           <thead>
             <tr>
               <th style={{ width: 40 }}></th>
-              <th><SortHeader active dir="desc">Réf</SortHeader></th>
-              <th>Créée le</th>
-              <th>Revendeur</th>
-              <th>Client</th>
-              <th>Type commande</th>
-              <th>Numéro</th>
-              <th>Date de portabilité</th>
-              <th>État commande</th>
-              <th>Pilotée</th>
-              <th>Statut de la portabilité</th>
-              <th>Note</th>
+              <th onClick={() => handleColSort("Réf")} style={{ cursor: "pointer", userSelect: "none" }}><SortHeader active={colActive("Réf")} dir={sortDir}>Réf</SortHeader></th>
+              <th onClick={() => handleColSort("Créée le")} style={{ cursor: "pointer", userSelect: "none" }}><SortHeader active={colActive("Créée le")} dir={sortDir}>Créée le</SortHeader></th>
+              <th onClick={() => handleColSort("Revendeur")} style={{ cursor: "pointer", userSelect: "none" }}><SortHeader active={colActive("Revendeur")} dir={sortDir}>Revendeur</SortHeader></th>
+              <th onClick={() => handleColSort("Client")} style={{ cursor: "pointer", userSelect: "none" }}><SortHeader active={colActive("Client")} dir={sortDir}>Client</SortHeader></th>
+              <th onClick={() => handleColSort("Type commande")} style={{ cursor: "pointer", userSelect: "none" }}><SortHeader active={colActive("Type commande")} dir={sortDir}>Type commande</SortHeader></th>
+              <th onClick={() => handleColSort("Numéro")} style={{ cursor: "pointer", userSelect: "none" }}><SortHeader active={colActive("Numéro")} dir={sortDir}>Numéro</SortHeader></th>
+              <th onClick={() => handleColSort("Date de portabilité")} style={{ cursor: "pointer", userSelect: "none" }}><SortHeader active={colActive("Date de portabilité")} dir={sortDir}>Date de portabilité</SortHeader></th>
+              <th onClick={() => handleColSort("État commande")} style={{ cursor: "pointer", userSelect: "none" }}><SortHeader active={colActive("État commande")} dir={sortDir}>État commande</SortHeader></th>
+              <th onClick={() => handleColSort("Pilotée")} style={{ cursor: "pointer", userSelect: "none" }}><SortHeader active={colActive("Pilotée")} dir={sortDir}>Pilotée</SortHeader></th>
+              <th onClick={() => handleColSort("Statut de la portabilité")} style={{ cursor: "pointer", userSelect: "none" }}><SortHeader active={colActive("Statut de la portabilité")} dir={sortDir}>Statut de la portabilité</SortHeader></th>
+              <th onClick={() => handleColSort("Note")} style={{ cursor: "pointer", userSelect: "none" }}><SortHeader active={colActive("Note")} dir={sortDir}>Note</SortHeader></th>
               <th style={{ width: 48 }}></th>
             </tr>
           </thead>
@@ -499,9 +562,22 @@ function NumbersTab({ onOpenDetail, variant }) {
   const [clientFilter, setClientFilter] = useStateVx(null);
   const [page, setPage] = useStateVx(1);
 
-  const numbersFieldMap = { "Date de création": "dateCreation", "Taille de la plage": "taillePlage" };
+  const numbersFieldMap = { "Date de création": "dateCreation", "Revendeur": "revendeur", "Client": "client", "Début de plage": "debutPlage", "Fin de plage": "finPlage", "Taille de la plage": "taillePlage", "Taux d'occupation": "tauxOccupation" };
   function handleSortChange(field, dir) { setSortBy(field); setSortDir(dir); }
   function handleReset() { setSortBy(null); setSortDir("asc"); setRevendeurFilter(null); setClientFilter(null); }
+
+  function handleColSort(label) {
+    if (sortBy === label || (sortBy === null && label === "Date de création")) {
+      setSortDir(d => d === "asc" ? "desc" : "asc");
+    } else {
+      setSortBy(label);
+      setSortDir("asc");
+    }
+  }
+
+  function colActive(label) {
+    return sortBy === label || (sortBy === null && label === "Date de création");
+  }
   const toSortableDate = (s) => { const p = String(s).split("/"); if (p.length < 3) return String(s); const y = p[2].split(" ")[0]; return `${y}/${p[1]}/${p[0]}`; };
   const sorted = React.useMemo(() => {
     let data = NUMBERS;
@@ -513,6 +589,11 @@ function NumbersTab({ onOpenDetail, variant }) {
       const isDateField = ["dateCreation"].includes(key);
       if (key === "taillePlage") {
         const va = Number(a[key]) || 0; const vb = Number(b[key]) || 0;
+        return sortDir === "asc" ? va - vb : vb - va;
+      }
+      if (key === "tauxOccupation") {
+        const va = parseFloat(String(a[key] || "0").replace(/\s*%/, "")) || 0;
+        const vb = parseFloat(String(b[key] || "0").replace(/\s*%/, "")) || 0;
         return sortDir === "asc" ? va - vb : vb - va;
       }
       const va = isDateField ? toSortableDate(a[key] || "") : (a[key] || "");
@@ -544,22 +625,22 @@ function NumbersTab({ onOpenDetail, variant }) {
           <thead>
             {variant === "revendeurs" ? (
               <tr>
-                <th>Revendeur</th>
-                <th><SortHeader active dir="asc">Début de plage</SortHeader></th>
-                <th>Fin de plage</th>
-                <th style={{ textAlign: "right" }}>Taille de la plage</th>
-                <th style={{ textAlign: "right" }}>Taux d'occupation</th>
-                <th>Date de création</th>
+                <th onClick={() => handleColSort("Revendeur")} style={{ cursor: "pointer", userSelect: "none" }}><SortHeader active={colActive("Revendeur")} dir={sortDir}>Revendeur</SortHeader></th>
+                <th onClick={() => handleColSort("Début de plage")} style={{ cursor: "pointer", userSelect: "none" }}><SortHeader active={colActive("Début de plage")} dir={sortDir}>Début de plage</SortHeader></th>
+                <th onClick={() => handleColSort("Fin de plage")} style={{ cursor: "pointer", userSelect: "none" }}><SortHeader active={colActive("Fin de plage")} dir={sortDir}>Fin de plage</SortHeader></th>
+                <th onClick={() => handleColSort("Taille de la plage")} style={{ cursor: "pointer", userSelect: "none", textAlign: "right" }}><SortHeader active={colActive("Taille de la plage")} dir={sortDir}>Taille de la plage</SortHeader></th>
+                <th onClick={() => handleColSort("Taux d'occupation")} style={{ cursor: "pointer", userSelect: "none", textAlign: "right" }}><SortHeader active={colActive("Taux d'occupation")} dir={sortDir}>Taux d'occupation</SortHeader></th>
+                <th onClick={() => handleColSort("Date de création")} style={{ cursor: "pointer", userSelect: "none" }}><SortHeader active={colActive("Date de création")} dir={sortDir}>Date de création</SortHeader></th>
                 <th style={{ width: 60 }}></th>
               </tr>
             ) : (
               <tr>
-                <th>Revendeur</th>
-                <th>Client</th>
-                <th><SortHeader active dir="asc">Début de plage</SortHeader></th>
-                <th>Fin de plage</th>
-                <th style={{ textAlign: "right" }}>Taille de la plage</th>
-                <th style={{ textAlign: "right" }}>Taux d'occupation</th>
+                <th onClick={() => handleColSort("Revendeur")} style={{ cursor: "pointer", userSelect: "none" }}><SortHeader active={colActive("Revendeur")} dir={sortDir}>Revendeur</SortHeader></th>
+                <th onClick={() => handleColSort("Client")} style={{ cursor: "pointer", userSelect: "none" }}><SortHeader active={colActive("Client")} dir={sortDir}>Client</SortHeader></th>
+                <th onClick={() => handleColSort("Début de plage")} style={{ cursor: "pointer", userSelect: "none" }}><SortHeader active={colActive("Début de plage")} dir={sortDir}>Début de plage</SortHeader></th>
+                <th onClick={() => handleColSort("Fin de plage")} style={{ cursor: "pointer", userSelect: "none" }}><SortHeader active={colActive("Fin de plage")} dir={sortDir}>Fin de plage</SortHeader></th>
+                <th onClick={() => handleColSort("Taille de la plage")} style={{ cursor: "pointer", userSelect: "none", textAlign: "right" }}><SortHeader active={colActive("Taille de la plage")} dir={sortDir}>Taille de la plage</SortHeader></th>
+                <th onClick={() => handleColSort("Taux d'occupation")} style={{ cursor: "pointer", userSelect: "none", textAlign: "right" }}><SortHeader active={colActive("Taux d'occupation")} dir={sortDir}>Taux d'occupation</SortHeader></th>
                 <th style={{ width: 60 }}></th>
               </tr>
             )}

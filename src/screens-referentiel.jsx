@@ -52,9 +52,22 @@ function RevendeursTab({ onOpenDetail }) {
   const [sortDir, setSortDir] = React.useState("asc");
   const [page, setPage] = React.useState(1);
 
-  const revFieldMap = { "Revendeur": "nom", "Code région": "codeRegion", "Email": "email" };
+  const revFieldMap = { "Revendeur": "nom", "Code région": "codeRegion", "Code Telesoft": "codeTelesoft", "Email": "email" };
   function handleSortChange(field, dir) { setSortBy(field); setSortDir(dir); }
   function handleReset() { setSortBy(null); setSortDir("asc"); }
+
+  function handleColSort(label) {
+    if (sortBy === label || (sortBy === null && label === "Revendeur")) {
+      setSortDir(d => d === "asc" ? "desc" : "asc");
+    } else {
+      setSortBy(label);
+      setSortDir("asc");
+    }
+  }
+
+  function colActive(label) {
+    return sortBy === label || (sortBy === null && label === "Revendeur");
+  }
 
   const sorted = React.useMemo(() => {
     const key = revFieldMap[sortBy || "Revendeur"];
@@ -89,10 +102,10 @@ function RevendeursTab({ onOpenDetail }) {
         <table className="kap-table">
           <thead>
             <tr>
-              <th><SortHeader active dir="asc">Revendeur</SortHeader></th>
-              <th>Code région</th>
-              <th>Code Telesoft</th>
-              <th>Email</th>
+              <th onClick={() => handleColSort("Revendeur")} style={{ cursor: "pointer", userSelect: "none" }}><SortHeader active={colActive("Revendeur")} dir={sortDir}>Revendeur</SortHeader></th>
+              <th onClick={() => handleColSort("Code région")} style={{ cursor: "pointer", userSelect: "none" }}><SortHeader active={colActive("Code région")} dir={sortDir}>Code région</SortHeader></th>
+              <th onClick={() => handleColSort("Code Telesoft")} style={{ cursor: "pointer", userSelect: "none" }}><SortHeader active={colActive("Code Telesoft")} dir={sortDir}>Code Telesoft</SortHeader></th>
+              <th onClick={() => handleColSort("Email")} style={{ cursor: "pointer", userSelect: "none" }}><SortHeader active={colActive("Email")} dir={sortDir}>Email</SortHeader></th>
               <th style={{ width: 60 }}></th>
             </tr>
           </thead>
@@ -124,6 +137,19 @@ function ClientsTab({ onOpenDetail }) {
   const clientFieldMap = { "Client": "nom", "Code Artis": "codeArtis", "SIREN": "siren", "Revendeur": "revendeur", "Date de création": "dateCreation" };
   function handleSortChange(field, dir) { setSortBy(field); setSortDir(dir); }
   function handleReset() { setSortBy(null); setSortDir("asc"); setRevendeurFilter(null); }
+
+  function handleColSort(label) {
+    if (sortBy === label || (sortBy === null && label === "Client")) {
+      setSortDir(d => d === "asc" ? "desc" : "asc");
+    } else {
+      setSortBy(label);
+      setSortDir("asc");
+    }
+  }
+
+  function colActive(label) {
+    return sortBy === label || (sortBy === null && label === "Client");
+  }
 
   const sorted = React.useMemo(() => {
     let data = CLIENTS;
@@ -170,12 +196,12 @@ function ClientsTab({ onOpenDetail }) {
         <table className="kap-table">
           <thead>
             <tr>
-              <th><SortHeader active dir="asc">Client</SortHeader></th>
-              <th>Code Artis</th>
+              <th onClick={() => handleColSort("Client")} style={{ cursor: "pointer", userSelect: "none" }}><SortHeader active={colActive("Client")} dir={sortDir}>Client</SortHeader></th>
+              <th onClick={() => handleColSort("Code Artis")} style={{ cursor: "pointer", userSelect: "none" }}><SortHeader active={colActive("Code Artis")} dir={sortDir}>Code Artis</SortHeader></th>
               <th>Codes Artis secondaires</th>
-              <th>SIREN</th>
-              <th>Revendeur</th>
-              <th>Date de création</th>
+              <th onClick={() => handleColSort("SIREN")} style={{ cursor: "pointer", userSelect: "none" }}><SortHeader active={colActive("SIREN")} dir={sortDir}>SIREN</SortHeader></th>
+              <th onClick={() => handleColSort("Revendeur")} style={{ cursor: "pointer", userSelect: "none" }}><SortHeader active={colActive("Revendeur")} dir={sortDir}>Revendeur</SortHeader></th>
+              <th onClick={() => handleColSort("Date de création")} style={{ cursor: "pointer", userSelect: "none" }}><SortHeader active={colActive("Date de création")} dir={sortDir}>Date de création</SortHeader></th>
               <th style={{ width: 60 }}></th>
             </tr>
           </thead>
@@ -210,6 +236,19 @@ function SitesTab({ onOpenDetail }) {
   const siteFieldMap = { "Site": "label", "SIRET": "siret", "Ville": "ville", "Code postal": "cp", "Revendeur": "revendeur", "Client": "client" };
   function handleSortChange(field, dir) { setSortBy(field); setSortDir(dir); }
   function handleReset() { setSortBy(null); setSortDir("asc"); setRevendeurFilter(null); setClientFilter(null); }
+
+  function handleColSort(label) {
+    if (sortBy === label || (sortBy === null && label === "Site")) {
+      setSortDir(d => d === "asc" ? "desc" : "asc");
+    } else {
+      setSortBy(label);
+      setSortDir("asc");
+    }
+  }
+
+  function colActive(label) {
+    return sortBy === label || (sortBy === null && label === "Site");
+  }
 
   const sorted = React.useMemo(() => {
     let data = SITES;
@@ -256,13 +295,13 @@ function SitesTab({ onOpenDetail }) {
           <thead>
             <tr>
               <th>ID</th>
-              <th><SortHeader active dir="asc">Site</SortHeader></th>
-              <th>SIRET</th>
-              <th>Ville</th>
-              <th>Code Postal</th>
+              <th onClick={() => handleColSort("Site")} style={{ cursor: "pointer", userSelect: "none" }}><SortHeader active={colActive("Site")} dir={sortDir}>Site</SortHeader></th>
+              <th onClick={() => handleColSort("SIRET")} style={{ cursor: "pointer", userSelect: "none" }}><SortHeader active={colActive("SIRET")} dir={sortDir}>SIRET</SortHeader></th>
+              <th onClick={() => handleColSort("Ville")} style={{ cursor: "pointer", userSelect: "none" }}><SortHeader active={colActive("Ville")} dir={sortDir}>Ville</SortHeader></th>
+              <th onClick={() => handleColSort("Code postal")} style={{ cursor: "pointer", userSelect: "none" }}><SortHeader active={colActive("Code postal")} dir={sortDir}>Code Postal</SortHeader></th>
               <th>Adresse</th>
-              <th>Revendeur</th>
-              <th>Client</th>
+              <th onClick={() => handleColSort("Revendeur")} style={{ cursor: "pointer", userSelect: "none" }}><SortHeader active={colActive("Revendeur")} dir={sortDir}>Revendeur</SortHeader></th>
+              <th onClick={() => handleColSort("Client")} style={{ cursor: "pointer", userSelect: "none" }}><SortHeader active={colActive("Client")} dir={sortDir}>Client</SortHeader></th>
               <th style={{ width: 60 }}></th>
             </tr>
           </thead>
@@ -339,6 +378,20 @@ function HebergementsTab({ onOpenDetail }) {
 
   const [page, setPage] = React.useState(1);
   const hebFieldMap = { "Nom": "nom", "Code": "code", "Réf. Technique": "refTechnique", "Type": "type", "Client": "client", "Revendeur": "revendeur" };
+
+  function handleColSort(label) {
+    if (sortBy === label || (sortBy === null && label === "Nom")) {
+      setSortDir(d => d === "asc" ? "desc" : "asc");
+    } else {
+      setSortBy(label);
+      setSortDir("asc");
+    }
+  }
+
+  function colActive(label) {
+    return sortBy === label || (sortBy === null && label === "Nom");
+  }
+
   const sortedHeb = React.useMemo(() => {
     let data = HEBERGEMENTS;
     if (revendeurFilter) data = data.filter(h => h.revendeur === revendeurFilter);
@@ -376,12 +429,12 @@ function HebergementsTab({ onOpenDetail }) {
         <table className="kap-table">
           <thead>
             <tr>
-              <th><SortHeader active dir="asc">Nom</SortHeader></th>
-              <th>Code</th>
-              <th>Réf. Technique</th>
-              <th>Type</th>
-              <th>Client</th>
-              <th>Revendeur</th>
+              <th onClick={() => handleColSort("Nom")} style={{ cursor: "pointer", userSelect: "none" }}><SortHeader active={colActive("Nom")} dir={sortDir}>Nom</SortHeader></th>
+              <th onClick={() => handleColSort("Code")} style={{ cursor: "pointer", userSelect: "none" }}><SortHeader active={colActive("Code")} dir={sortDir}>Code</SortHeader></th>
+              <th onClick={() => handleColSort("Réf. Technique")} style={{ cursor: "pointer", userSelect: "none" }}><SortHeader active={colActive("Réf. Technique")} dir={sortDir}>Réf. Technique</SortHeader></th>
+              <th onClick={() => handleColSort("Type")} style={{ cursor: "pointer", userSelect: "none" }}><SortHeader active={colActive("Type")} dir={sortDir}>Type</SortHeader></th>
+              <th onClick={() => handleColSort("Client")} style={{ cursor: "pointer", userSelect: "none" }}><SortHeader active={colActive("Client")} dir={sortDir}>Client</SortHeader></th>
+              <th onClick={() => handleColSort("Revendeur")} style={{ cursor: "pointer", userSelect: "none" }}><SortHeader active={colActive("Revendeur")} dir={sortDir}>Revendeur</SortHeader></th>
               <th>Statut</th>
               <th style={{ width: 60 }}></th>
             </tr>
@@ -424,6 +477,19 @@ function ServicesTab({ onOpenDetail }) {
   const serviceFieldMap = { "Service": "type", "Quantité": "quantite", "Matricule": "matricule", "Revendeur": "revendeur", "Client": "client", "Site": "site", "Statut": "statut.label", "Date facturation": "dateFacturation", "Fin d'engagement": "finEngagement" };
   function handleSortChange(field, dir) { setSortBy(field); setSortDir(dir); }
   function handleReset() { setSortBy(null); setSortDir("asc"); setStatutFilter([]); setRevendeurFilter(null); setClientFilter(null); setSiteFilter(null); setHebFilter(null); }
+
+  function handleColSort(label) {
+    if (sortBy === label || (sortBy === null && label === "Service")) {
+      setSortDir(d => d === "asc" ? "desc" : "asc");
+    } else {
+      setSortBy(label);
+      setSortDir("asc");
+    }
+  }
+
+  function colActive(label) {
+    return sortBy === label || (sortBy === null && label === "Service");
+  }
 
   const sorted = React.useMemo(() => {
     let data = SERVICES;
@@ -479,15 +545,15 @@ function ServicesTab({ onOpenDetail }) {
         <table className="kap-table">
           <thead>
             <tr>
-              <th><SortHeader active dir="asc">Service</SortHeader></th>
-              <th>Quantité</th>
-              <th>Matricule</th>
-              <th>Revendeur</th>
-              <th>Client</th>
-              <th>Site</th>
-              <th>Statut</th>
-              <th>Date facturation</th>
-              <th>Fin d'engagement</th>
+              <th onClick={() => handleColSort("Service")} style={{ cursor: "pointer", userSelect: "none" }}><SortHeader active={colActive("Service")} dir={sortDir}>Service</SortHeader></th>
+              <th onClick={() => handleColSort("Quantité")} style={{ cursor: "pointer", userSelect: "none" }}><SortHeader active={colActive("Quantité")} dir={sortDir}>Quantité</SortHeader></th>
+              <th onClick={() => handleColSort("Matricule")} style={{ cursor: "pointer", userSelect: "none" }}><SortHeader active={colActive("Matricule")} dir={sortDir}>Matricule</SortHeader></th>
+              <th onClick={() => handleColSort("Revendeur")} style={{ cursor: "pointer", userSelect: "none" }}><SortHeader active={colActive("Revendeur")} dir={sortDir}>Revendeur</SortHeader></th>
+              <th onClick={() => handleColSort("Client")} style={{ cursor: "pointer", userSelect: "none" }}><SortHeader active={colActive("Client")} dir={sortDir}>Client</SortHeader></th>
+              <th onClick={() => handleColSort("Site")} style={{ cursor: "pointer", userSelect: "none" }}><SortHeader active={colActive("Site")} dir={sortDir}>Site</SortHeader></th>
+              <th onClick={() => handleColSort("Statut")} style={{ cursor: "pointer", userSelect: "none" }}><SortHeader active={colActive("Statut")} dir={sortDir}>Statut</SortHeader></th>
+              <th onClick={() => handleColSort("Date facturation")} style={{ cursor: "pointer", userSelect: "none" }}><SortHeader active={colActive("Date facturation")} dir={sortDir}>Date facturation</SortHeader></th>
+              <th onClick={() => handleColSort("Fin d'engagement")} style={{ cursor: "pointer", userSelect: "none" }}><SortHeader active={colActive("Fin d'engagement")} dir={sortDir}>Fin d'engagement</SortHeader></th>
               <th style={{ width: 60 }}></th>
             </tr>
           </thead>
@@ -528,9 +594,22 @@ function CataloguesTab({ onOpenDetail }) {
   const [sousFamilleFilter, setSousFamilleFilter] = React.useState(null);
   const [page, setPage] = React.useState(1);
 
-  const catFieldMap = { "Libellé": "designation" };
+  const catFieldMap = { "Libellé": "designation", "Famille": "famille", "Sous-famille": "sousFamille", "Fournisseur": "fournisseur", "Type": "type", "Prix d'achat": "prixAchat", "Prix public": "prixPublic" };
   function handleSortChange(field, dir) { setSortBy(field); setSortDir(dir); }
   function handleReset() { setSortBy(null); setSortDir("asc"); setFamilleFilter(null); setSousFamilleFilter(null); }
+
+  function handleColSort(label) {
+    if (sortBy === label || (sortBy === null && label === "Libellé")) {
+      setSortDir(d => d === "asc" ? "desc" : "asc");
+    } else {
+      setSortBy(label);
+      setSortDir("asc");
+    }
+  }
+
+  function colActive(label) {
+    return sortBy === label || (sortBy === null && label === "Libellé");
+  }
 
   const sorted = React.useMemo(() => {
     let data = CATALOGUE;
@@ -538,7 +617,13 @@ function CataloguesTab({ onOpenDetail }) {
     if (sousFamilleFilter) data = data.filter(c => c.sousFamille === sousFamilleFilter);
     const key = catFieldMap[sortBy || "Libellé"];
     if (!key) return data;
+    const priceFields = ["prixAchat", "prixPublic"];
+    const parsePrice = s => parseFloat(String(s || "0").replace(/\s/g, "").replace("€", "").replace(",", ".")) || 0;
     return [...data].sort((a, b) => {
+      if (priceFields.includes(key)) {
+        const va = parsePrice(a[key]); const vb = parsePrice(b[key]);
+        return sortDir === "asc" ? va - vb : vb - va;
+      }
       const va = a[key] || ""; const vb = b[key] || "";
       return sortDir === "asc" ? String(va).localeCompare(String(vb)) : String(vb).localeCompare(String(va));
     });
@@ -571,13 +656,13 @@ function CataloguesTab({ onOpenDetail }) {
           <thead>
             <tr>
               <th>Réf.</th>
-              <th><SortHeader active dir="asc">Libellé</SortHeader></th>
-              <th>Famille</th>
-              <th>Sous-famille</th>
-              <th>Fournisseur</th>
-              <th>Type</th>
-              <th style={{ textAlign: "right" }}>Prix d'achat</th>
-              <th style={{ textAlign: "right" }}>Prix public</th>
+              <th onClick={() => handleColSort("Libellé")} style={{ cursor: "pointer", userSelect: "none" }}><SortHeader active={colActive("Libellé")} dir={sortDir}>Libellé</SortHeader></th>
+              <th onClick={() => handleColSort("Famille")} style={{ cursor: "pointer", userSelect: "none" }}><SortHeader active={colActive("Famille")} dir={sortDir}>Famille</SortHeader></th>
+              <th onClick={() => handleColSort("Sous-famille")} style={{ cursor: "pointer", userSelect: "none" }}><SortHeader active={colActive("Sous-famille")} dir={sortDir}>Sous-famille</SortHeader></th>
+              <th onClick={() => handleColSort("Fournisseur")} style={{ cursor: "pointer", userSelect: "none" }}><SortHeader active={colActive("Fournisseur")} dir={sortDir}>Fournisseur</SortHeader></th>
+              <th onClick={() => handleColSort("Type")} style={{ cursor: "pointer", userSelect: "none" }}><SortHeader active={colActive("Type")} dir={sortDir}>Type</SortHeader></th>
+              <th onClick={() => handleColSort("Prix d'achat")} style={{ textAlign: "right", cursor: "pointer", userSelect: "none" }}><SortHeader active={colActive("Prix d'achat")} dir={sortDir}>Prix d'achat</SortHeader></th>
+              <th onClick={() => handleColSort("Prix public")} style={{ textAlign: "right", cursor: "pointer", userSelect: "none" }}><SortHeader active={colActive("Prix public")} dir={sortDir}>Prix public</SortHeader></th>
               <th style={{ width: 60 }}></th>
             </tr>
           </thead>

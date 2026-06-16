@@ -515,7 +515,6 @@ button { font-family: inherit; }
 .kap-pill--soft {
   background: var(--bg, rgba(0,0,0,.06));
   color: var(--fg, var(--kap-fg-1));
-  border: 1px solid var(--bd, transparent);
   font-weight: 600;
 }
 

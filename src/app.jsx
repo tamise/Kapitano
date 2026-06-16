@@ -100,6 +100,7 @@ function App() {
       {openLog && <LogDrawer log={openLog} onClose={() => setOpenLog(null)} />}
       {openUser && <UserDrawer user={openUser} onClose={() => setOpenUser(null)} />}
       {tweaksOpen && <TweaksPanel collapsed={collapsed} setCollapsed={(v) => setTweak("sidebarCollapsed", v)} onClose={() => { setTweaksOpen(false); window.parent.postMessage({ type: "__edit_mode_dismissed" }, "*"); }} />}
+      <CopyTooltip />
     </>
   );
 }

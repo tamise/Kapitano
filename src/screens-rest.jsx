@@ -31,7 +31,7 @@ function OrdersTab({ onOpenDetail }) {
   const [etatFilter, setEtatFilter] = useStateCt([]);
   const [page, setPage] = useStateCt(1);
 
-  const ordersFieldMap = { "Date": "dap", "Numéro d'affaire": "numeroAffaire", "Revendeur": "revendeur", "Client": "client", "État commande": "etatCommande" };
+  const ordersFieldMap = { "Date": "dap", "Numéro d'affaire": "numeroAffaire", "Source": "source", "Revendeur": "revendeur", "Client": "client", "Qté articles": "quantite", "État commande": "etatCommande" };
   function handleSortChange(field, dir) { setSortBy(field); setSortDir(dir); }
   function handleReset() {
     setSourceFilter([]);
@@ -40,6 +40,19 @@ function OrdersTab({ onOpenDetail }) {
     setEtatFilter([]);
     setSortBy(null);
     setSortDir("asc");
+  }
+
+  function handleColSort(label) {
+    if (sortBy === label || (sortBy === null && label === "Date")) {
+      setSortDir(d => d === "asc" ? "desc" : "asc");
+    } else {
+      setSortBy(label);
+      setSortDir("asc");
+    }
+  }
+
+  function colActive(label) {
+    return sortBy === label || (sortBy === null && label === "Date");
   }
 
   const sorted = React.useMemo(() => {
@@ -53,6 +66,10 @@ function OrdersTab({ onOpenDetail }) {
     if (!key) return data;
     const toSortableDate = (s) => { const p = String(s).split("/"); if (p.length < 3) return String(s); const y = p[2].split(" ")[0]; return `${y}/${p[1]}/${p[0]}`; };
     return [...data].sort((a, b) => {
+      if (key === "quantite") {
+        const va = Number(a[key]) || 0; const vb = Number(b[key]) || 0;
+        return sortDir === "asc" ? va - vb : vb - va;
+      }
       const isDateField = ["dap"].includes(key);
       const va = isDateField ? toSortableDate(a[key] || "") : (a[key] || "");
       const vb = isDateField ? toSortableDate(b[key] || "") : (b[key] || "");
@@ -77,13 +94,13 @@ function OrdersTab({ onOpenDetail }) {
         <table className="kap-table">
           <thead>
             <tr>
-              <th>Date</th>
-              <th><SortHeader active>N° d'affaire</SortHeader></th>
-              <th>Source</th>
-              <th>Revendeur</th>
-              <th>Client</th>
-              <th style={{ textAlign: "right" }}>Qté articles</th>
-              <th>État commande</th>
+              <th onClick={() => handleColSort("Date")} style={{ cursor: "pointer", userSelect: "none" }}><SortHeader active={colActive("Date")} dir={sortDir}>Date</SortHeader></th>
+              <th onClick={() => handleColSort("Numéro d'affaire")} style={{ cursor: "pointer", userSelect: "none" }}><SortHeader active={colActive("Numéro d'affaire")} dir={sortDir}>N° d'affaire</SortHeader></th>
+              <th onClick={() => handleColSort("Source")} style={{ cursor: "pointer", userSelect: "none" }}><SortHeader active={colActive("Source")} dir={sortDir}>Source</SortHeader></th>
+              <th onClick={() => handleColSort("Revendeur")} style={{ cursor: "pointer", userSelect: "none" }}><SortHeader active={colActive("Revendeur")} dir={sortDir}>Revendeur</SortHeader></th>
+              <th onClick={() => handleColSort("Client")} style={{ cursor: "pointer", userSelect: "none" }}><SortHeader active={colActive("Client")} dir={sortDir}>Client</SortHeader></th>
+              <th onClick={() => handleColSort("Qté articles")} style={{ cursor: "pointer", userSelect: "none", textAlign: "right" }}><SortHeader active={colActive("Qté articles")} dir={sortDir}>Qté articles</SortHeader></th>
+              <th onClick={() => handleColSort("État commande")} style={{ cursor: "pointer", userSelect: "none" }}><SortHeader active={colActive("État commande")} dir={sortDir}>État commande</SortHeader></th>
               <th style={{ width: 60 }}></th>
             </tr>
           </thead>
@@ -127,7 +144,7 @@ function ReportingTab() {
   const TOTAL = 4190;
   const perPage = 15;
 
-  const reportingFieldMap = { "Date de l'action": "dateAction", "Numéro d'affaire": "numeroAffaire", "Revendeur": "revendeur", "Client": "client", "Nom de l'article": "article", "Quantité": "quantite" };
+  const reportingFieldMap = { "Date de l'action": "dateAction", "Numéro d'affaire": "numeroAffaire", "Revendeur": "revendeur", "Client": "client", "Nom de l'utilisateur": "utilisateur", "Téléphone": "telephone", "Nom de l'article": "article", "Quantité": "quantite", "Type de prod.": "typeProd", "Type d'action": "typeAction" };
   function handleSortChange(field, dir) { setSortBy(field); setSortDir(dir); }
   function handleReset() {
     setRevendeurFilter(null);
@@ -137,6 +154,19 @@ function ReportingTab() {
     setDateFilter(null);
     setSortBy(null);
     setSortDir("asc");
+  }
+
+  function handleColSort(label) {
+    if (sortBy === label || (sortBy === null && label === "Date de l'action")) {
+      setSortDir(d => d === "asc" ? "desc" : "asc");
+    } else {
+      setSortBy(label);
+      setSortDir("asc");
+    }
+  }
+
+  function colActive(label) {
+    return sortBy === label || (sortBy === null && label === "Date de l'action");
   }
 
   const TYPE_PROD_MAP = { "Abonnement mobile": "abo-mobile", "Abonnement mobile data": "abo-mobile-data", "Trunk SIP": "trunk" };
@@ -191,16 +221,16 @@ function ReportingTab() {
         <table className="kap-table">
           <thead>
             <tr>
-              <th>Numéro d'affaire</th>
-              <th><SortHeader active dir="desc">Date de l'action</SortHeader></th>
-              <th>Revendeur</th>
-              <th>Client</th>
-              <th>Nom de l'utilisateur</th>
-              <th>Téléphone</th>
-              <th>Nom de l'article</th>
-              <th style={{ textAlign: "right" }}>Quantité</th>
-              <th>Type de prod.</th>
-              <th>Type d'action</th>
+              <th onClick={() => handleColSort("Numéro d'affaire")} style={{ cursor: "pointer", userSelect: "none" }}><SortHeader active={colActive("Numéro d'affaire")} dir={sortDir}>Numéro d'affaire</SortHeader></th>
+              <th onClick={() => handleColSort("Date de l'action")} style={{ cursor: "pointer", userSelect: "none" }}><SortHeader active={colActive("Date de l'action")} dir={sortDir}>Date de l'action</SortHeader></th>
+              <th onClick={() => handleColSort("Revendeur")} style={{ cursor: "pointer", userSelect: "none" }}><SortHeader active={colActive("Revendeur")} dir={sortDir}>Revendeur</SortHeader></th>
+              <th onClick={() => handleColSort("Client")} style={{ cursor: "pointer", userSelect: "none" }}><SortHeader active={colActive("Client")} dir={sortDir}>Client</SortHeader></th>
+              <th onClick={() => handleColSort("Nom de l'utilisateur")} style={{ cursor: "pointer", userSelect: "none" }}><SortHeader active={colActive("Nom de l'utilisateur")} dir={sortDir}>Nom de l'utilisateur</SortHeader></th>
+              <th onClick={() => handleColSort("Téléphone")} style={{ cursor: "pointer", userSelect: "none" }}><SortHeader active={colActive("Téléphone")} dir={sortDir}>Téléphone</SortHeader></th>
+              <th onClick={() => handleColSort("Nom de l'article")} style={{ cursor: "pointer", userSelect: "none" }}><SortHeader active={colActive("Nom de l'article")} dir={sortDir}>Nom de l'article</SortHeader></th>
+              <th onClick={() => handleColSort("Quantité")} style={{ cursor: "pointer", userSelect: "none", textAlign: "right" }}><SortHeader active={colActive("Quantité")} dir={sortDir}>Quantité</SortHeader></th>
+              <th onClick={() => handleColSort("Type de prod.")} style={{ cursor: "pointer", userSelect: "none" }}><SortHeader active={colActive("Type de prod.")} dir={sortDir}>Type de prod.</SortHeader></th>
+              <th onClick={() => handleColSort("Type d'action")} style={{ cursor: "pointer", userSelect: "none" }}><SortHeader active={colActive("Type d'action")} dir={sortDir}>Type d'action</SortHeader></th>
               <th style={{ width: 48 }}></th>
             </tr>
           </thead>
@@ -214,7 +244,7 @@ function ReportingTab() {
                 <td className="muted">{r.utilisateur}</td>
                 <td className="mono muted">{r.telephone}</td>
                 <td className="muted" style={{ maxWidth: 220, overflow: "hidden", textOverflow: "ellipsis" }}>{r.article}</td>
-                <td style={{ textAlign: "right", color: "var(--kap-primary)", fontWeight: 700 }}>{r.quantite}</td>
+                <td style={{ textAlign: "right", fontWeight: 700 }}>{r.quantite}</td>
                 <td>{TYPE_PROD_ICON[r.typeProd]}</td>
                 <td>{{
                   "Création":    <Tooltip text="Création"><Icon name="add_circle" size={18} style={{ color: "#2E7D32" }} /></Tooltip>,
@@ -253,14 +283,14 @@ function TechniqueScreen({ initialSub = "tickets", onOpenDetail }) {
 }
 
 const CRITICITE_CHIP = {
-  "Bloquant": <span style={{ display:"inline-flex",alignItems:"center",gap:4,padding:"2px 8px",borderRadius:99,border:"1px solid #D32F2F",color:"#D32F2F",fontSize:12,fontFamily:"var(--kap-font-ui)",fontWeight:600,whiteSpace:"nowrap" }}><Icon name="ban" size={13}/>Bloquant</span>,
-  "Critique": <span style={{ display:"inline-flex",alignItems:"center",gap:4,padding:"2px 8px",borderRadius:99,border:"1px solid #616161",color:"#616161",fontSize:12,fontFamily:"var(--kap-font-ui)",fontWeight:600,whiteSpace:"nowrap" }}><Icon name="skull" size={13}/>Critique</span>,
-  "Mineur":   <span style={{ display:"inline-flex",alignItems:"center",gap:4,padding:"2px 8px",borderRadius:99,border:"1px solid #0288D1",color:"#0288D1",fontSize:12,fontFamily:"var(--kap-font-ui)",fontWeight:600,whiteSpace:"nowrap" }}><Icon name="info" size={13}/>Mineur</span>,
-  "Majeur":   <span style={{ display:"inline-flex",alignItems:"center",gap:4,padding:"2px 8px",borderRadius:99,border:"1px solid #ED6C02",color:"#ED6C02",fontSize:12,fontFamily:"var(--kap-font-ui)",fontWeight:600,whiteSpace:"nowrap" }}><Icon name="alert-triangle" size={13}/>Majeur</span>,
+  "Bloquant": <span className="kap-pill kap-pill--soft" style={{ "--bg":"#FFEBEE","--fg":"#C62828" }}><Icon name="ban" size={13}/>Bloquant</span>,
+  "Critique": <span className="kap-pill kap-pill--soft" style={{ "--bg":"#F5F5F5","--fg":"#616161" }}><Icon name="skull" size={13}/>Critique</span>,
+  "Mineur":   <span className="kap-pill kap-pill--soft" style={{ "--bg":"#E1F5FE","--fg":"#0277BD" }}><Icon name="info" size={13}/>Mineur</span>,
+  "Majeur":   <span className="kap-pill kap-pill--soft" style={{ "--bg":"#FFF3E0","--fg":"#E65100" }}><Icon name="alert-triangle" size={13}/>Majeur</span>,
 };
 const NATURE_CHIP = {
-  "Incident": <span style={{ display:"inline-flex",alignItems:"center",gap:4,padding:"2px 8px",borderRadius:99,border:"1px solid #D32F2F",color:"#D32F2F",fontSize:12,fontFamily:"var(--kap-font-ui)",fontWeight:600,whiteSpace:"nowrap" }}><Icon name="alert-triangle" size={13}/>Incident</span>,
-  "Demande":  <span style={{ display:"inline-flex",alignItems:"center",gap:4,padding:"2px 8px",borderRadius:99,border:"1px solid #1976D2",color:"#1976D2",fontSize:12,fontFamily:"var(--kap-font-ui)",fontWeight:600,whiteSpace:"nowrap" }}><Icon name="help-circle" size={13}/>Demande</span>,
+  "Incident": <span className="kap-pill kap-pill--soft" style={{ "--bg":"#FFEBEE","--fg":"#C62828" }}><Icon name="alert-triangle" size={13}/>Incident</span>,
+  "Demande":  <span className="kap-pill kap-pill--soft" style={{ "--bg":"#E3F2FD","--fg":"#1565C0" }}><Icon name="help-circle" size={13}/>Demande</span>,
 };
 
 function TicketsTab({ onOpenDetail }) {
@@ -274,7 +304,7 @@ function TicketsTab({ onOpenDetail }) {
   const [page, setPage] = useStateCt(1);
   const TOTAL_TKT = 720;
 
-  const ticketFieldMap = { "Date de création": "dateCreation", "Référence": "reference", "Sujet": "sujet", "État": "etat", "Criticité": "criticite", "Nature": "nature" };
+  const ticketFieldMap = { "Date de création": "dateCreation", "Référence": "reference", "Sujet": "sujet", "État": "etat", "Criticité": "criticite", "Nature": "nature", "Origine": "origineAuto", "Revendeur": "revendeur", "Client": "client", "Site": "site" };
   function handleSortChange(field, dir) { setSortBy(field); setSortDir(dir); }
   function handleReset() {
     setRevendeurFilter(null);
@@ -284,6 +314,19 @@ function TicketsTab({ onOpenDetail }) {
     setNatureFilter([]);
     setSortBy(null);
     setSortDir("asc");
+  }
+
+  function handleColSort(label) {
+    if (sortBy === label || (sortBy === null && label === "Date de création")) {
+      setSortDir(d => d === "asc" ? "desc" : "asc");
+    } else {
+      setSortBy(label);
+      setSortDir("asc");
+    }
+  }
+
+  function colActive(label) {
+    return sortBy === label || (sortBy === null && label === "Date de création");
   }
 
   const sorted = React.useMemo(() => {
@@ -298,6 +341,10 @@ function TicketsTab({ onOpenDetail }) {
     if (!key) return data;
     const toSortableDate = (s) => { const p = String(s).split("/"); if (p.length < 3) return String(s); const y = p[2].split(" ")[0]; return `${y}/${p[1]}/${p[0]}`; };
     return [...data].sort((a, b) => {
+      if (key === "origineAuto") {
+        const va = a.origineAuto ? 1 : 0; const vb = b.origineAuto ? 1 : 0;
+        return sortDir === "asc" ? va - vb : vb - va;
+      }
       const isDateField = ["dateCreation"].includes(key);
       const va = isDateField ? toSortableDate(a[key] || "") : (a[key] || "");
       const vb = isDateField ? toSortableDate(b[key] || "") : (b[key] || "");
@@ -334,16 +381,16 @@ function TicketsTab({ onOpenDetail }) {
         <table className="kap-table">
           <thead>
             <tr>
-              <th><SortHeader active dir="desc">Référence</SortHeader></th>
-              <th>Date de création</th>
-              <th>Sujet</th>
-              <th>État</th>
-              <th>Criticité</th>
-              <th>Nature</th>
-              <th>Origine</th>
-              <th>Revendeur</th>
-              <th>Client</th>
-              <th>Site</th>
+              <th onClick={() => handleColSort("Référence")} style={{ cursor: "pointer", userSelect: "none" }}><SortHeader active={colActive("Référence")} dir={sortDir}>Référence</SortHeader></th>
+              <th onClick={() => handleColSort("Date de création")} style={{ cursor: "pointer", userSelect: "none" }}><SortHeader active={colActive("Date de création")} dir={sortDir}>Date de création</SortHeader></th>
+              <th onClick={() => handleColSort("Sujet")} style={{ cursor: "pointer", userSelect: "none" }}><SortHeader active={colActive("Sujet")} dir={sortDir}>Sujet</SortHeader></th>
+              <th onClick={() => handleColSort("État")} style={{ cursor: "pointer", userSelect: "none" }}><SortHeader active={colActive("État")} dir={sortDir}>État</SortHeader></th>
+              <th onClick={() => handleColSort("Criticité")} style={{ cursor: "pointer", userSelect: "none" }}><SortHeader active={colActive("Criticité")} dir={sortDir}>Criticité</SortHeader></th>
+              <th onClick={() => handleColSort("Nature")} style={{ cursor: "pointer", userSelect: "none" }}><SortHeader active={colActive("Nature")} dir={sortDir}>Nature</SortHeader></th>
+              <th onClick={() => handleColSort("Origine")} style={{ cursor: "pointer", userSelect: "none" }}><SortHeader active={colActive("Origine")} dir={sortDir}>Origine</SortHeader></th>
+              <th onClick={() => handleColSort("Revendeur")} style={{ cursor: "pointer", userSelect: "none" }}><SortHeader active={colActive("Revendeur")} dir={sortDir}>Revendeur</SortHeader></th>
+              <th onClick={() => handleColSort("Client")} style={{ cursor: "pointer", userSelect: "none" }}><SortHeader active={colActive("Client")} dir={sortDir}>Client</SortHeader></th>
+              <th onClick={() => handleColSort("Site")} style={{ cursor: "pointer", userSelect: "none" }}><SortHeader active={colActive("Site")} dir={sortDir}>Site</SortHeader></th>
               <th style={{ width: 48 }}></th>
             </tr>
           </thead>
@@ -386,7 +433,7 @@ function TicketsArchivesTab() {
   const [page, setPage] = useStateCt(1);
   const TOTAL_ARCH = 7592;
 
-  const ticketsArchFieldMap = { "Date de création": "dateCreation", "Numéro": "numero", "Symptôme": "symptome", "Type DIT": "typeDIT" };
+  const ticketsArchFieldMap = { "Date de création": "dateCreation", "Numéro": "numero", "Symptôme": "symptome", "Type DIT": "typeDIT", "État": "etat", "Revendeur": "revendeur", "Client": "client", "Code Artis": "codeArtis", "Site": "site" };
   function handleSortChange(field, dir) { setSortBy(field); setSortDir(dir); }
   function handleReset() {
     setRevendeurFilter(null);
@@ -396,6 +443,19 @@ function TicketsArchivesTab() {
     setTypeDITFilter(null);
     setSortBy(null);
     setSortDir("asc");
+  }
+
+  function handleColSort(label) {
+    if (sortBy === label || (sortBy === null && label === "Date de création")) {
+      setSortDir(d => d === "asc" ? "desc" : "asc");
+    } else {
+      setSortBy(label);
+      setSortDir("asc");
+    }
+  }
+
+  function colActive(label) {
+    return sortBy === label || (sortBy === null && label === "Date de création");
   }
   const toSortableDate = (s) => { const p = String(s).split("/"); if (p.length < 3) return String(s); const y = p[2].split(" ")[0]; return `${y}/${p[1]}/${p[0]}`; };
   const sortedArchives = React.useMemo(() => {
@@ -442,15 +502,15 @@ function TicketsArchivesTab() {
         <table className="kap-table">
           <thead>
             <tr>
-              <th><SortHeader active dir="desc">Numéro</SortHeader></th>
-              <th>Date de création</th>
-              <th>Symptôme</th>
-              <th>État</th>
-              <th>Revendeur</th>
-              <th>Client</th>
-              <th>Code Artis</th>
-              <th>Site</th>
-              <th>Type DIT</th>
+              <th onClick={() => handleColSort("Numéro")} style={{ cursor: "pointer", userSelect: "none" }}><SortHeader active={colActive("Numéro")} dir={sortDir}>Numéro</SortHeader></th>
+              <th onClick={() => handleColSort("Date de création")} style={{ cursor: "pointer", userSelect: "none" }}><SortHeader active={colActive("Date de création")} dir={sortDir}>Date de création</SortHeader></th>
+              <th onClick={() => handleColSort("Symptôme")} style={{ cursor: "pointer", userSelect: "none" }}><SortHeader active={colActive("Symptôme")} dir={sortDir}>Symptôme</SortHeader></th>
+              <th onClick={() => handleColSort("État")} style={{ cursor: "pointer", userSelect: "none" }}><SortHeader active={colActive("État")} dir={sortDir}>État</SortHeader></th>
+              <th onClick={() => handleColSort("Revendeur")} style={{ cursor: "pointer", userSelect: "none" }}><SortHeader active={colActive("Revendeur")} dir={sortDir}>Revendeur</SortHeader></th>
+              <th onClick={() => handleColSort("Client")} style={{ cursor: "pointer", userSelect: "none" }}><SortHeader active={colActive("Client")} dir={sortDir}>Client</SortHeader></th>
+              <th onClick={() => handleColSort("Code Artis")} style={{ cursor: "pointer", userSelect: "none" }}><SortHeader active={colActive("Code Artis")} dir={sortDir}>Code Artis</SortHeader></th>
+              <th onClick={() => handleColSort("Site")} style={{ cursor: "pointer", userSelect: "none" }}><SortHeader active={colActive("Site")} dir={sortDir}>Site</SortHeader></th>
+              <th onClick={() => handleColSort("Type DIT")} style={{ cursor: "pointer", userSelect: "none" }}><SortHeader active={colActive("Type DIT")} dir={sortDir}>Type DIT</SortHeader></th>
               <th style={{ width: 48 }}></th>
             </tr>
           </thead>
@@ -487,7 +547,7 @@ function ConfigurationsTab({ onOpenDetail }) {
   const [page, setPage] = useStateCt(1);
   const TOTAL_CFG = 320;
 
-  const cfgFieldMap = { "Date de création": "dateCreation", "Version": "version", "Statut": "statut", "Date d'archivage": "dateArchivage", "Revendeur": "revendeur", "Client": "client", "Site": "site", "Service": "service" };
+  const cfgFieldMap = { "Date de création": "dateCreation", "Version": "version", "Lien": "lien", "Options": "options", "Numéro de série": "numeroSerie", "Statut": "statut", "Date d'archivage": "dateArchivage", "Revendeur": "revendeur", "Client": "client", "Site": "site", "Service": "service" };
   function handleSortChange(field, dir) { setSortBy(field); setSortDir(dir); }
   function handleReset() {
     setStatutFilter(null);
@@ -496,6 +556,19 @@ function ConfigurationsTab({ onOpenDetail }) {
     setSiteFilter(null);
     setSortBy(null);
     setSortDir("asc");
+  }
+
+  function handleColSort(label) {
+    if (sortBy === label || (sortBy === null && label === "Date de création")) {
+      setSortDir(d => d === "asc" ? "desc" : "asc");
+    } else {
+      setSortBy(label);
+      setSortDir("asc");
+    }
+  }
+
+  function colActive(label) {
+    return sortBy === label || (sortBy === null && label === "Date de création");
   }
   const toSortableDate = (s) => { const p = String(s).split("/"); if (p.length < 3) return String(s); const y = p[2].split(" ")[0]; return `${y}/${p[1]}/${p[0]}`; };
   const sortedCfg = React.useMemo(() => {
@@ -540,17 +613,17 @@ function ConfigurationsTab({ onOpenDetail }) {
         <table className="kap-table">
           <thead>
             <tr>
-              <th><SortHeader active dir="desc">Date de création</SortHeader></th>
-              <th>Version</th>
-              <th>Lien</th>
-              <th>Options</th>
-              <th>Numéro de série</th>
-              <th>Statut</th>
-              <th>Date d'archivage</th>
-              <th>Revendeur</th>
-              <th>Client</th>
-              <th>Site</th>
-              <th>Service</th>
+              <th onClick={() => handleColSort("Date de création")} style={{ cursor: "pointer", userSelect: "none" }}><SortHeader active={colActive("Date de création")} dir={sortDir}>Date de création</SortHeader></th>
+              <th onClick={() => handleColSort("Version")} style={{ cursor: "pointer", userSelect: "none" }}><SortHeader active={colActive("Version")} dir={sortDir}>Version</SortHeader></th>
+              <th onClick={() => handleColSort("Lien")} style={{ cursor: "pointer", userSelect: "none" }}><SortHeader active={colActive("Lien")} dir={sortDir}>Lien</SortHeader></th>
+              <th onClick={() => handleColSort("Options")} style={{ cursor: "pointer", userSelect: "none" }}><SortHeader active={colActive("Options")} dir={sortDir}>Options</SortHeader></th>
+              <th onClick={() => handleColSort("Numéro de série")} style={{ cursor: "pointer", userSelect: "none" }}><SortHeader active={colActive("Numéro de série")} dir={sortDir}>Numéro de série</SortHeader></th>
+              <th onClick={() => handleColSort("Statut")} style={{ cursor: "pointer", userSelect: "none" }}><SortHeader active={colActive("Statut")} dir={sortDir}>Statut</SortHeader></th>
+              <th onClick={() => handleColSort("Date d'archivage")} style={{ cursor: "pointer", userSelect: "none" }}><SortHeader active={colActive("Date d'archivage")} dir={sortDir}>Date d'archivage</SortHeader></th>
+              <th onClick={() => handleColSort("Revendeur")} style={{ cursor: "pointer", userSelect: "none" }}><SortHeader active={colActive("Revendeur")} dir={sortDir}>Revendeur</SortHeader></th>
+              <th onClick={() => handleColSort("Client")} style={{ cursor: "pointer", userSelect: "none" }}><SortHeader active={colActive("Client")} dir={sortDir}>Client</SortHeader></th>
+              <th onClick={() => handleColSort("Site")} style={{ cursor: "pointer", userSelect: "none" }}><SortHeader active={colActive("Site")} dir={sortDir}>Site</SortHeader></th>
+              <th onClick={() => handleColSort("Service")} style={{ cursor: "pointer", userSelect: "none" }}><SortHeader active={colActive("Service")} dir={sortDir}>Service</SortHeader></th>
               <th style={{ width: 48 }}></th>
             </tr>
           </thead>
@@ -582,9 +655,44 @@ function ConfigurationsTab({ onOpenDetail }) {
   );
 }
 
+const SUPERV_ETAT_CFG = {
+  "En ligne":   { icon: "check-circle-2",  fg: "#2E7D32", bg: "#E8F5E9" },
+  "Alerte":     { icon: "alert-triangle",  fg: "#E65100", bg: "#FFF3E0" },
+  "Hors ligne": { icon: "x-circle",        fg: "#C62828", bg: "#FFEBEE" },
+};
+
 function SupervisionTab({ onOpenDetail }) {
   const [page, setPage] = useStateCt(1);
-  const totalPages = Math.max(1, Math.ceil(EQUIPMENTS.length / 15));
+  const [sortBy, setSortBy] = useStateCt(null);
+  const [sortDir, setSortDir] = useStateCt("asc");
+
+  const supFieldMap = { "ID": "id", "Équipement": "nom", "Client": "client", "Site": "site", "IP": "ip", "Uptime": "uptime", "État": "etat.label" };
+
+  function handleColSort(label) {
+    if (sortBy === label || (sortBy === null && label === "Équipement")) {
+      setSortDir(d => d === "asc" ? "desc" : "asc");
+    } else {
+      setSortBy(label);
+      setSortDir("asc");
+    }
+  }
+
+  function colActive(label) {
+    return sortBy === label || (sortBy === null && label === "Équipement");
+  }
+
+  const sorted = React.useMemo(() => {
+    const key = supFieldMap[sortBy || "Équipement"];
+    if (!key) return EQUIPMENTS;
+    return [...EQUIPMENTS].sort((a, b) => {
+      let va, vb;
+      if (key === "etat.label") { va = a.etat ? a.etat.label || "" : ""; vb = b.etat ? b.etat.label || "" : ""; }
+      else { va = a[key] || ""; vb = b[key] || ""; }
+      return sortDir === "asc" ? String(va).localeCompare(String(vb)) : String(vb).localeCompare(String(va));
+    });
+  }, [sortBy, sortDir]);
+
+  const totalPages = Math.max(1, Math.ceil(sorted.length / 15));
   const KPIS_SUP = [
     { label: "Équipements supervisés", value: "1 247", trend: "+18", up: true, desc: "ce mois" },
     { label: "Taux de disponibilité",  value: "99,6 %", trend: "+0,2 pt", up: true, desc: "SLA 99,5 %" },
@@ -605,18 +713,18 @@ function SupervisionTab({ onOpenDetail }) {
           <table className="kap-table">
             <thead>
               <tr>
-                <th>ID</th>
-                <th><SortHeader active>Équipement</SortHeader></th>
-                <th>Client</th>
-                <th>Site</th>
-                <th>IP</th>
-                <th>Uptime</th>
-                <th>État</th>
+                <th onClick={() => handleColSort("ID")} style={{ cursor: "pointer", userSelect: "none" }}><SortHeader active={colActive("ID")} dir={sortDir}>ID</SortHeader></th>
+                <th onClick={() => handleColSort("Équipement")} style={{ cursor: "pointer", userSelect: "none" }}><SortHeader active={colActive("Équipement")} dir={sortDir}>Équipement</SortHeader></th>
+                <th onClick={() => handleColSort("Client")} style={{ cursor: "pointer", userSelect: "none" }}><SortHeader active={colActive("Client")} dir={sortDir}>Client</SortHeader></th>
+                <th onClick={() => handleColSort("Site")} style={{ cursor: "pointer", userSelect: "none" }}><SortHeader active={colActive("Site")} dir={sortDir}>Site</SortHeader></th>
+                <th onClick={() => handleColSort("IP")} style={{ cursor: "pointer", userSelect: "none" }}><SortHeader active={colActive("IP")} dir={sortDir}>IP</SortHeader></th>
+                <th onClick={() => handleColSort("Uptime")} style={{ cursor: "pointer", userSelect: "none" }}><SortHeader active={colActive("Uptime")} dir={sortDir}>Uptime</SortHeader></th>
+                <th onClick={() => handleColSort("État")} style={{ cursor: "pointer", userSelect: "none" }}><SortHeader active={colActive("État")} dir={sortDir}>État</SortHeader></th>
                 <th style={{ width: 60 }}></th>
               </tr>
             </thead>
             <tbody>
-              {EQUIPMENTS.slice((page - 1) * 15, page * 15).map(e => (
+              {sorted.slice((page - 1) * 15, page * 15).map(e => (
                 <tr key={e.id} className="is-clickable" onClick={() => onOpenDetail({ kind: "equipment", data: e })}>
                   <td className="mono">{e.id}</td>
                   <td style={{ fontWeight: 600 }}>{e.nom}</td>
@@ -624,14 +732,14 @@ function SupervisionTab({ onOpenDetail }) {
                   <td className="muted">{e.site}</td>
                   <td className="mono">{e.ip}</td>
                   <td className="mono">{e.uptime}</td>
-                  <td><DotStatus color={e.etat.color} label={e.etat.label} /></td>
+                  <td>{(() => { const cfg = SUPERV_ETAT_CFG[e.etat.label] || { icon: "circle", fg: "#616161", bg: "#F5F5F5" }; return <span style={{ display:"inline-flex", alignItems:"center", gap:4, padding:"2px 8px 2px 6px", borderRadius:9999, background:cfg.bg, color:cfg.fg, fontSize:11, fontFamily:"var(--kap-font-display)", fontWeight:600, lineHeight:1.6 }}><Icon name={cfg.icon} size={12} style={{ color:cfg.fg }} />{e.etat.label}</span>; })()}</td>
                   <td><IconButton icon="more-vertical" /></td>
                 </tr>
               ))}
             </tbody>
           </table>
         </TableBox>
-        <Pagination page={page} totalPages={totalPages} onChange={setPage} totalItems={EQUIPMENTS.length} perPage={15} />
+        <Pagination page={page} totalPages={totalPages} onChange={setPage} totalItems={sorted.length} perPage={15} />
       </div>
     </div>
   );
@@ -749,7 +857,7 @@ function EligDemandesScreen() {
   const TOTAL = 1553;
   const perPage = 15;
 
-  const eligDemFieldMap = { "Créée le": "creeLe", "Libellé": "libelle", "Statut": "statut", "Traitée le": "traiteLe" };
+  const eligDemFieldMap = { "Créée le": "creeLe", "Libellé": "libelle", "Statut": "statut", "Traitée le": "traiteLe", "Utilisateur": "utilisateur" };
   function handleSortChange(field, dir) { setSortBy(field); setSortDir(dir); }
   function handleReset() {
     setRevendeurFilter(null);
@@ -759,6 +867,19 @@ function EligDemandesScreen() {
     setStatutFilter(null);
     setSortBy(null);
     setSortDir("asc");
+  }
+
+  function handleColSort(label) {
+    if (sortBy === label || (sortBy === null && label === "Créée le")) {
+      setSortDir(d => d === "asc" ? "desc" : "asc");
+    } else {
+      setSortBy(label);
+      setSortDir("asc");
+    }
+  }
+
+  function colActive(label) {
+    return sortBy === label || (sortBy === null && label === "Créée le");
   }
   const toSortableDate = (s) => { const p = String(s).split("/"); if (p.length < 3) return String(s); const y = p[2].split(" ")[0]; return `${y}/${p[1]}/${p[0]}`; };
   const sortedDemandes = React.useMemo(() => {
@@ -830,11 +951,11 @@ function EligDemandesScreen() {
         <table className="kap-table">
           <thead>
             <tr>
-              <th><SortHeader active dir="desc">Utilisateur</SortHeader></th>
-              <th>Créée le</th>
-              <th>Libellé</th>
-              <th>Statut</th>
-              <th>Traitée le</th>
+              <th onClick={() => handleColSort("Utilisateur")} style={{ cursor: "pointer", userSelect: "none" }}><SortHeader active={colActive("Utilisateur")} dir={sortDir}>Utilisateur</SortHeader></th>
+              <th onClick={() => handleColSort("Créée le")} style={{ cursor: "pointer", userSelect: "none" }}><SortHeader active={colActive("Créée le")} dir={sortDir}>Créée le</SortHeader></th>
+              <th onClick={() => handleColSort("Libellé")} style={{ cursor: "pointer", userSelect: "none" }}><SortHeader active={colActive("Libellé")} dir={sortDir}>Libellé</SortHeader></th>
+              <th onClick={() => handleColSort("Statut")} style={{ cursor: "pointer", userSelect: "none" }}><SortHeader active={colActive("Statut")} dir={sortDir}>Statut</SortHeader></th>
+              <th onClick={() => handleColSort("Traitée le")} style={{ cursor: "pointer", userSelect: "none" }}><SortHeader active={colActive("Traitée le")} dir={sortDir}>Traitée le</SortHeader></th>
               <th style={{ width: 48 }}></th>
             </tr>
           </thead>
@@ -909,7 +1030,7 @@ function EligAdressesScreen() {
   const TOTAL = 1589;
   const perPage = 15;
 
-  const eligAddrFieldMap = { "Créée le": "creeLe", "Type de recherche": "type", "Données de la recherche": "donnees", "Libellé": "libelle", "Statut": "statut", "Testée le": "testeeLe" };
+  const eligAddrFieldMap = { "Créée le": "creeLe", "Type de recherche": "type", "Données de la recherche": "donnees", "Libellé": "libelle", "Statut": "statut", "Testée le": "testeeLe", "Utilisateur": "utilisateur" };
   function handleSortChange(field, dir) { setSortBy(field); setSortDir(dir); }
   function handleReset() {
     setRevendeurFilter(null);
@@ -919,6 +1040,19 @@ function EligAdressesScreen() {
     setStatutFilter(null);
     setSortBy(null);
     setSortDir("asc");
+  }
+
+  function handleColSort(label) {
+    if (sortBy === label || (sortBy === null && label === "Créée le")) {
+      setSortDir(d => d === "asc" ? "desc" : "asc");
+    } else {
+      setSortBy(label);
+      setSortDir("asc");
+    }
+  }
+
+  function colActive(label) {
+    return sortBy === label || (sortBy === null && label === "Créée le");
   }
   const toSortableDate = (s) => { const p = String(s).split("/"); if (p.length < 3) return String(s); const y = p[2].split(" ")[0]; return `${y}/${p[1]}/${p[0]}`; };
   const sortedAdresses = React.useMemo(() => {
@@ -984,13 +1118,13 @@ function EligAdressesScreen() {
         <table className="kap-table">
           <thead>
             <tr>
-              <th><SortHeader active dir="desc">Utilisateur</SortHeader></th>
-              <th>Créée le</th>
-              <th>Type de recherche</th>
-              <th>Données de la recherche</th>
-              <th>Libellé</th>
-              <th>Statut</th>
-              <th>Testée le</th>
+              <th onClick={() => handleColSort("Utilisateur")} style={{ cursor: "pointer", userSelect: "none" }}><SortHeader active={colActive("Utilisateur")} dir={sortDir}>Utilisateur</SortHeader></th>
+              <th onClick={() => handleColSort("Créée le")} style={{ cursor: "pointer", userSelect: "none" }}><SortHeader active={colActive("Créée le")} dir={sortDir}>Créée le</SortHeader></th>
+              <th onClick={() => handleColSort("Type de recherche")} style={{ cursor: "pointer", userSelect: "none" }}><SortHeader active={colActive("Type de recherche")} dir={sortDir}>Type de recherche</SortHeader></th>
+              <th onClick={() => handleColSort("Données de la recherche")} style={{ cursor: "pointer", userSelect: "none" }}><SortHeader active={colActive("Données de la recherche")} dir={sortDir}>Données de la recherche</SortHeader></th>
+              <th onClick={() => handleColSort("Libellé")} style={{ cursor: "pointer", userSelect: "none" }}><SortHeader active={colActive("Libellé")} dir={sortDir}>Libellé</SortHeader></th>
+              <th onClick={() => handleColSort("Statut")} style={{ cursor: "pointer", userSelect: "none" }}><SortHeader active={colActive("Statut")} dir={sortDir}>Statut</SortHeader></th>
+              <th onClick={() => handleColSort("Testée le")} style={{ cursor: "pointer", userSelect: "none" }}><SortHeader active={colActive("Testée le")} dir={sortDir}>Testée le</SortHeader></th>
               <th style={{ width: 48 }}></th>
             </tr>
           </thead>
@@ -1792,7 +1926,7 @@ function MatricesDecisionTab({ questFilter, onClearFilter }) {
     ? MATRICES.slice(0, questCount)
     : MATRICES;
 
-  const matricesFieldMap = { "Nature": "nature", "Sujet": "sujet", "Type de cible": "cible", "Code catégorie Kali": "codeKali" };
+  const matricesFieldMap = { "Nature": "nature", "Sujet": "sujet", "Type de cible": "cible", "Code catégorie Kali": "codeKali", "Dernière modification": "dateModif", "Mapping périmètre": "perimetre", "Mapping symptôme": "symptome", "Kali Queue": "queue" };
   function handleSortChange(field, dir) { setSortBy(field); setSortDir(dir); }
   function handleReset() {
     setNatureFilter(null);
@@ -1800,6 +1934,19 @@ function MatricesDecisionTab({ questFilter, onClearFilter }) {
     setQuestionnaireFilter(null);
     setSortBy(null);
     setSortDir("asc");
+  }
+
+  function handleColSort(label) {
+    if (sortBy === label) {
+      setSortDir(d => d === "asc" ? "desc" : "asc");
+    } else {
+      setSortBy(label);
+      setSortDir("asc");
+    }
+  }
+
+  function colActive(label) {
+    return sortBy === label;
   }
 
   const sortedFiltered = React.useMemo(() => {
@@ -1814,6 +1961,10 @@ function MatricesDecisionTab({ questFilter, onClearFilter }) {
     const key = matricesFieldMap[sortBy];
     if (!key) return data;
     return [...data].sort((a, b) => {
+      if (key === "queue") {
+        const va = Number(a[key]) || 0; const vb = Number(b[key]) || 0;
+        return sortDir === "asc" ? va - vb : vb - va;
+      }
       const va = a[key] || ""; const vb = b[key] || "";
       return sortDir === "asc" ? String(va).localeCompare(String(vb)) : String(vb).localeCompare(String(va));
     });
@@ -1854,14 +2005,14 @@ function MatricesDecisionTab({ questFilter, onClearFilter }) {
         <table className="kap-table">
           <thead>
             <tr>
-              <th><SortHeader active dir="desc">Dernière modification</SortHeader></th>
-              <th>Nature</th>
-              <th>Sujet</th>
-              <th>Type de cible</th>
-              <th>Mapping périmètre</th>
-              <th>Mapping symptôme</th>
-              <th>Code catégorie Kali</th>
-              <th>Kali Queue</th>
+              <th onClick={() => handleColSort("Dernière modification")} style={{ cursor: "pointer", userSelect: "none" }}><SortHeader active={colActive("Dernière modification")} dir={sortDir}>Dernière modification</SortHeader></th>
+              <th onClick={() => handleColSort("Nature")} style={{ cursor: "pointer", userSelect: "none" }}><SortHeader active={colActive("Nature")} dir={sortDir}>Nature</SortHeader></th>
+              <th onClick={() => handleColSort("Sujet")} style={{ cursor: "pointer", userSelect: "none" }}><SortHeader active={colActive("Sujet")} dir={sortDir}>Sujet</SortHeader></th>
+              <th onClick={() => handleColSort("Type de cible")} style={{ cursor: "pointer", userSelect: "none" }}><SortHeader active={colActive("Type de cible")} dir={sortDir}>Type de cible</SortHeader></th>
+              <th onClick={() => handleColSort("Mapping périmètre")} style={{ cursor: "pointer", userSelect: "none" }}><SortHeader active={colActive("Mapping périmètre")} dir={sortDir}>Mapping périmètre</SortHeader></th>
+              <th onClick={() => handleColSort("Mapping symptôme")} style={{ cursor: "pointer", userSelect: "none" }}><SortHeader active={colActive("Mapping symptôme")} dir={sortDir}>Mapping symptôme</SortHeader></th>
+              <th onClick={() => handleColSort("Code catégorie Kali")} style={{ cursor: "pointer", userSelect: "none" }}><SortHeader active={colActive("Code catégorie Kali")} dir={sortDir}>Code catégorie Kali</SortHeader></th>
+              <th onClick={() => handleColSort("Kali Queue")} style={{ cursor: "pointer", userSelect: "none" }}><SortHeader active={colActive("Kali Queue")} dir={sortDir}>Kali Queue</SortHeader></th>
               <th style={{ width: 48 }}></th>
             </tr>
           </thead>
@@ -1906,17 +2057,34 @@ function QuestionnaireTab({ onGoToMatrices }) {
   const [page, setPage] = useStateCt(1);
   const perPage = 15;
 
-  const questFieldMap = { "Libellé": "libelle" };
+  const questFieldMap = { "Libellé": "libelle", "Dernière modification": "dateModif", "Nombre de questions": "nbQuestions", "Symptômes liés": "symptomes", "Matrices affectées": "matrices" };
   function handleSortChange(field, dir) { setSortBy(field); setSortDir(dir); }
   function handleReset() {
     setSortBy(null);
     setSortDir("asc");
   }
 
+  function handleColSort(label) {
+    if (sortBy === label) {
+      setSortDir(d => d === "asc" ? "desc" : "asc");
+    } else {
+      setSortBy(label);
+      setSortDir("asc");
+    }
+  }
+
+  function colActive(label) {
+    return sortBy === label;
+  }
+
   const sorted = React.useMemo(() => {
     const key = questFieldMap[sortBy];
     if (!key) return QUESTIONNAIRES;
     return [...QUESTIONNAIRES].sort((a, b) => {
+      if (key === "nbQuestions" || key === "matrices") {
+        const va = Number(a[key]) || 0; const vb = Number(b[key]) || 0;
+        return sortDir === "asc" ? va - vb : vb - va;
+      }
       const va = a[key] || ""; const vb = b[key] || "";
       return sortDir === "asc" ? String(va).localeCompare(String(vb)) : String(vb).localeCompare(String(va));
     });
@@ -1937,11 +2105,11 @@ function QuestionnaireTab({ onGoToMatrices }) {
         <table className="kap-table">
           <thead>
             <tr>
-              <th><SortHeader active dir="desc">Dernière modification</SortHeader></th>
-              <th>Libellé</th>
-              <th style={{ textAlign: "right" }}>Nombre de questions</th>
-              <th>Symptômes liés</th>
-              <th style={{ textAlign: "center" }}>Matrices affectées</th>
+              <th onClick={() => handleColSort("Dernière modification")} style={{ cursor: "pointer", userSelect: "none" }}><SortHeader active={colActive("Dernière modification")} dir={sortDir}>Dernière modification</SortHeader></th>
+              <th onClick={() => handleColSort("Libellé")} style={{ cursor: "pointer", userSelect: "none" }}><SortHeader active={colActive("Libellé")} dir={sortDir}>Libellé</SortHeader></th>
+              <th onClick={() => handleColSort("Nombre de questions")} style={{ cursor: "pointer", userSelect: "none", textAlign: "right" }}><SortHeader active={colActive("Nombre de questions")} dir={sortDir}>Nombre de questions</SortHeader></th>
+              <th onClick={() => handleColSort("Symptômes liés")} style={{ cursor: "pointer", userSelect: "none" }}><SortHeader active={colActive("Symptômes liés")} dir={sortDir}>Symptômes liés</SortHeader></th>
+              <th onClick={() => handleColSort("Matrices affectées")} style={{ cursor: "pointer", userSelect: "none", textAlign: "center" }}><SortHeader active={colActive("Matrices affectées")} dir={sortDir}>Matrices affectées</SortHeader></th>
               <th style={{ width: 48 }}></th>
             </tr>
           </thead>
@@ -1954,7 +2122,7 @@ function QuestionnaireTab({ onGoToMatrices }) {
                 <td className="muted">{q.symptomes}</td>
                 <td style={{ textAlign: "center" }}>
                   {q.matrices > 0 && onGoToMatrices
-                    ? <span onClick={() => onGoToMatrices(q.libelle, q.matrices)} style={{ color:"var(--kap-primary)", fontWeight:600, cursor:"pointer", textDecoration:"underline", textDecorationStyle:"dotted", textUnderlineOffset:3 }}>{q.matrices}</span>
+                    ? <span onClick={() => onGoToMatrices(q.libelle, q.matrices)} style={{ fontWeight:600, cursor:"pointer", textDecoration:"underline", textDecorationStyle:"dotted", textUnderlineOffset:3 }}>{q.matrices}</span>
                     : q.matrices
                   }
                 </td>
@@ -2002,7 +2170,7 @@ function ReglesServiceTab() {
   const [page, setPage] = useStateCt(1);
   const perPage = 15;
 
-  const reglesFieldMap = { "Dernière modification": "nom", "Action": "nom", "Type": "nom", "Nom": "nom" };
+  const reglesFieldMap = { "Dernière modification": "nom", "Action": "action", "Type": "type", "Nom": "nom" };
   function handleSortChange(field, dir) { setSortBy(field); setSortDir(dir); }
   function handleReset() {
     setActionFilter([]);
@@ -2010,11 +2178,25 @@ function ReglesServiceTab() {
     setSortBy(null);
     setSortDir("asc");
   }
+
+  function handleColSort(label) {
+    if (sortBy === label || (sortBy === null && label === "Nom")) {
+      setSortDir(d => d === "asc" ? "desc" : "asc");
+    } else {
+      setSortBy(label);
+      setSortDir("asc");
+    }
+  }
+
+  function colActive(label) {
+    return sortBy === label || (sortBy === null && label === "Nom");
+  }
   const sortedRegles = React.useMemo(() => {
     let data = REGLES_SERVICE;
     if (actionFilter && actionFilter.length > 0) data = data.filter(r => actionFilter.includes(r.action));
     if (typeFilter && typeFilter.length > 0) data = data.filter(r => typeFilter.includes(r.type));
-    const key = reglesFieldMap[sortBy || "Nom"];
+    const resolvedField = { "Dernière modification": "nom", "Action": "action", "Type": "type", "Nom": "nom" };
+    const key = resolvedField[sortBy || "Nom"];
     if (!key) return data;
     return [...data].sort((a, b) => {
       const va = a[key] || ""; const vb = b[key] || "";
@@ -2046,10 +2228,10 @@ function ReglesServiceTab() {
         <table className="kap-table">
           <thead>
             <tr>
-              <th><SortHeader active dir="desc">Dernière modification</SortHeader></th>
-              <th>Action</th>
-              <th>Type</th>
-              <th>Nom</th>
+              <th onClick={() => handleColSort("Dernière modification")} style={{ cursor: "pointer", userSelect: "none" }}><SortHeader active={colActive("Dernière modification")} dir={sortDir}>Dernière modification</SortHeader></th>
+              <th onClick={() => handleColSort("Action")} style={{ cursor: "pointer", userSelect: "none" }}><SortHeader active={colActive("Action")} dir={sortDir}>Action</SortHeader></th>
+              <th onClick={() => handleColSort("Type")} style={{ cursor: "pointer", userSelect: "none" }}><SortHeader active={colActive("Type")} dir={sortDir}>Type</SortHeader></th>
+              <th onClick={() => handleColSort("Nom")} style={{ cursor: "pointer", userSelect: "none" }}><SortHeader active={colActive("Nom")} dir={sortDir}>Nom</SortHeader></th>
               <th style={{ width: 48 }}></th>
             </tr>
           </thead>

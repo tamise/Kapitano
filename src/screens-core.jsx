@@ -109,6 +109,20 @@ function HomeScreen({ onNavigate }) {
 // ════════════════════════════════════════════════════════════════
 // UTILISATEURS — Liste + Logs
 // ════════════════════════════════════════════════════════════════
+const ROLE_COLORS = {
+  "Administrateur": { bg: "#F3E5F5", color: "#6A1B9A" },
+  "Manager":        { bg: "#E0F2F1", color: "#00695C" },
+  "Support N1":     { bg: "#E8EAF6", color: "#283593" },
+  "Support N2":     { bg: "#EDE7F6", color: "#4527A0" },
+  "Opérateur":      { bg: "#F1F8E9", color: "#558B2F" },
+  "Lecture seule":  { bg: "#EFEBE9", color: "#6D4C41" },
+};
+function RoleChip({ role }) {
+  const c = ROLE_COLORS[role] || { bg: "#F5F5F5", color: "#616161" };
+  return (
+    <span className="kap-pill kap-pill--soft" style={{ "--bg": c.bg, "--fg": c.color }}>{role}</span>
+  );
+}
 function UsersScreen({ initialTab = "liste", onOpenLog, onOpenUser }) {
   const [q, setQ] = useStateScA("");
   const [page, setPage] = useStateScA(1);
@@ -134,6 +148,8 @@ function UsersScreen({ initialTab = "liste", onOpenLog, onOpenUser }) {
     "Nom": "nom",
     "Prénom": "prenom",
     "Email": "email",
+    "Type": "type",
+    "Rôle": "role",
     "Revendeur associé": "revendeur",
   };
 
@@ -148,6 +164,32 @@ function UsersScreen({ initialTab = "liste", onOpenLog, onOpenUser }) {
 
   function handleSortChange(field, dir) { setSortBy(field); setSortDir(dir); }
   function handleLogSortChange(field, dir) { setLogSortBy(field); setLogSortDir(dir); }
+
+  function handleColSort(label) {
+    if (sortBy === label || (sortBy === null && label === "Date de création")) {
+      setSortDir(d => d === "asc" ? "desc" : "asc");
+    } else {
+      setSortBy(label);
+      setSortDir("asc");
+    }
+  }
+
+  function colActive(label) {
+    return sortBy === label || (sortBy === null && label === "Date de création");
+  }
+
+  function handleLogColSort(label) {
+    if (logSortBy === label || (logSortBy === null && label === "Date de création")) {
+      setLogSortDir(d => d === "asc" ? "desc" : "asc");
+    } else {
+      setLogSortBy(label);
+      setLogSortDir("asc");
+    }
+  }
+
+  function logColActive(label) {
+    return logSortBy === label || (logSortBy === null && label === "Date de création");
+  }
 
   function handleReset() {
     setQ("");
@@ -183,9 +225,11 @@ function UsersScreen({ initialTab = "liste", onOpenLog, onOpenUser }) {
     const sortField = sortBy || "Date de création";
     const key = userFieldMap[sortField];
     if (!key) return filtered;
+    const pdn = s => { const p = String(s || "").split("/"); return p.length >= 3 ? parseInt(p[2].split(" ")[0],10)*10000+parseInt(p[1],10)*100+parseInt(p[0],10) : 0; };
     return [...filtered].sort((a, b) => {
       let va, vb;
       if (key === "statut.label") { va = a.statut ? a.statut.label || "" : ""; vb = b.statut ? b.statut.label || "" : ""; }
+      else if (key === "dateCreation") { va = pdn(a.dateCreation); vb = pdn(b.dateCreation); return sortDir === "asc" ? va - vb : vb - va; }
       else { va = a[key] || ""; vb = b[key] || ""; }
       return sortDir === "asc" ? String(va).localeCompare(String(vb)) : String(vb).localeCompare(String(va));
     });
@@ -216,11 +260,13 @@ function UsersScreen({ initialTab = "liste", onOpenLog, onOpenUser }) {
     if (!key) return data;
     return [...data].sort((a, b) => {
       let va, vb;
+      const pdn = s => { const p = String(s || "").split("/"); return p.length >= 3 ? parseInt(p[2].split(" ")[0],10)*10000+parseInt(p[1],10)*100+parseInt(p[0],10) : 0; };
       if (key === "statut.code") {
         va = a.statut ? Number(a.statut.code) : 0;
         vb = b.statut ? Number(b.statut.code) : 0;
         return logSortDir === "asc" ? va - vb : vb - va;
       }
+      if (key === "dateCreation") { return logSortDir === "asc" ? pdn(a.dateCreation) - pdn(b.dateCreation) : pdn(b.dateCreation) - pdn(a.dateCreation); }
       va = a[key] || ""; vb = b[key] || "";
       return logSortDir === "asc" ? String(va).localeCompare(String(vb)) : String(vb).localeCompare(String(va));
     });
@@ -265,14 +311,14 @@ function UsersScreen({ initialTab = "liste", onOpenLog, onOpenUser }) {
               <table className="kap-table">
                 <thead>
                   <tr>
-                    <th>Actif</th>
-                    <th><SortHeader active dir="asc">Nom</SortHeader></th>
-                    <th>Prénom</th>
-                    <th>Email</th>
-                    <th>Type</th>
-                    <th>Rôle</th>
-                    <th>Revendeur associé</th>
-                    <th>Date de création</th>
+                    <th onClick={() => handleColSort("Actif")} style={{ cursor: "pointer", userSelect: "none" }}><SortHeader active={colActive("Actif")} dir={sortDir}>Actif</SortHeader></th>
+                    <th onClick={() => handleColSort("Nom")} style={{ cursor: "pointer", userSelect: "none" }}><SortHeader active={colActive("Nom")} dir={sortDir}>Nom</SortHeader></th>
+                    <th onClick={() => handleColSort("Prénom")} style={{ cursor: "pointer", userSelect: "none" }}><SortHeader active={colActive("Prénom")} dir={sortDir}>Prénom</SortHeader></th>
+                    <th onClick={() => handleColSort("Email")} style={{ cursor: "pointer", userSelect: "none" }}><SortHeader active={colActive("Email")} dir={sortDir}>Email</SortHeader></th>
+                    <th onClick={() => handleColSort("Type")} style={{ cursor: "pointer", userSelect: "none" }}><SortHeader active={colActive("Type")} dir={sortDir}>Type</SortHeader></th>
+                    <th onClick={() => handleColSort("Rôle")} style={{ cursor: "pointer", userSelect: "none" }}><SortHeader active={colActive("Rôle")} dir={sortDir}>Rôle</SortHeader></th>
+                    <th onClick={() => handleColSort("Revendeur associé")} style={{ cursor: "pointer", userSelect: "none" }}><SortHeader active={colActive("Revendeur associé")} dir={sortDir}>Revendeur associé</SortHeader></th>
+                    <th onClick={() => handleColSort("Date de création")} style={{ cursor: "pointer", userSelect: "none" }}><SortHeader active={colActive("Date de création")} dir={sortDir}>Date de création</SortHeader></th>
                     <th style={{ width: 60 }}></th>
                   </tr>
                 </thead>
@@ -284,7 +330,7 @@ function UsersScreen({ initialTab = "liste", onOpenLog, onOpenUser }) {
                       <td>{u.prenom}</td>
                       <td className="muted">{u.email}</td>
                       <td><span className="kap-pill kap-pill--soft" style={u.type === "AUTH0" ? { "--bg": "#FFF3E0", "--fg": "#E65100" } : { "--bg": "#F5F5F5", "--fg": "#212121" }}>{u.type}</span></td>
-                      <td>{u.role}</td>
+                      <td><RoleChip role={u.role} /></td>
                       <td className="muted">{u.revendeur}</td>
                       <td className="muted">{u.dateCreation}</td>
                       <td><IconButton icon="more-vertical" /></td>
@@ -314,13 +360,13 @@ function UsersScreen({ initialTab = "liste", onOpenLog, onOpenUser }) {
                 <thead>
                   <tr>
                     <th>ID</th>
-                    <th><SortHeader active>Date</SortHeader></th>
-                    <th>Nom de l'utilisateur</th>
-                    <th>Revendeur de l'utilisateur</th>
-                    <th>Statut</th>
-                    <th>Ressource</th>
+                    <th onClick={() => handleLogColSort("Date de création")} style={{ cursor: "pointer", userSelect: "none" }}><SortHeader active={logColActive("Date de création")} dir={logSortDir}>Date</SortHeader></th>
+                    <th onClick={() => handleLogColSort("Nom de l'utilisateur")} style={{ cursor: "pointer", userSelect: "none" }}><SortHeader active={logColActive("Nom de l'utilisateur")} dir={logSortDir}>Nom de l'utilisateur</SortHeader></th>
+                    <th onClick={() => handleLogColSort("Revendeur de l'utilisateur")} style={{ cursor: "pointer", userSelect: "none" }}><SortHeader active={logColActive("Revendeur de l'utilisateur")} dir={logSortDir}>Revendeur de l'utilisateur</SortHeader></th>
+                    <th onClick={() => handleLogColSort("Statut")} style={{ cursor: "pointer", userSelect: "none" }}><SortHeader active={logColActive("Statut")} dir={logSortDir}>Statut</SortHeader></th>
+                    <th onClick={() => handleLogColSort("Ressources")} style={{ cursor: "pointer", userSelect: "none" }}><SortHeader active={logColActive("Ressources")} dir={logSortDir}>Ressource</SortHeader></th>
                     <th>Description</th>
-                    <th>Durée</th>
+                    <th onClick={() => handleLogColSort("Durée")} style={{ cursor: "pointer", userSelect: "none" }}><SortHeader active={logColActive("Durée")} dir={logSortDir}>Durée</SortHeader></th>
                     <th style={{ width: 48 }}></th>
                   </tr>
                 </thead>
