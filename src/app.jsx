@@ -14,6 +14,8 @@ function App() {
   const [detail, setDetail] = useStateApp(null);
   const [openLog, setOpenLog] = useStateApp(null);
   const [openUser, setOpenUser] = useStateApp(null);
+  const [editUser, setEditUser] = useStateApp(null);
+  const [resetUser, setResetUser] = useStateApp(null);
 
   // Tweaks
   const [collapsed, setCollapsed] = useStateApp(TWEAK_DEFAULTS.sidebarCollapsed);
@@ -70,7 +72,7 @@ function App() {
   let body;
   switch (screen) {
     case "accueil":      body = <HomeScreen onNavigate={navigate} />; break;
-    case "utilisateurs": body = <UsersScreen initialTab={sub || "liste"} onOpenLog={setOpenLog} onOpenUser={setOpenUser} />; break;
+    case "utilisateurs": body = <UsersScreen initialTab={sub || "liste"} onOpenLog={setOpenLog} onOpenUser={setOpenUser} onCollapseSidebar={() => setCollapsed(true)} />; break;
     case "referentiel":  body = <ReferentielScreen initialSub={sub || "revendeurs"} onOpenDetail={setDetail} />; break;
     case "mobiles":      body = <MobilesScreen   initialSub={sub || "abonnements"} onOpenDetail={setDetail} />; break;
     case "liens":        body = <LinksScreen     initialSub={sub || "abonnements"} onOpenDetail={setDetail} />; break;
@@ -98,7 +100,9 @@ function App() {
       </Shell>
       {detail && <GenericDetailDrawer payload={detail} onClose={() => setDetail(null)} />}
       {openLog && <LogDrawer log={openLog} onClose={() => setOpenLog(null)} />}
-      {openUser && <UserDrawer user={openUser} onClose={() => setOpenUser(null)} />}
+      {openUser && <UserDrawer user={openUser} onClose={() => setOpenUser(null)} onEdit={u => { setOpenUser(null); setEditUser(u); }} onReset={u => setResetUser(u)} />}
+      {editUser && <CreateUserModal title="Modifier un utilisateur" initialValues={{ id: editUser.id, prenom: editUser.prenom, nom: editUser.nom, email: editUser.email, revendeur: editUser.revendeur, role: editUser.role, type: editUser.type, actif: editUser.statut?.label === "Actif", dateCreation: editUser.dateCreation }} onClose={() => setEditUser(null)} onCreate={() => setEditUser(null)} />}
+      {resetUser && <Modal title="Réinitialisation du mot de passe" onClose={() => setResetUser(null)} footer={<><Button variant="tertiary" onClick={() => setResetUser(null)}>Annuler</Button><Button variant="primary" onClick={() => setResetUser(null)}>Confirmer</Button></>}><p style={{ fontFamily: "var(--kap-font-ui)", fontSize: 14, color: "var(--kap-fg-1)", margin: 0, lineHeight: 1.6 }}>Un lien de réinitialisation du mot de passe sera envoyé à l'adresse <strong>{resetUser.email}</strong>.</p></Modal>}
       {tweaksOpen && <TweaksPanel collapsed={collapsed} setCollapsed={(v) => setTweak("sidebarCollapsed", v)} onClose={() => { setTweaksOpen(false); window.parent.postMessage({ type: "__edit_mode_dismissed" }, "*"); }} />}
       <CopyTooltip />
     </>

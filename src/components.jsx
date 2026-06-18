@@ -132,7 +132,7 @@ function Select({ icon, value, onChange, options, placeholder, width }) {
   );
 }
 
-function RadioDropdown({ placeholder, options, value, onChange, onSortChange, width = 220, showSearch = true, showRadio = true, multiSelect = false, sortMode = false }) {
+function RadioDropdown({ placeholder, options, value, onChange, onSortChange, width = 220, showSearch = true, showRadio = true, multiSelect = false, sortMode = false, block = false, showClear = true }) {
   const [open, setOpen] = useStateC(false);
   const [search, setSearch] = useStateC("");
   const [sortDir, setSortDir] = useStateC("asc");
@@ -179,10 +179,10 @@ function RadioDropdown({ placeholder, options, value, onChange, onSortChange, wi
     : <span style={{ fontSize:11, fontWeight:700, fontFamily:"var(--kap-font-ui)", color:"var(--kap-primary)", letterSpacing:"-0.5px" }}>ZA↓</span>;
 
   return (
-    <div ref={ref} style={{ position: "relative", display: "inline-block" }}>
+    <div ref={ref} style={{ position: "relative", display: block ? "block" : "inline-block" }}>
       <span
         className="kap-input-wrap"
-        style={{ width: "auto", cursor: "pointer", userSelect: "none" }}
+        style={{ width: block ? "100%" : "auto", cursor: "pointer", userSelect: "none" }}
         onClick={() => setOpen(o => !o)}
       >
         <span style={{ flex: 1, display: "flex", alignItems: "center", gap: 6, color: "var(--kap-fg-3)", fontSize: 13, fontFamily: "var(--kap-font-ui)" }}>
@@ -203,7 +203,7 @@ function RadioDropdown({ placeholder, options, value, onChange, onSortChange, wi
       {open && (
         <div style={{
           position: "absolute", top: "calc(100% + 4px)", left: 0,
-          minWidth: Math.max(width, 200), background: "#fff",
+          minWidth: Math.max(width, 200), width: block ? "100%" : undefined, background: "#fff",
           border: "1px solid var(--kap-border-2)", borderRadius: 8,
           boxShadow: "0 8px 24px rgba(0,0,0,0.12)", zIndex: 200,
         }}>
@@ -259,9 +259,11 @@ function RadioDropdown({ placeholder, options, value, onChange, onSortChange, wi
               <div style={{ padding: "10px 14px", color: "var(--kap-fg-3)", fontSize: 13, fontFamily: "var(--kap-font-ui)" }}>Aucun résultat</div>
             )}
           </div>
-          <div style={{ padding: "8px 10px", borderTop: "1px solid var(--kap-border-1)" }}>
-            <Button variant="tertiary" disabled={multiSelect ? selected.length === 0 : !value} onClick={() => { onChange(multiSelect ? [] : null); setOpen(false); setSearch(""); }}>Effacer</Button>
-          </div>
+          {showClear && (
+            <div style={{ padding: "8px 10px", borderTop: "1px solid var(--kap-border-1)" }}>
+              <Button variant="tertiary" disabled={multiSelect ? selected.length === 0 : !value} onClick={() => { onChange(multiSelect ? [] : null); setOpen(false); setSearch(""); }}>Effacer</Button>
+            </div>
+          )}
         </div>
       )}
     </div>
@@ -530,8 +532,8 @@ function Pagination({ page, totalPages, onChange, totalItems, perPage }) {
 }
 
 // ──────────────────────────────────────────────────────────────────
-function Toolbar({ children }) {
-  return <div className="kap-toolbar">{children}</div>;
+function Toolbar({ children, wrap }) {
+  return <div className="kap-toolbar" style={wrap ? { flexWrap: "wrap" } : undefined}>{children}</div>;
 }
 
 // Generic table wrapper
@@ -658,7 +660,7 @@ function CopyTooltip() {
 }
 
 // ──────────────────────────────────────────────────────────────────
-function Drawer({ title, subtitle, onClose, children, footer }) {
+function Drawer({ title, subtitle, headerContent, onClose, children, footer }) {
   useEffectC(() => {
     const handler = (e) => { if (e.key === "Escape") onClose(); };
     window.addEventListener("keydown", handler);
@@ -669,10 +671,13 @@ function Drawer({ title, subtitle, onClose, children, footer }) {
       <div className="kap-drawer-backdrop" onClick={onClose} />
       <aside className="kap-drawer" role="dialog" aria-modal="true">
         <header>
-          <div style={{ flex: 1 }}>
-            <div className="title">{title}</div>
-            {subtitle && <div className="sub">{subtitle}</div>}
-          </div>
+          {headerContent
+            ? <div style={{ flex: 1 }}>{headerContent}</div>
+            : <div style={{ flex: 1 }}>
+                <div className="title">{title}</div>
+                {subtitle && <div className="sub">{subtitle}</div>}
+              </div>
+          }
           <button className="x" onClick={onClose} aria-label="Fermer">
             <Icon name="x" size={22} />
           </button>
@@ -681,6 +686,86 @@ function Drawer({ title, subtitle, onClose, children, footer }) {
         {footer && <div className="kap-drawer-foot">{footer}</div>}
       </aside>
     </>
+  );
+}
+
+function RowMenu({ items }) {
+  const [open, setOpen] = useStateC(false);
+  const ref = React.useRef(null);
+
+  useEffectC(() => {
+    if (!open) return;
+    function handler(e) { if (ref.current && !ref.current.contains(e.target)) setOpen(false); }
+    document.addEventListener("mousedown", handler);
+    return () => document.removeEventListener("mousedown", handler);
+  }, [open]);
+
+  return (
+    <div ref={ref} style={{ position: "relative", display: "inline-block" }}>
+      <button type="button" className="kap-icon-btn-square" onClick={() => setOpen(o => !o)} aria-label="Actions">
+        <Icon name="more-vertical" size={18} />
+      </button>
+      {open && (
+        <div style={{
+          position: "absolute", right: 0, top: "calc(100% + 4px)",
+          background: "#fff", border: "1px solid var(--kap-border-2)",
+          borderRadius: 8, boxShadow: "0 8px 24px rgba(0,0,0,0.12)",
+          zIndex: 200, minWidth: 220, overflow: "hidden",
+        }}>
+          {items.map((item, i) => (
+            <button key={i} type="button"
+              onClick={() => { item.onClick && item.onClick(); setOpen(false); }}
+              onMouseEnter={e => e.currentTarget.style.background = item.danger ? "#FFF5F5" : "var(--kap-bg-hover, #F5F5F5)"}
+              onMouseLeave={e => e.currentTarget.style.background = "transparent"}
+              style={{ all: "unset", display: "flex", alignItems: "center", gap: 10, width: "100%", padding: "9px 14px", cursor: "pointer", fontFamily: "var(--kap-font-ui)", fontSize: 13, color: item.danger ? "#C62828" : "var(--kap-fg-1)", boxSizing: "border-box" }}
+            >
+              {item.icon && <Icon name={item.icon} size={16} style={{ color: item.danger ? "#C62828" : "var(--kap-fg-3)", flexShrink: 0 }} />}
+              {item.label}
+            </button>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
+function Modal({ title, onClose, children, footer }) {
+  useEffectC(() => {
+    const handler = (e) => { if (e.key === "Escape") onClose(); };
+    window.addEventListener("keydown", handler);
+    return () => window.removeEventListener("keydown", handler);
+  }, [onClose]);
+  return (
+    <>
+      <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,.32)", zIndex: 200 }} onClick={onClose} />
+      <div style={{ position: "fixed", inset: 0, display: "flex", alignItems: "center", justifyContent: "center", zIndex: 210, pointerEvents: "none" }}>
+        <div style={{ background: "#fff", borderRadius: 12, width: 520, boxShadow: "0 8px 40px rgba(0,0,0,.18)", display: "flex", flexDirection: "column", pointerEvents: "auto", maxHeight: "90vh" }}>
+          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "20px 24px 16px", borderBottom: "1px solid var(--kap-divider)", flexShrink: 0 }}>
+            <div style={{ fontFamily: "var(--kap-font-display)", fontWeight: 700, fontSize: 17, color: "var(--kap-fg-1)" }}>{title}</div>
+            <button style={{ all: "unset", cursor: "pointer", padding: 6, borderRadius: 4, color: "var(--kap-fg-3)" }} onClick={onClose}>
+              <Icon name="x" size={20} />
+            </button>
+          </div>
+          <div style={{ padding: "20px 24px", overflowY: "auto", flex: 1 }}>{children}</div>
+          {footer && (
+            <div style={{ display: "flex", justifyContent: "flex-end", gap: 8, padding: "14px 24px", borderTop: "1px solid var(--kap-divider)", flexShrink: 0 }}>
+              {footer}
+            </div>
+          )}
+        </div>
+      </div>
+    </>
+  );
+}
+
+function Switch({ checked, onChange }) {
+  return (
+    <div
+      onClick={() => onChange && onChange(!checked)}
+      style={{ width: 40, height: 22, borderRadius: 9999, background: checked ? "var(--kap-primary)" : "#CCC", cursor: "pointer", position: "relative", flexShrink: 0, transition: "background 180ms" }}
+    >
+      <div style={{ position: "absolute", top: 3, left: checked ? 21 : 3, width: 16, height: 16, borderRadius: 9999, background: "#fff", boxShadow: "0 1px 3px rgba(0,0,0,.25)", transition: "left 180ms" }} />
+    </div>
   );
 }
 
@@ -791,6 +876,6 @@ Object.assign(window, {
   StatusPill, DotStatus, HttpCode, MethodTag,
   IconTile, PageHead, SectionCard,
   Tabs, Pagination, Toolbar, TableBox, SortHeader,
-  Drawer, DetailSection, DetailRow, CodeBlock,
+  Drawer, Modal, Switch, RowMenu, DetailSection, DetailRow, CodeBlock,
   Kpi, ProgressBar, ChipRow, Flag,
 });

@@ -123,7 +123,100 @@ function RoleChip({ role }) {
     <span className="kap-pill kap-pill--soft" style={{ "--bg": c.bg, "--fg": c.color }}>{role}</span>
   );
 }
-function UsersScreen({ initialTab = "liste", onOpenLog, onOpenUser }) {
+const REVENDEUR_OPTIONS = ["2IT SOLUTIONS","ABC TELECOMS","ADV","AXIUM SOLUTIONS","CIS VALLEY","GROUPE TELECOMS DE L'OUEST GTO","IPNEOS","KOESIO AQUITAINE","KOESIO AURA INFO (VD)","KOESIO AURA INFO (VDI)","KOESIO AURA TELECOM","KOESIO AUSTRALIA","KOESIO CENTRE EST","KOESIO CORPORATE IT","KOESIO EST","KOESIO GRAND EST","KOESIO IDF","KOESIO MANAGED SERVICES","KOESIO MEDITERRANNEE","KOESIO NETWORKS","KOESIO NORD OUEST","KOESIO OCCITANIE","KOESIO OCCITANIE BPA","KOESIO OUEST","KOESIO PACA","KOESIO PACA TELECOMS","KOESIO SUD ALLIANCE","KOESIO SUISSE","ONE OPERATEUR","Production","S-WAN IP"];
+
+function CreateUserModal({ onClose, onCreate, initialValues, title = "Création d'un nouvel utilisateur" }) {
+  const defaults = { prenom: "", nom: "", email: "", revendeur: "", role: "", type: "OKTA", actif: true };
+  const [form, setForm] = useStateScA(initialValues ? { ...defaults, ...initialValues } : defaults);
+  function set(k, v) { setForm(f => ({ ...f, [k]: v })); }
+  const roles = Object.keys(ROLE_COLORS);
+  const isEdit = !!initialValues;
+
+  function handleCreate() {
+    const now = new Date();
+    const pad = n => String(n).padStart(2, "0");
+    const ts = `${pad(now.getDate())}/${pad(now.getMonth()+1)}/${now.getFullYear()} - ${pad(now.getHours())}:${pad(now.getMinutes())}:${pad(now.getSeconds())}`;
+    onCreate({
+      id: initialValues?.id || Date.now(),
+      prenom: form.prenom,
+      nom: form.nom.toUpperCase(),
+      email: form.email,
+      type: form.type,
+      filiale: form.revendeur,
+      statut: { label: form.actif ? "Actif" : "Inactif", color: form.actif ? "#2E7D32" : "#9E9E9E" },
+      dateCreation: initialValues?.dateCreation || ts,
+      dateModification: ts,
+      role: form.role,
+      revendeur: form.revendeur,
+    });
+  }
+
+  return (
+    <Modal
+      title={title}
+      onClose={onClose}
+      footer={<>
+        <Button variant="tertiary" onClick={onClose}>Annuler</Button>
+        <Button variant="primary" icon={isEdit ? "pencil" : "plus"} onClick={handleCreate}>{isEdit ? "Enregistrer" : "Créer l'utilisateur"}</Button>
+      </>}
+    >
+      <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
+        <div style={{ display: "flex", gap: 12 }}>
+          <div className="kap-field" style={{ flex: 1 }}>
+            <label className="kap-field-label">Prénom</label>
+            <Input icon={null} placeholder="Prénom" value={form.prenom} onChange={v => set("prenom", v)} width="100%" />
+          </div>
+          <div className="kap-field" style={{ flex: 1 }}>
+            <label className="kap-field-label">Nom</label>
+            <Input icon={null} placeholder="Nom" value={form.nom} onChange={v => set("nom", v)} width="100%" />
+          </div>
+        </div>
+        <div className="kap-field">
+          <label className="kap-field-label">Adresse e-mail</label>
+          <Input icon={null} placeholder="email@example.com" type="email" value={form.email} onChange={v => set("email", v)} width="100%" />
+        </div>
+        <div className="kap-field">
+          <label className="kap-field-label">Revendeur associé</label>
+          <RadioDropdown placeholder={form.revendeur || "Sélectionner un revendeur"} options={REVENDEUR_OPTIONS} value={form.revendeur} onChange={v => set("revendeur", v)} showRadio={false} showClear={false} block />
+        </div>
+        <div className="kap-field">
+          <label className="kap-field-label">Rôle</label>
+          <RadioDropdown placeholder={form.role || "Sélectionner un rôle"} options={roles} value={form.role} onChange={v => set("role", v)} showRadio={false} showSearch={false} showClear={false} block />
+        </div>
+        <div className="kap-field">
+          <label className="kap-field-label">Type</label>
+          <div style={{ display: "flex", gap: 24, marginTop: 2 }}>
+            {["OKTA", "AUTH0"].map(t => (
+              <label key={t} style={{ display: "flex", alignItems: "center", gap: 8, cursor: "pointer", fontFamily: "var(--kap-font-ui)", fontSize: 13, color: "var(--kap-fg-1)" }}>
+                <input type="radio" name="create-user-type" checked={form.type === t} onChange={() => set("type", t)} style={{ accentColor: "var(--kap-primary)", width: 16, height: 16, cursor: "pointer" }} />
+                {t}
+              </label>
+            ))}
+          </div>
+        </div>
+        <div className="kap-field">
+          <label className="kap-field-label">État de l'utilisateur</label>
+          <div style={{ display: "flex", alignItems: "center", gap: 10, marginTop: 2 }}>
+            <Switch checked={form.actif} onChange={v => set("actif", v)} />
+            <span style={{ fontFamily: "var(--kap-font-ui)", fontSize: 13, color: "var(--kap-fg-2)" }}>{form.actif ? "Actif" : "Inactif"}</span>
+          </div>
+        </div>
+      </div>
+    </Modal>
+  );
+}
+
+function UsersScreen({ initialTab = "liste", onOpenLog, onOpenUser, onCollapseSidebar }) {
+  const [showCreate, setShowCreate] = useStateScA(false);
+  const [editUser, setEditUser] = useStateScA(null);
+  const [resetUser, setResetUser] = useStateScA(null);
+  const [selectedUser, setSelectedUser] = useStateScA(null);
+
+  function openDetail(u) {
+    setSelectedUser(u);
+    if (onCollapseSidebar) onCollapseSidebar();
+  }
+  const [users, setUsers] = useStateScA(USERS);
   const [q, setQ] = useStateScA("");
   const [page, setPage] = useStateScA(1);
   const [sortBy, setSortBy] = useStateScA(null);
@@ -213,13 +306,13 @@ function UsersScreen({ initialTab = "liste", onOpenLog, onOpenUser }) {
 
   const filtered = useMemoScA(() => {
     const n = q.trim().toLowerCase();
-    let data = n ? USERS.filter(u => (u.prenom + " " + u.nom + " " + u.email).toLowerCase().includes(n)) : USERS;
+    let data = n ? users.filter(u => (u.prenom + " " + u.nom + " " + u.email).toLowerCase().includes(n)) : users;
     if (revendeurFilter) data = data.filter(u => u.revendeur === revendeurFilter);
     if (statutFilter) data = data.filter(u => u.statut && u.statut.label === statutFilter);
     if (typeFilter && typeFilter.length) data = data.filter(u => typeFilter.includes(u.type));
     if (roleFilter && roleFilter.length) data = data.filter(u => roleFilter.includes(u.role));
     return data;
-  }, [q, revendeurFilter, statutFilter, typeFilter, roleFilter]);
+  }, [users, q, revendeurFilter, statutFilter, typeFilter, roleFilter]);
 
   const sortedFiltered = useMemoScA(() => {
     const sortField = sortBy || "Date de création";
@@ -281,22 +374,26 @@ function UsersScreen({ initialTab = "liste", onOpenLog, onOpenUser }) {
   React.useEffect(() => {
     setTopbarActions(isLogs
       ? null
-      : <><Button variant="primary" icon="plus">Ajouter un utilisateur</Button></>
+      : <><Button variant="primary" icon="plus" onClick={() => setShowCreate(true)}>Ajouter un utilisateur</Button></>
     );
     return () => setTopbarActions(null);
   }, [isLogs]);
 
   return (
     <>
-      <div className="kap-card" style={{ overflow: "hidden" }}>
-        {!isLogs && (
+      <div className="kap-card" style={{ overflow: "hidden", flexDirection: selectedUser ? "row" : undefined }}>
+        <div style={selectedUser ? { flex: 1, minWidth: 0, overflowX: "auto", display: "flex", flexDirection: "column" } : {}}>
+        {!isLogs &&
           <>
-            <Toolbar>
+            <Toolbar wrap={!!selectedUser}>
               <RadioDropdown placeholder="Trier" options={["Date de création","Actif","Nom","Prénom","Email","Revendeur associé"]} value={sortBy} onChange={setSortBy} onSortChange={handleSortChange} width={100} showSearch={false} showRadio={false} sortMode={true} />
               <Input placeholder="Recherche par nom, prénom, e-mail" value={q} onChange={(v) => { setQ(v); setPage(1); }} width={360} />
+              <div className="grow" />
+              <Button variant="tertiary" icon="refresh-cw" onClick={handleReset}>Réinitialiser</Button>
+              {selectedUser && <div style={{ flexBasis: "100%", height: 0 }} />}
               <RadioDropdown
                 placeholder="Revendeur"
-                options={["2IT SOLUTIONS","ABC TELECOMS","ADV","AXIUM SOLUTIONS","CIS VALLEY","GROUPE TELECOMS DE L'OUEST GTO","IPNEOS","KOESIO AQUITAINE","KOESIO AURA INFO (VD)","KOESIO AURA INFO (VDI)","KOESIO AURA TELECOM","KOESIO AUSTRALIA","KOESIO CENTRE EST","KOESIO CORPORATE IT","KOESIO EST","KOESIO GRAND EST","KOESIO IDF","KOESIO MANAGED SERVICES","KOESIO MEDITERRANNEE","KOESIO NETWORKS","KOESIO NORD OUEST","KOESIO OCCITANIE","KOESIO OCCITANIE BPA","KOESIO OUEST","KOESIO PACA","KOESIO PACA TELECOMS","KOESIO SUD ALLIANCE","KOESIO SUISSE","ONE OPERATEUR","Production","S-WAN IP"]}
+                options={REVENDEUR_OPTIONS}
                 value={revendeurFilter}
                 onChange={setRevendeurFilter}
                 width={190}
@@ -304,8 +401,6 @@ function UsersScreen({ initialTab = "liste", onOpenLog, onOpenUser }) {
               <RadioDropdown placeholder="Statut" options={["Actif","Inactif"]} value={statutFilter} onChange={setStatutFilter} width={140} showSearch={false} />
               <RadioDropdown placeholder="Type" options={["AUTH0","OKTA"]} value={typeFilter} onChange={setTypeFilter} width={140} showSearch={false} multiSelect={true} />
               <RadioDropdown placeholder="Rôle" options={["Administrateur","Manager","Support N1","Lecture seule","Support N2","Opérateur"]} value={roleFilter} onChange={setRoleFilter} width={150} showSearch={false} multiSelect={true} />
-              <div className="grow" />
-              <Button variant="tertiary" icon="refresh-cw" onClick={handleReset}>Réinitialiser</Button>
             </Toolbar>
             <TableBox>
               <table className="kap-table">
@@ -324,7 +419,10 @@ function UsersScreen({ initialTab = "liste", onOpenLog, onOpenUser }) {
                 </thead>
                 <tbody>
                   {view.map(u => (
-                    <tr key={u.id} className="is-clickable" onClick={() => onOpenUser && onOpenUser(u)}>
+                    <tr key={u.id}
+                      className={selectedUser ? "is-clickable" + (selectedUser.id === u.id ? " is-selected" : "") : ""}
+                      onClick={selectedUser ? () => setSelectedUser(u) : undefined}
+                    >
                       <td>{u.statut.label === "Actif" ? <Icon name="check-circle-2" size={18} style={{ color: "#2E7D32" }} /> : <Icon name="x-circle" size={18} style={{ color: "#D32F2F" }} />}</td>
                       <td style={{ fontWeight: 600 }}>{u.nom}</td>
                       <td>{u.prenom}</td>
@@ -333,18 +431,21 @@ function UsersScreen({ initialTab = "liste", onOpenLog, onOpenUser }) {
                       <td><RoleChip role={u.role} /></td>
                       <td className="muted">{u.revendeur}</td>
                       <td className="muted">{u.dateCreation}</td>
-                      <td><IconButton icon="more-vertical" /></td>
+                      <td onClick={e => e.stopPropagation()}><RowMenu items={[
+                        { label: "Consulter", icon: "eye", onClick: () => openDetail(u) },
+                        { label: "Modifier", icon: "pencil", onClick: () => setEditUser(u) },
+                        { label: "Réinitialiser le mot de passe", icon: "key", danger: true, onClick: () => setResetUser(u) },
+                      ]} /></td>
                     </tr>
                   ))}
                 </tbody>
               </table>
             </TableBox>
             <Pagination page={page} totalPages={totalPages} onChange={setPage} totalItems={filtered.length} perPage={perPage} />
-          </>
-        )}
-        {isLogs && (
+          </>}
+        {isLogs &&
           <>
-            <Toolbar>
+            <Toolbar wrap={!!selectedUser}>
               <RadioDropdown placeholder="Trier" options={["Date de création","Nom de l'utilisateur","Revendeur de l'utilisateur","Statut","Ressources","Durée"]} value={logSortBy} onChange={setLogSortBy} onSortChange={handleLogSortChange} width={100} showSearch={false} showRadio={false} sortMode={true} />
               <Input icon="search" placeholder="Statut, Email, Nom et Prénom" width={360} />
               <RadioDropdown placeholder="Revendeur" options={["2IT SOLUTIONS","ABC TELECOMS","ADV","AXIUM SOLUTIONS","CIS VALLEY","GROUPE TELECOMS DE L'OUEST GTO","IPNEOS","KOESIO AQUITAINE","KOESIO AURA INFO (VD)","KOESIO AURA INFO (VDI)","KOESIO AURA TELECOM","KOESIO AUSTRALIA","KOESIO CENTRE EST","KOESIO CORPORATE IT","KOESIO EST","KOESIO GRAND EST","KOESIO IDF","KOESIO MANAGED SERVICES","KOESIO MEDITERRANNEE","KOESIO NETWORKS","KOESIO NORD OUEST","KOESIO OCCITANIE","KOESIO OCCITANIE BPA","KOESIO OUEST","KOESIO PACA","KOESIO PACA TELECOMS","KOESIO SUD ALLIANCE","KOESIO SUISSE","ONE OPERATEUR","Production","S-WAN IP"]} value={logRevendeur} onChange={setLogRevendeur} width={170} />
@@ -388,9 +489,42 @@ function UsersScreen({ initialTab = "liste", onOpenLog, onOpenUser }) {
               </table>
             </TableBox>
             <Pagination page={logPage} totalPages={logTotalPages} onChange={setLogPage} totalItems={LOGS.length} perPage={15} />
-          </>
+          </>}
+
+        </div>
+        {selectedUser && (
+          <div style={{ width: 600, flexShrink: 0, borderLeft: "1px solid var(--kap-divider)", display: "flex", flexDirection: "column" }}>
+            <UserDetailPanel
+              user={selectedUser}
+              onClose={() => setSelectedUser(null)}
+              onEdit={u => setEditUser(u)}
+              onReset={u => setResetUser(u)}
+            />
+          </div>
         )}
       </div>
+      {showCreate && <CreateUserModal onClose={() => setShowCreate(false)} onCreate={u => { setUsers(prev => [u, ...prev]); setShowCreate(false); }} />}
+      {resetUser && (
+        <Modal
+          title="Réinitialisation du mot de passe"
+          onClose={() => setResetUser(null)}
+          footer={<>
+            <Button variant="tertiary" onClick={() => setResetUser(null)}>Annuler</Button>
+            <Button variant="primary" onClick={() => setResetUser(null)}>Confirmer</Button>
+          </>}
+        >
+          <p style={{ fontFamily: "var(--kap-font-ui)", fontSize: 14, color: "var(--kap-fg-1)", margin: 0, lineHeight: 1.6 }}>
+            Un lien de réinitialisation du mot de passe sera envoyé à l'adresse{" "}
+            <strong>{resetUser.email}</strong>.
+          </p>
+        </Modal>
+      )}
+      {editUser && <CreateUserModal
+        title="Modifier un utilisateur"
+        initialValues={{ id: editUser.id, prenom: editUser.prenom, nom: editUser.nom, email: editUser.email, revendeur: editUser.revendeur, role: editUser.role, type: editUser.type, actif: editUser.statut?.label === "Actif", dateCreation: editUser.dateCreation }}
+        onClose={() => setEditUser(null)}
+        onCreate={updated => { setUsers(prev => prev.map(u => u.id === updated.id ? updated : u)); setEditUser(null); }}
+      />}
     </>
   );
 }
@@ -398,37 +532,17 @@ function UsersScreen({ initialTab = "liste", onOpenLog, onOpenUser }) {
 // ════════════════════════════════════════════════════════════════
 // DRAWERS — User detail + Request log detail
 // ════════════════════════════════════════════════════════════════
-function UserDrawer({ user, onClose }) {
+function UserDetailBody({ user }) {
   return (
-    <Drawer
-      title={`${user.prenom} ${user.nom}`}
-      subtitle={user.email}
-      onClose={onClose}
-      footer={<>
-        <Button variant="tertiary" onClick={onClose}>Annuler</Button>
-        <Button variant="secondary" icon="key">Réinitialiser le mot de passe</Button>
-        <Button variant="danger" icon="ban">Désactiver</Button>
-        <Button variant="primary" icon="pencil">Modifier</Button>
-      </>}
-    >
-      <div style={{ padding: "14px 24px 0", display: "flex", alignItems: "center", gap: 14 }}>
-        <div style={{ width: 56, height: 56, borderRadius: 9999, background: "var(--kap-primary)", color: "#fff",
-                      display: "flex", alignItems: "center", justifyContent: "center", fontFamily: "var(--kap-font-display)", fontWeight: 700, fontSize: 20 }}>
-          {user.prenom[0]}{user.nom[0]}
-        </div>
-        <div>
-          <div style={{ fontFamily: "var(--kap-font-display)", fontWeight: 700, fontSize: 18 }}>{user.prenom} {user.nom}</div>
-          <div style={{ fontFamily: "var(--kap-font-ui)", fontSize: 13, color: "var(--kap-fg-3)" }}>{user.role} · {user.filiale}</div>
-          <div style={{ marginTop: 6 }}><DotStatus color={user.statut.color} label={user.statut.label} /></div>
-        </div>
-      </div>
+    <>
       <DetailSection title="Informations">
-        <DetailRow label="Identifiant"><span className="kap-mono">#{user.id}</span></DetailRow>
         <DetailRow label="Prénom">{user.prenom}</DetailRow>
         <DetailRow label="Nom">{user.nom}</DetailRow>
         <DetailRow label="Adresse e-mail"><a className="kap-link">{user.email}</a></DetailRow>
-        <DetailRow label="Type d'utilisateur">{user.type}</DetailRow>
-        <DetailRow label="Rôle">{user.role}</DetailRow>
+        <DetailRow label="Type d'utilisateur">
+          <span className="kap-pill kap-pill--soft" style={user.type === "AUTH0" ? { "--bg": "#FFF3E0", "--fg": "#E65100" } : { "--bg": "#F5F5F5", "--fg": "#212121" }}>{user.type}</span>
+        </DetailRow>
+        <DetailRow label="Rôle"><RoleChip role={user.role} /></DetailRow>
         <DetailRow label="Filiale">{user.filiale}</DetailRow>
       </DetailSection>
       <DetailSection title="Historique">
@@ -447,6 +561,59 @@ function UserDrawer({ user, onClose }) {
           </div>
         </DetailRow>
       </DetailSection>
+    </>
+  );
+}
+
+function UserDetailHeader({ user }) {
+  return (
+    <div style={{ display: "flex", alignItems: "center", gap: 14 }}>
+      <div style={{ width: 52, height: 52, borderRadius: 9999, background: "var(--kap-primary)", color: "#fff",
+                    display: "flex", alignItems: "center", justifyContent: "center",
+                    fontFamily: "var(--kap-font-display)", fontWeight: 700, fontSize: 18, flexShrink: 0 }}>
+        {user.prenom[0]}{user.nom[0]}
+      </div>
+      <div>
+        <div style={{ fontFamily: "var(--kap-font-display)", fontWeight: 700, fontSize: 16 }}>{user.prenom} {user.nom}</div>
+        <div style={{ marginTop: 4 }}><DotStatus color={user.statut.color} label={user.statut.label} /></div>
+      </div>
+    </div>
+  );
+}
+
+function UserDetailPanel({ user, onClose, onEdit, onReset }) {
+  return (
+    <div style={{ display: "flex", flexDirection: "column", height: "100%" }}>
+      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "18px 20px", borderBottom: "1px solid var(--kap-divider)", flexShrink: 0 }}>
+        <UserDetailHeader user={user} />
+        <button style={{ all: "unset", cursor: "pointer", padding: 6, borderRadius: 4, color: "var(--kap-fg-3)" }} onClick={onClose}>
+          <Icon name="x" size={20} />
+        </button>
+      </div>
+      <div className="kap-drawer-body" style={{ flex: 1, overflowY: "auto" }}>
+        <UserDetailBody user={user} />
+      </div>
+      <div style={{ display: "flex", justifyContent: "flex-end", gap: 8, padding: "14px 16px", borderTop: "1px solid var(--kap-divider)", flexShrink: 0, flexWrap: "wrap" }}>
+        <Button variant="secondary" icon="key" onClick={() => onReset && onReset(user)}>Réinitialiser</Button>
+        <Button variant="danger" icon="ban">Désactiver</Button>
+        <Button variant="primary" icon="pencil" onClick={() => onEdit && onEdit(user)}>Modifier</Button>
+      </div>
+    </div>
+  );
+}
+
+function UserDrawer({ user, onClose, onEdit, onReset }) {
+  return (
+    <Drawer
+      headerContent={<UserDetailHeader user={user} />}
+      onClose={onClose}
+      footer={<>
+        <Button variant="secondary" icon="key" onClick={() => onReset && onReset(user)}>Réinitialiser le mot de passe</Button>
+        <Button variant="danger" icon="ban">Désactiver</Button>
+        <Button variant="primary" icon="pencil" onClick={() => onEdit && onEdit(user)}>Modifier</Button>
+      </>}
+    >
+      <UserDetailBody user={user} />
     </Drawer>
   );
 }
@@ -524,4 +691,4 @@ function LogDrawer({ log, onClose }) {
   );
 }
 
-Object.assign(window, { LoginScreen, HomeScreen, UsersScreen, UserDrawer, LogDrawer });
+Object.assign(window, { LoginScreen, HomeScreen, UsersScreen, UserDrawer, LogDrawer, CreateUserModal });
