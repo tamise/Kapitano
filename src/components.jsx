@@ -404,30 +404,44 @@ function DateRangeDropdown({ placeholder = "Date", value, onChange, width = 160,
 
 // Tooltip au survol — placement: "top" (défaut) | "top-start" | "top-end" | light: fond blanc texte noir
 function Tooltip({ text, children, placement = "top", light = false }) {
-  const [visible, setVisible] = useStateC(false);
-  const posStyle = placement === "top-end"
-    ? { bottom: "calc(100% + 6px)", right: 0 }
-    : placement === "top-start"
-    ? { bottom: "calc(100% + 6px)", left: 0 }
-    : { bottom: "calc(100% + 6px)", left: "50%", transform: "translateX(-50%)" };
+  const [pos, setPos] = useStateC(null);
+  const ref = React.useRef(null);
+
+  function show() {
+    if (!ref.current || !text) return;
+    const r = ref.current.getBoundingClientRect();
+    if (placement === "top-end")       setPos({ left: r.right,              top: r.top, align: "right" });
+    else if (placement === "top-start") setPos({ left: r.left,              top: r.top, align: "left"  });
+    else                                setPos({ left: r.left + r.width / 2, top: r.top, align: "center" });
+  }
+
+  const fixedStyle = pos ? {
+    position: "fixed",
+    top: pos.top - 8,
+    ...(pos.align === "right"  ? { left: pos.left, transform: "translate(-100%, -100%)" } :
+        pos.align === "left"   ? { left: pos.left, transform: "translateY(-100%)" } :
+                                  { left: pos.left, transform: "translate(-50%, -100%)" }),
+  } : {};
+
   return (
-    <span style={{ position: "relative", display: "inline-flex" }}
-      onMouseEnter={() => setVisible(true)}
-      onMouseLeave={() => setVisible(false)}
+    <span ref={ref} style={{ position: "relative", display: "inline-flex" }}
+      onMouseEnter={show}
+      onMouseLeave={() => setPos(null)}
     >
       {children}
-      {visible && text && (
+      {pos && text && ReactDOM.createPortal(
         <span style={{
-          position: "absolute", ...posStyle,
+          ...fixedStyle,
           background: light ? "#fff" : "#1a1a2e", color: light ? "var(--kap-fg-dark)" : "#fff",
           border: light ? "1px solid var(--kap-border-2)" : "none",
           padding: "5px 10px", borderRadius: 5,
           fontSize: 12, fontFamily: "var(--kap-font-ui)",
-          whiteSpace: "nowrap", pointerEvents: "none", zIndex: 500,
+          whiteSpace: "nowrap", pointerEvents: "none", zIndex: 9999,
           boxShadow: "0 2px 8px rgba(0,0,0,0.2)",
         }}>
           {text}
-        </span>
+        </span>,
+        document.body
       )}
     </span>
   );
@@ -538,7 +552,38 @@ function Toolbar({ children, wrap }) {
 
 // Generic table wrapper
 function TableBox({ children }) {
-  return <div className="kap-table-wrap">{children}</div>;
+  const ref = React.useRef(null);
+  const [showLeft, setShowLeft] = useStateC(false);
+  const [showRight, setShowRight] = useStateC(false);
+  const [sbH, setSbH] = useStateC(0);
+  const [sbW, setSbW] = useStateC(0);
+
+  function update() {
+    const el = ref.current;
+    if (!el) return;
+    setShowLeft(el.scrollLeft > 4);
+    setShowRight(el.scrollLeft + el.clientWidth < el.scrollWidth - 4);
+    setSbH(el.offsetHeight - el.clientHeight);
+    setSbW(el.offsetWidth - el.clientWidth);
+  }
+
+  useEffectC(() => {
+    const el = ref.current;
+    if (!el) return;
+    update();
+    el.addEventListener("scroll", update, { passive: true });
+    const ro = new ResizeObserver(update);
+    ro.observe(el);
+    return () => { el.removeEventListener("scroll", update); ro.disconnect(); };
+  }, []);
+
+  return (
+    <div style={{ position: "relative", flex: 1, minHeight: 0, display: "flex", flexDirection: "column" }}>
+      <div ref={ref} className="kap-table-wrap" onScroll={update}>{children}</div>
+      {showLeft && <div style={{ position: "absolute", top: 0, left: 0, bottom: sbH, width: 80, pointerEvents: "none", background: "linear-gradient(to right, rgba(255,255,255,.96), transparent)", zIndex: 2 }} />}
+      {showRight && <div style={{ position: "absolute", top: 0, right: sbW + 60, bottom: sbH, width: 80, pointerEvents: "none", background: "linear-gradient(to left, rgba(255,255,255,.96), transparent)", zIndex: 2 }} />}
+    </div>
+  );
 }
 
 function SortHeader({ children, active, dir = "desc" }) {
@@ -547,6 +592,71 @@ function SortHeader({ children, active, dir = "desc" }) {
       {children}
       {active && <Icon name={dir === "desc" ? "chevron-down" : "chevron-up"} size={14} style={{ color: "var(--kap-primary)" }} />}
     </span>
+  );
+}
+
+// ── Masquage de colonnes piloté par Affichage par rôle ───────────
+// colWidths : { [colName]: minPx }  — doit être une référence stable (constante module)
+function useHideableColumns(pageKey, colWidths) {
+  const [containerWidth, setContainerWidth] = useStateC(Infinity);
+  const [userRevealed, setUserRevealed] = useStateC([]);
+  const tableRef = React.useRef(null);
+
+  useEffectC(() => {
+    const table = tableRef.current;
+    if (!table) return;
+    const wrap = table.parentElement;
+    if (!wrap) return;
+    const update = () => setContainerWidth(wrap.clientWidth);
+    update();
+    const ro = new ResizeObserver(update);
+    ro.observe(wrap);
+    return () => ro.disconnect();
+  }, []);
+
+  const hiddenCols = React.useMemo(() => {
+    const config = window.APR_SAVED_CONFIG;
+    if (!config) return [];
+    const role = (window.CURRENT_USER || {}).role;
+    if (!role) return [];
+    const priorityList = ((config[pageKey] || {})[role]) || [];
+    if (!priorityList.length) return [];
+    const totalWidth = Object.values(colWidths).reduce((a, b) => a + b, 0);
+    if (totalWidth <= containerWidth) return [];
+    let overflow = totalWidth - containerWidth;
+    const toHide = [];
+    for (const col of priorityList) {
+      if (userRevealed.includes(col)) continue;
+      toHide.push(col);
+      overflow -= ((colWidths[col] || 100) - 28);
+      if (overflow <= 0) break;
+    }
+    return toHide;
+  }, [pageKey, colWidths, containerWidth, userRevealed]);
+
+  // min-width dynamique : colonnes masquées contribuent 28px, visibles leur largeur nominale
+  const tableMinWidth = React.useMemo(() =>
+    Object.entries(colWidths).reduce((s, [col, w]) => s + (hiddenCols.includes(col) ? 28 : w), 0),
+  [colWidths, hiddenCols]);
+
+  function revealCol(col) {
+    setUserRevealed(prev => [...prev, col]);
+  }
+
+  return { tableRef, hiddenCols, revealCol, tableMinWidth };
+}
+
+function HiddenTh({ name, onReveal }) {
+  return (
+    <th style={{ width: 28, padding: "0 2px", background: "#CAD4F5", textAlign: "center" }}>
+      <Tooltip text={name}>
+        <button type="button" onClick={onReveal}
+          style={{ all: "unset", cursor: "pointer", display: "flex", alignItems: "center",
+                   justifyContent: "center", width: "100%", minHeight: 36, color: "var(--kap-primary)" }}>
+          <Icon name="circle" size={10} />
+        </button>
+      </Tooltip>
+    </th>
   );
 }
 
@@ -691,39 +801,61 @@ function Drawer({ title, subtitle, headerContent, onClose, children, footer }) {
 
 function RowMenu({ items }) {
   const [open, setOpen] = useStateC(false);
+  const [pos, setPos] = useStateC(null);
   const ref = React.useRef(null);
+  const dropRef = React.useRef(null);
+  const btnRef = React.useRef(null);
 
   useEffectC(() => {
     if (!open) return;
-    function handler(e) { if (ref.current && !ref.current.contains(e.target)) setOpen(false); }
-    document.addEventListener("mousedown", handler);
-    return () => document.removeEventListener("mousedown", handler);
+    function handleClick(e) {
+      if (ref.current && ref.current.contains(e.target)) return;
+      if (dropRef.current && dropRef.current.contains(e.target)) return;
+      setOpen(false);
+    }
+    function handleScroll() { setOpen(false); }
+    document.addEventListener("mousedown", handleClick);
+    document.addEventListener("scroll", handleScroll, true);
+    return () => {
+      document.removeEventListener("mousedown", handleClick);
+      document.removeEventListener("scroll", handleScroll, true);
+    };
   }, [open]);
 
+  function toggle() {
+    if (!open && btnRef.current) {
+      const r = btnRef.current.getBoundingClientRect();
+      setPos({ top: r.bottom + 4, right: window.innerWidth - r.right });
+    }
+    setOpen(o => !o);
+  }
+
   return (
-    <div ref={ref} style={{ position: "relative", display: "inline-block" }}>
-      <button type="button" className="kap-icon-btn-square" onClick={() => setOpen(o => !o)} aria-label="Actions">
+    <div ref={ref} style={{ display: "inline-block" }}>
+      <button ref={btnRef} type="button" className="kap-icon-btn-square" onClick={toggle} aria-label="Actions">
         <Icon name="more-vertical" size={18} />
       </button>
-      {open && (
-        <div style={{
-          position: "absolute", right: 0, top: "calc(100% + 4px)",
+      {open && pos && ReactDOM.createPortal(
+        <div ref={dropRef} style={{
+          position: "fixed", top: pos.top, right: pos.right,
           background: "#fff", border: "1px solid var(--kap-border-2)",
           borderRadius: 8, boxShadow: "0 8px 24px rgba(0,0,0,0.12)",
-          zIndex: 200, minWidth: 220, overflow: "hidden",
+          zIndex: 9999, minWidth: 260, overflow: "hidden",
         }}>
           {items.map((item, i) => (
             <button key={i} type="button"
-              onClick={() => { item.onClick && item.onClick(); setOpen(false); }}
-              onMouseEnter={e => e.currentTarget.style.background = item.danger ? "#FFF5F5" : "var(--kap-bg-hover, #F5F5F5)"}
+              disabled={item.disabled}
+              onClick={() => { if (item.disabled) return; item.onClick && item.onClick(); setOpen(false); }}
+              onMouseEnter={e => { if (!item.disabled) e.currentTarget.style.background = item.danger ? "#FFF5F5" : "var(--kap-bg-hover, #F5F5F5)"; }}
               onMouseLeave={e => e.currentTarget.style.background = "transparent"}
-              style={{ all: "unset", display: "flex", alignItems: "center", gap: 10, width: "100%", padding: "9px 14px", cursor: "pointer", fontFamily: "var(--kap-font-ui)", fontSize: 13, color: item.danger ? "#C62828" : "var(--kap-fg-1)", boxSizing: "border-box" }}
+              style={{ all: "unset", display: "flex", alignItems: "center", gap: 10, width: "100%", padding: "9px 14px", cursor: item.disabled ? "default" : "pointer", fontFamily: "var(--kap-font-ui)", fontSize: 13, color: item.disabled ? "var(--kap-fg-4, #BDBDBD)" : item.danger ? "#C62828" : "var(--kap-fg-1)", boxSizing: "border-box", opacity: item.disabled ? 0.5 : 1 }}
             >
-              {item.icon && <Icon name={item.icon} size={16} style={{ color: item.danger ? "#C62828" : "var(--kap-fg-3)", flexShrink: 0 }} />}
+              {item.icon && <Icon name={item.icon} size={16} style={{ color: item.disabled ? "var(--kap-fg-4, #BDBDBD)" : item.danger ? "#C62828" : "var(--kap-fg-3)", flexShrink: 0 }} />}
               {item.label}
             </button>
           ))}
-        </div>
+        </div>,
+        document.body
       )}
     </div>
   );
@@ -875,7 +1007,7 @@ Object.assign(window, {
   Icon, Button, IconButton, Input, Select, RadioDropdown, DateRangeDropdown, Checkbox, Tooltip,
   StatusPill, DotStatus, HttpCode, MethodTag,
   IconTile, PageHead, SectionCard,
-  Tabs, Pagination, Toolbar, TableBox, SortHeader,
+  Tabs, Pagination, Toolbar, TableBox, SortHeader, HiddenTh, useHideableColumns,
   Drawer, Modal, Switch, RowMenu, DetailSection, DetailRow, CodeBlock,
   Kpi, ProgressBar, ChipRow, Flag,
 });

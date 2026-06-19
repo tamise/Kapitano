@@ -231,7 +231,7 @@ function ReportingTab() {
               <th onClick={() => handleColSort("Quantité")} style={{ cursor: "pointer", userSelect: "none", textAlign: "right" }}><SortHeader active={colActive("Quantité")} dir={sortDir}>Quantité</SortHeader></th>
               <th onClick={() => handleColSort("Type de prod.")} style={{ cursor: "pointer", userSelect: "none" }}><SortHeader active={colActive("Type de prod.")} dir={sortDir}>Type de prod.</SortHeader></th>
               <th onClick={() => handleColSort("Type d'action")} style={{ cursor: "pointer", userSelect: "none" }}><SortHeader active={colActive("Type d'action")} dir={sortDir}>Type d'action</SortHeader></th>
-              <th style={{ width: 48 }}></th>
+              <th style={{ width: 60 }}></th>
             </tr>
           </thead>
           <tbody>
@@ -391,7 +391,7 @@ function TicketsTab({ onOpenDetail }) {
               <th onClick={() => handleColSort("Revendeur")} style={{ cursor: "pointer", userSelect: "none" }}><SortHeader active={colActive("Revendeur")} dir={sortDir}>Revendeur</SortHeader></th>
               <th onClick={() => handleColSort("Client")} style={{ cursor: "pointer", userSelect: "none" }}><SortHeader active={colActive("Client")} dir={sortDir}>Client</SortHeader></th>
               <th onClick={() => handleColSort("Site")} style={{ cursor: "pointer", userSelect: "none" }}><SortHeader active={colActive("Site")} dir={sortDir}>Site</SortHeader></th>
-              <th style={{ width: 48 }}></th>
+              <th style={{ width: 60 }}></th>
             </tr>
           </thead>
           <tbody>
@@ -511,7 +511,7 @@ function TicketsArchivesTab() {
               <th onClick={() => handleColSort("Code Artis")} style={{ cursor: "pointer", userSelect: "none" }}><SortHeader active={colActive("Code Artis")} dir={sortDir}>Code Artis</SortHeader></th>
               <th onClick={() => handleColSort("Site")} style={{ cursor: "pointer", userSelect: "none" }}><SortHeader active={colActive("Site")} dir={sortDir}>Site</SortHeader></th>
               <th onClick={() => handleColSort("Type DIT")} style={{ cursor: "pointer", userSelect: "none" }}><SortHeader active={colActive("Type DIT")} dir={sortDir}>Type DIT</SortHeader></th>
-              <th style={{ width: 48 }}></th>
+              <th style={{ width: 60 }}></th>
             </tr>
           </thead>
           <tbody>
@@ -624,7 +624,7 @@ function ConfigurationsTab({ onOpenDetail }) {
               <th onClick={() => handleColSort("Client")} style={{ cursor: "pointer", userSelect: "none" }}><SortHeader active={colActive("Client")} dir={sortDir}>Client</SortHeader></th>
               <th onClick={() => handleColSort("Site")} style={{ cursor: "pointer", userSelect: "none" }}><SortHeader active={colActive("Site")} dir={sortDir}>Site</SortHeader></th>
               <th onClick={() => handleColSort("Service")} style={{ cursor: "pointer", userSelect: "none" }}><SortHeader active={colActive("Service")} dir={sortDir}>Service</SortHeader></th>
-              <th style={{ width: 48 }}></th>
+              <th style={{ width: 60 }}></th>
             </tr>
           </thead>
           <tbody>
@@ -956,7 +956,7 @@ function EligDemandesScreen() {
               <th onClick={() => handleColSort("Libellé")} style={{ cursor: "pointer", userSelect: "none" }}><SortHeader active={colActive("Libellé")} dir={sortDir}>Libellé</SortHeader></th>
               <th onClick={() => handleColSort("Statut")} style={{ cursor: "pointer", userSelect: "none" }}><SortHeader active={colActive("Statut")} dir={sortDir}>Statut</SortHeader></th>
               <th onClick={() => handleColSort("Traitée le")} style={{ cursor: "pointer", userSelect: "none" }}><SortHeader active={colActive("Traitée le")} dir={sortDir}>Traitée le</SortHeader></th>
-              <th style={{ width: 48 }}></th>
+              <th style={{ width: 60 }}></th>
             </tr>
           </thead>
           <tbody>
@@ -1125,7 +1125,7 @@ function EligAdressesScreen() {
               <th onClick={() => handleColSort("Libellé")} style={{ cursor: "pointer", userSelect: "none" }}><SortHeader active={colActive("Libellé")} dir={sortDir}>Libellé</SortHeader></th>
               <th onClick={() => handleColSort("Statut")} style={{ cursor: "pointer", userSelect: "none" }}><SortHeader active={colActive("Statut")} dir={sortDir}>Statut</SortHeader></th>
               <th onClick={() => handleColSort("Testée le")} style={{ cursor: "pointer", userSelect: "none" }}><SortHeader active={colActive("Testée le")} dir={sortDir}>Testée le</SortHeader></th>
-              <th style={{ width: 48 }}></th>
+              <th style={{ width: 60 }}></th>
             </tr>
           </thead>
           <tbody>
@@ -1738,6 +1738,12 @@ function EligibiliteScreen({ initialSub = "carte" }) {
 // PROFIL
 // ════════════════════════════════════════════════════════════════
 function ProfilScreen() {
+  const [changePwd, setChangePwd] = useStateCt(false);
+  const [pwd, setPwd] = useStateCt("");
+  const [pwd2, setPwd2] = useStateCt("");
+
+  function closeChangePwd() { setChangePwd(false); setPwd(""); setPwd2(""); }
+
   return (
     <>
       <PageHead icon="user" title="Profil & paramètres" subtitle="Gérez votre compte, vos préférences et vos accès." />
@@ -1759,30 +1765,12 @@ function ProfilScreen() {
 
         <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
           <div className="kap-card kap-card--padded">
-            <div style={{ fontFamily: "var(--kap-font-display)", fontWeight: 700, fontSize: 16, marginBottom: 14 }}>Informations personnelles</div>
-            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 14 }}>
-              <div className="kap-field"><label className="kap-field-label">Prénom</label><Input icon={null} value="Mathis" onChange={() => {}} width="100%" /></div>
-              <div className="kap-field"><label className="kap-field-label">Nom</label><Input icon={null} value="Bourgoin" onChange={() => {}} width="100%" /></div>
-              <div className="kap-field"><label className="kap-field-label">E-mail</label><Input icon="mail" value="mathis.bourgoin@koesio.com" onChange={() => {}} width="100%" /></div>
-              <div className="kap-field"><label className="kap-field-label">Téléphone</label><Input icon="phone" value="+33 6 12 34 56 78" onChange={() => {}} width="100%" /></div>
-              <div className="kap-field"><label className="kap-field-label">Filiale</label><Select width="100%" value="Koesio Aquitaine" onChange={() => {}} options={["Koesio Aquitaine","Koesio Île-de-France","Koesio Bretagne"]} icon="building-2" /></div>
-              <div className="kap-field"><label className="kap-field-label">Rôle</label><Select width="100%" value="Administrateur" onChange={() => {}} options={["Administrateur","Manager","Opérateur","Lecture seule"]} icon="shield" /></div>
-            </div>
-            <div style={{ display: "flex", justifyContent: "flex-end", gap: 8, marginTop: 16 }}>
-              <Button variant="tertiary">Annuler</Button>
-              <Button variant="primary" icon="check">Enregistrer</Button>
-            </div>
-          </div>
-
-          <div className="kap-card kap-card--padded">
             <div style={{ fontFamily: "var(--kap-font-display)", fontWeight: 700, fontSize: 16, marginBottom: 14 }}>Sécurité</div>
             <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
               <Row label="Mot de passe" sub="Dernière modification le 14/09/2025">
-                <Button variant="tertiary" icon="lock">Modifier</Button>
+                <Button variant="tertiary" icon="lock" onClick={() => setChangePwd(true)}>Modifier</Button>
               </Row>
-              <Row label="Authentification à deux facteurs" sub="Application Authenticator">
-                <span className="kap-pill kap-pill--soft" style={{ "--bg": "#E6F2E7", "--fg": "var(--kap-success)" }}>Activée</span>
-              </Row>
+
               <Row label="Sessions actives" sub="3 appareils connectés">
                 <Button variant="danger" icon="log-out">Tout déconnecter</Button>
               </Row>
@@ -1800,6 +1788,27 @@ function ProfilScreen() {
           </div>
         </div>
       </div>
+      {changePwd && (
+        <Modal
+          title="Modifier le mot de passe"
+          onClose={closeChangePwd}
+          footer={<>
+            <Button variant="tertiary" onClick={closeChangePwd}>Annuler</Button>
+            <Button variant="primary" icon="check" onClick={closeChangePwd}>Enregistrer</Button>
+          </>}
+        >
+          <div style={{ display: "flex", flexDirection: "column", gap: 14, padding: "4px 0" }}>
+            <div className="kap-field">
+              <label className="kap-field-label">Nouveau mot de passe</label>
+              <Input icon="lock" type="password" value={pwd} onChange={setPwd} width="100%" placeholder="Nouveau mot de passe" />
+            </div>
+            <div className="kap-field">
+              <label className="kap-field-label">Confirmer le mot de passe</label>
+              <Input icon="lock" type="password" value={pwd2} onChange={setPwd2} width="100%" placeholder="Confirmation du mot de passe" />
+            </div>
+          </div>
+        </Modal>
+      )}
     </>
   );
 }
@@ -1865,6 +1874,353 @@ const QUESTIONNAIRES = [
 ];
 const Q_DATE = "02/04/2026 - 17:32:56";
 
+// ── Affichage par rôle ────────────────────────────────────────────
+const APR_ROLES = ["Administrateur", "Manager", "Opérateur", "Support N2", "Lecture seule"];
+
+const APR_PAGES = [
+  {
+    key: "utilisateurs",
+    label: "Liste des utilisateurs",
+    columns: ["Actif", "Nom", "Prénom", "Email", "Type", "Rôle", "Revendeur associé", "Date de création"],
+  },
+  {
+    key: "logs",
+    label: "Logs d'activité",
+    columns: ["ID", "Date", "Nom de l'utilisateur", "Revendeur de l'utilisateur", "Statut", "Ressource", "Description", "Durée"],
+  },
+  {
+    key: "commandes-suivi",
+    label: "Suivi de commandes",
+    columns: ["Date", "N° d'affaire", "Source", "Revendeur", "Client", "Qté articles", "État commande"],
+  },
+  {
+    key: "commandes-reporting",
+    label: "Reporting commandes",
+    columns: ["Numéro d'affaire", "Date de l'action", "Revendeur", "Client", "Nom de l'utilisateur", "Téléphone", "Nom de l'article", "Quantité", "Type de prod.", "Type d'action"],
+  },
+  {
+    key: "tickets",
+    label: "Tickets",
+    columns: ["Référence", "Date de création", "Sujet", "État", "Criticité", "Nature", "Origine", "Revendeur", "Client", "Site"],
+  },
+  {
+    key: "tickets-archives",
+    label: "Tickets archivés",
+    columns: ["Numéro", "Date de création", "Symptôme", "État", "Revendeur", "Client", "Code Artis", "Site", "Type DIT"],
+  },
+  {
+    key: "configurations",
+    label: "Configurations",
+    columns: ["Version", "Lien", "Options", "Numéro de série", "Statut", "Date d'archivage", "Revendeur", "Client", "Site", "Service"],
+  },
+  {
+    key: "espaces-voix",
+    label: "Espaces voix",
+    columns: ["Date de création", "Revendeur", "Client", "Nom client Enove", "ID production", "État de l'espace voix"],
+  },
+  {
+    key: "trunk-sip",
+    label: "Trunk SIP & Centrex",
+    columns: ["Revendeur", "Client", "Site", "N° de charge", "Offre", "Canaux", "Etat factu.", "Etat prod."],
+  },
+  {
+    key: "trunk-commandes",
+    label: "Commandes Trunk SIP",
+    columns: ["Réf", "Date", "Revendeur", "Client", "Type d'offre", "Type commande", "N° de charge", "État commande"],
+  },
+  {
+    key: "portabilite",
+    label: "Portabilité",
+    columns: ["Réf", "Créée le", "Revendeur", "Client", "Type commande", "Numéro", "Date de portabilité", "État commande", "Pilotée", "Statut portabilité", "Note"],
+  },
+  {
+    key: "numeros-revendeurs",
+    label: "Numéros revendeurs",
+    columns: ["Revendeur", "Début de plage", "Fin de plage", "Taille de la plage", "Taux d'occupation", "Date de création"],
+  },
+  {
+    key: "numeros-clients",
+    label: "Numéros clients",
+    columns: ["Revendeur", "Client", "Début de plage", "Fin de plage", "Taille de la plage", "Taux d'occupation"],
+  },
+  {
+    key: "abonnements-mobiles",
+    label: "Abonnements mobiles",
+    columns: ["Revendeur", "Client", "Numéro mobile", "Type", "ICCID", "Utilisateur", "Forfait", "Etat abo.", "Etat prod."],
+  },
+  {
+    key: "commandes-mobiles",
+    label: "Commandes mobiles",
+    columns: ["Réf", "Date", "Revendeur", "Client", "Type commande", "Forfait", "Numéro", "Type", "ICCID", "Portabilité", "Etat commande"],
+  },
+  {
+    key: "dispatcher",
+    label: "Dispatcher",
+    columns: ["Numéro d'affaire", "Date de création", "Date étape", "Revendeur", "Client", "Lignes"],
+  },
+  {
+    key: "cartes-sim",
+    label: "Cartes SIM",
+    columns: ["Revendeur", "Opérateur", "Type", "ICCID", "État", "Date du statut", "Localisation"],
+  },
+  {
+    key: "gestionnaires-flottes",
+    label: "Gestionnaires de flottes",
+    columns: ["Actif", "Nom", "Prénom", "Email", "Revendeur associé", "Date de création"],
+  },
+  {
+    key: "liens-abonnements",
+    label: "Liens — Abonnements",
+    columns: ["Revendeur", "Client", "Site", "Numéro mobile", "ICCID", "Nom du lien", "Offre", "Etat abo.", "Etat prod."],
+  },
+  {
+    key: "liens-commandes",
+    label: "Liens — Commandes",
+    columns: ["Réf", "Date", "Revendeur", "Client", "Type commande", "Forfait", "ICCID", "Numéro", "Etat commande"],
+  },
+];
+
+// Chargement immédiat depuis localStorage pour que les tables l'aient dès leur premier mount
+(function() {
+  try {
+    const s = localStorage.getItem("kap_apr_config");
+    if (s) window.APR_SAVED_CONFIG = JSON.parse(s);
+  } catch(e) {}
+})();
+
+function initAprConfig() {
+  if (window.APR_SAVED_CONFIG) return JSON.parse(JSON.stringify(window.APR_SAVED_CONFIG));
+  const cfg = {};
+  APR_PAGES.forEach(p => {
+    cfg[p.key] = {};
+    APR_ROLES.forEach(r => { cfg[p.key][r] = []; });
+  });
+  // Données initiales de démonstration
+  cfg.utilisateurs["Opérateur"]     = ["Date de création", "Type"];
+  cfg.utilisateurs["Support N2"]    = ["Date de création", "Type", "Prénom"];
+  cfg.utilisateurs["Lecture seule"] = ["Date de création", "Type", "Prénom", "Revendeur associé"];
+  cfg.logs["Opérateur"]     = ["ID", "Description"];
+  cfg.logs["Support N2"]    = ["ID", "Description", "Durée"];
+  cfg.logs["Lecture seule"] = ["ID", "Description", "Durée", "Revendeur de l'utilisateur"];
+  return cfg;
+}
+
+function AffichageParRoleTab() {
+  const [activePage, setActivePage] = useStateCt(APR_PAGES[0].key);
+  const [config, setConfig] = useStateCt(initAprConfig);
+  const [saved, setSaved] = useStateCt(false);
+  const [pageMenuOpen, setPageMenuOpen] = useStateCt(false);
+  const [pageMenuPos, setPageMenuPos] = useStateCt(null);
+  const pageMenuBtnRef = React.useRef(null);
+  const pageMenuDropRef = React.useRef(null);
+
+  React.useEffect(() => {
+    if (!pageMenuOpen) return;
+    function handleClick(e) {
+      if (pageMenuBtnRef.current && pageMenuBtnRef.current.contains(e.target)) return;
+      if (pageMenuDropRef.current && pageMenuDropRef.current.contains(e.target)) return;
+      setPageMenuOpen(false);
+    }
+    function handleScroll(e) {
+      if (pageMenuDropRef.current && pageMenuDropRef.current.contains(e.target)) return;
+      setPageMenuOpen(false);
+    }
+    document.addEventListener("mousedown", handleClick);
+    document.addEventListener("scroll", handleScroll, true);
+    return () => {
+      document.removeEventListener("mousedown", handleClick);
+      document.removeEventListener("scroll", handleScroll, true);
+    };
+  }, [pageMenuOpen]);
+
+  function togglePageMenu() {
+    if (!pageMenuOpen && pageMenuBtnRef.current) {
+      const r = pageMenuBtnRef.current.getBoundingClientRect();
+      setPageMenuPos({ top: r.bottom + 4, left: r.left });
+    }
+    setPageMenuOpen(o => !o);
+  }
+
+  const page = APR_PAGES.find(p => p.key === activePage);
+
+  function getPriority(col, role) {
+    const list = config[activePage][role];
+    const idx = list.indexOf(col);
+    return idx === -1 ? null : idx + 1;
+  }
+
+  function toggleCol(col, role) {
+    setConfig(prev => {
+      const list = [...prev[activePage][role]];
+      const idx = list.indexOf(col);
+      if (idx === -1) list.push(col);
+      else list.splice(idx, 1);
+      return { ...prev, [activePage]: { ...prev[activePage], [role]: list } };
+    });
+    setSaved(false);
+  }
+
+  function movePriority(col, role, dir) {
+    setConfig(prev => {
+      const list = [...prev[activePage][role]];
+      const idx = list.indexOf(col);
+      const newIdx = idx + dir;
+      if (newIdx < 0 || newIdx >= list.length) return prev;
+      list.splice(idx, 1);
+      list.splice(newIdx, 0, col);
+      return { ...prev, [activePage]: { ...prev[activePage], [role]: list } };
+    });
+    setSaved(false);
+  }
+
+  const cellStyle = (priority) => ({
+    display: "flex", alignItems: "center", justifyContent: "center", gap: 4,
+    padding: "6px 8px", borderRadius: 6, cursor: "pointer",
+    background: priority !== null ? "rgba(126,65,163,.08)" : "transparent",
+    border: priority !== null ? "1px solid rgba(126,65,163,.25)" : "1px solid transparent",
+    minWidth: 80,
+  });
+
+  const maxHideable = page ? page.columns.length - 1 : 0;
+
+  return (
+    <div className="kap-canvas">
+      <PageHead icon="layout" title="Affichage par rôle"
+        subtitle="Définissez quelles colonnes masquer en priorité selon le rôle, quand la largeur du tableau est insuffisante." />
+
+      <div className="kap-card" style={{ padding: "20px 24px", display: "flex", flexDirection: "column", gap: 20 }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+          <span style={{ fontFamily: "var(--kap-font-ui)", fontSize: 13, color: "var(--kap-fg-3)", whiteSpace: "nowrap" }}>Page :</span>
+          <button ref={pageMenuBtnRef} type="button" onClick={togglePageMenu} style={{
+            all: "unset", cursor: "pointer", display: "inline-flex", alignItems: "center", gap: 8,
+            padding: "7px 12px", borderRadius: 8, border: "1px solid var(--kap-border-2)",
+            background: "#fff", fontFamily: "var(--kap-font-ui)", fontSize: 13, color: "var(--kap-fg-1)",
+            boxShadow: "0 1px 3px rgba(0,0,0,0.06)", width: 260, boxSizing: "border-box",
+            justifyContent: "space-between",
+          }}>
+            {APR_PAGES.find(p => p.key === activePage)?.label}
+            <Icon name="chevron-down" size={15} style={{ color: "var(--kap-fg-3)", marginLeft: 2 }} />
+          </button>
+          {pageMenuOpen && pageMenuPos && ReactDOM.createPortal(
+            <div ref={pageMenuDropRef} style={{
+              position: "fixed", top: pageMenuPos.top, left: pageMenuPos.left,
+              background: "#fff", border: "1px solid var(--kap-border-2)",
+              borderRadius: 8, boxShadow: "0 8px 24px rgba(0,0,0,0.12)",
+              zIndex: 9999, minWidth: 260, overflow: "hidden",
+            }}>
+              <div style={{ maxHeight: 320, overflowY: "auto" }}>
+              {APR_PAGES.map(p => (
+                <button key={p.key} type="button"
+                  onClick={() => { setActivePage(p.key); setPageMenuOpen(false); setSaved(false); }}
+                  onMouseEnter={e => { e.currentTarget.style.background = p.key === activePage ? "var(--kap-primary-soft, #F0E6F9)" : "var(--kap-bg-hover, #F5F5F5)"; }}
+                  onMouseLeave={e => { e.currentTarget.style.background = p.key === activePage ? "var(--kap-primary-soft, #F0E6F9)" : "transparent"; }}
+                  style={{
+                    all: "unset", display: "flex", alignItems: "center", width: "100%",
+                    padding: "9px 14px", cursor: "pointer", boxSizing: "border-box",
+                    fontFamily: "var(--kap-font-ui)", fontSize: 13,
+                    color: p.key === activePage ? "var(--kap-primary)" : "var(--kap-fg-1)",
+                    fontWeight: p.key === activePage ? 600 : 400,
+                    background: p.key === activePage ? "var(--kap-primary-soft, #F0E6F9)" : "transparent",
+                  }}>
+                  {p.label}
+                </button>
+              ))}
+              </div>
+            </div>,
+            document.body
+          )}
+        </div>
+
+        <div style={{ display: "flex", gap: 8, padding: "10px 14px", borderRadius: 8, background: "rgba(126,65,163,.05)", border: "1px solid rgba(126,65,163,.15)" }}>
+          <Icon name="info" size={16} style={{ color: "var(--kap-primary)", flexShrink: 0, marginTop: 1 }} />
+          <span style={{ fontFamily: "var(--kap-font-ui)", fontSize: 13, color: "var(--kap-fg-2)" }}>
+            Cliquez sur une cellule pour rendre une colonne masquable. Le chiffre indique l'ordre de masquage : <strong>1</strong> = masquée en premier. Utilisez les flèches pour ajuster la priorité.
+          </span>
+        </div>
+
+        <div style={{ overflowX: "auto" }}>
+          <table style={{ width: "100%", borderCollapse: "collapse", tableLayout: "auto" }}>
+            <thead>
+              <tr>
+                <th style={{ padding: "10px 16px", textAlign: "left", fontFamily: "var(--kap-font-ui)", fontSize: 12, fontWeight: 700, color: "var(--kap-fg-3)", background: "var(--kap-bg-2)", borderBottom: "2px solid var(--kap-divider)", whiteSpace: "nowrap" }}>
+                  Colonne
+                </th>
+                {APR_ROLES.map(role => (
+                  <th key={role} style={{ padding: "10px 16px", textAlign: "center", fontFamily: "var(--kap-font-ui)", fontSize: 12, fontWeight: 700, color: "var(--kap-fg-3)", background: "var(--kap-bg-2)", borderBottom: "2px solid var(--kap-divider)", whiteSpace: "nowrap" }}>
+                    {role}
+                  </th>
+                ))}
+              </tr>
+            </thead>
+            <tbody>
+              {page && page.columns.map((col, ci) => (
+                <tr key={col} style={{ background: ci % 2 === 0 ? "#fff" : "var(--kap-bg-2)" }}>
+                  <td style={{ padding: "10px 16px", fontFamily: "var(--kap-font-ui)", fontSize: 13, color: "var(--kap-fg-1)", borderBottom: "1px solid var(--kap-divider)", whiteSpace: "nowrap", fontWeight: 500 }}>
+                    {col}
+                  </td>
+                  {APR_ROLES.map(role => {
+                    const priority = getPriority(col, role);
+                    const list = config[activePage][role];
+                    const idx = list.indexOf(col);
+                    return (
+                      <td key={role} style={{ padding: "8px 12px", borderBottom: "1px solid var(--kap-divider)", textAlign: "center" }}>
+                        <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 2 }}>
+                          {priority !== null && (
+                            <button type="button"
+                              onClick={() => movePriority(col, role, -1)}
+                              disabled={idx === 0}
+                              style={{ all: "unset", cursor: idx === 0 ? "default" : "pointer", color: idx === 0 ? "var(--kap-fg-4)" : "var(--kap-fg-3)", padding: 2, borderRadius: 3, lineHeight: 1 }}>
+                              <Icon name="chevron-up" size={14} />
+                            </button>
+                          )}
+                          <button type="button"
+                            onClick={() => toggleCol(col, role)}
+                            style={cellStyle(priority)}
+                            title={priority !== null ? "Cliquer pour retirer" : "Cliquer pour rendre masquable"}>
+                            {priority !== null
+                              ? <React.Fragment>
+                                  <span style={{ fontFamily: "var(--kap-font-ui)", fontSize: 12, fontWeight: 700, color: "var(--kap-primary)" }}>{priority}</span>
+                                  <Icon name="eye-off" size={13} style={{ color: "var(--kap-primary)" }} />
+                                </React.Fragment>
+                              : <span style={{ fontFamily: "var(--kap-font-ui)", fontSize: 12, color: "var(--kap-fg-4)" }}>—</span>
+                            }
+                          </button>
+                          {priority !== null && (
+                            <button type="button"
+                              onClick={() => movePriority(col, role, 1)}
+                              disabled={idx === list.length - 1}
+                              style={{ all: "unset", cursor: idx === list.length - 1 ? "default" : "pointer", color: idx === list.length - 1 ? "var(--kap-fg-4)" : "var(--kap-fg-3)", padding: 2, borderRadius: 3, lineHeight: 1 }}>
+                              <Icon name="chevron-down" size={14} />
+                            </button>
+                          )}
+                        </div>
+                      </td>
+                    );
+                  })}
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+
+        <div style={{ display: "flex", justifyContent: "flex-end", gap: 8, paddingTop: 4, borderTop: "1px solid var(--kap-divider)" }}>
+          {saved && (
+            <span style={{ fontFamily: "var(--kap-font-ui)", fontSize: 13, color: "var(--kap-success)", display: "flex", alignItems: "center", gap: 6, marginRight: 8 }}>
+              <Icon name="check-circle-2" size={15} /> Enregistré
+            </span>
+          )}
+          <Button variant="primary" icon="save" onClick={() => {
+            const snap = JSON.parse(JSON.stringify(config));
+            window.APR_SAVED_CONFIG = snap;
+            try { localStorage.setItem("kap_apr_config", JSON.stringify(snap)); } catch(e) {}
+            setSaved(true);
+          }}>Enregistrer</Button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 function AdminScreen({ initialSub = "questionnaire" }) {
   const [activeSub, setActiveSub] = useStateCt(initialSub);
   const [questFilter, setQuestFilter] = useStateCt(null);
@@ -1882,6 +2238,7 @@ function AdminScreen({ initialSub = "questionnaire" }) {
   if (activeSub === "questionnaire") return <QuestionnaireTab onGoToMatrices={goToMatrices} />;
   if (activeSub === "regles-service") return <ReglesServiceTab />;
   if (activeSub === "matrices-decision") return <MatricesDecisionTab questFilter={questFilter} onClearFilter={() => setQuestFilter(null)} />;
+  if (activeSub === "affichage-par-role") return <AffichageParRoleTab />;
   return null;
 }
 
@@ -2013,7 +2370,7 @@ function MatricesDecisionTab({ questFilter, onClearFilter }) {
               <th onClick={() => handleColSort("Mapping symptôme")} style={{ cursor: "pointer", userSelect: "none" }}><SortHeader active={colActive("Mapping symptôme")} dir={sortDir}>Mapping symptôme</SortHeader></th>
               <th onClick={() => handleColSort("Code catégorie Kali")} style={{ cursor: "pointer", userSelect: "none" }}><SortHeader active={colActive("Code catégorie Kali")} dir={sortDir}>Code catégorie Kali</SortHeader></th>
               <th onClick={() => handleColSort("Kali Queue")} style={{ cursor: "pointer", userSelect: "none" }}><SortHeader active={colActive("Kali Queue")} dir={sortDir}>Kali Queue</SortHeader></th>
-              <th style={{ width: 48 }}></th>
+              <th style={{ width: 60 }}></th>
             </tr>
           </thead>
           <tbody>
@@ -2110,7 +2467,7 @@ function QuestionnaireTab({ onGoToMatrices }) {
               <th onClick={() => handleColSort("Nombre de questions")} style={{ cursor: "pointer", userSelect: "none", textAlign: "right" }}><SortHeader active={colActive("Nombre de questions")} dir={sortDir}>Nombre de questions</SortHeader></th>
               <th onClick={() => handleColSort("Symptômes liés")} style={{ cursor: "pointer", userSelect: "none" }}><SortHeader active={colActive("Symptômes liés")} dir={sortDir}>Symptômes liés</SortHeader></th>
               <th onClick={() => handleColSort("Matrices affectées")} style={{ cursor: "pointer", userSelect: "none", textAlign: "center" }}><SortHeader active={colActive("Matrices affectées")} dir={sortDir}>Matrices affectées</SortHeader></th>
-              <th style={{ width: 48 }}></th>
+              <th style={{ width: 60 }}></th>
             </tr>
           </thead>
           <tbody>
@@ -2232,7 +2589,7 @@ function ReglesServiceTab() {
               <th onClick={() => handleColSort("Action")} style={{ cursor: "pointer", userSelect: "none" }}><SortHeader active={colActive("Action")} dir={sortDir}>Action</SortHeader></th>
               <th onClick={() => handleColSort("Type")} style={{ cursor: "pointer", userSelect: "none" }}><SortHeader active={colActive("Type")} dir={sortDir}>Type</SortHeader></th>
               <th onClick={() => handleColSort("Nom")} style={{ cursor: "pointer", userSelect: "none" }}><SortHeader active={colActive("Nom")} dir={sortDir}>Nom</SortHeader></th>
-              <th style={{ width: 48 }}></th>
+              <th style={{ width: 60 }}></th>
             </tr>
           </thead>
           <tbody>

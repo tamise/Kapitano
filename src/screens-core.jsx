@@ -1,6 +1,6 @@
 // Screens core — Login, Accueil, Utilisateurs (Liste + Logs + drawer)
 
-const { useState: useStateScA, useMemo: useMemoScA } = React;
+const { useState: useStateScA, useMemo: useMemoScA, useEffect: useEffectScA } = React;
 
 // ════════════════════════════════════════════════════════════════
 // LOGIN
@@ -206,16 +206,34 @@ function CreateUserModal({ onClose, onCreate, initialValues, title = "Création 
   );
 }
 
-function UsersScreen({ initialTab = "liste", onOpenLog, onOpenUser, onCollapseSidebar }) {
+const USERS_COL_WIDTHS = { "Actif": 80, "Nom": 72, "Prénom": 92, "Email": 82, "Type": 110, "Rôle": 76, "Revendeur associé": 158, "Date de création": 148, "_actions": 60 };
+const LOGS_COL_WIDTHS  = { "ID": 60, "Date": 80, "Nom de l'utilisateur": 190, "Revendeur de l'utilisateur": 235, "Statut": 90, "Ressource": 115, "Description": 115, "Durée": 85, "_actions": 60 };
+
+function UsersScreen({ initialTab = "liste", onOpenLog, onOpenUser, onCollapseSidebar, onExpandSidebar }) {
   const [showCreate, setShowCreate] = useStateScA(false);
   const [editUser, setEditUser] = useStateScA(null);
   const [resetUser, setResetUser] = useStateScA(null);
   const [selectedUser, setSelectedUser] = useStateScA(null);
+  const [selectedLog, setSelectedLog] = useStateScA(null);
 
   function openDetail(u) {
     setSelectedUser(u);
     if (onCollapseSidebar) onCollapseSidebar();
   }
+
+  function openLogDetail(l) {
+    setSelectedLog(l);
+    if (onCollapseSidebar) onCollapseSidebar();
+  }
+
+  useEffectScA(() => {
+    setSelectedUser(null);
+    setSelectedLog(null);
+  }, [initialTab]);
+
+  useEffectScA(() => {
+    if (!selectedUser && !selectedLog && onExpandSidebar) onExpandSidebar();
+  }, [selectedUser, selectedLog]);
   const [users, setUsers] = useStateScA(USERS);
   const [q, setQ] = useStateScA("");
   const [page, setPage] = useStateScA(1);
@@ -234,6 +252,8 @@ function UsersScreen({ initialTab = "liste", onOpenLog, onOpenUser, onCollapseSi
   const [logRessources, setLogRessources] = useStateScA([]);
   const perPage = 15;
   const [logPage, setLogPage] = useStateScA(1);
+  const { tableRef: usersTableRef, hiddenCols: uHid, revealCol: uReveal, tableMinWidth: uMinW } = useHideableColumns("utilisateurs", USERS_COL_WIDTHS);
+  const { tableRef: logsTableRef,  hiddenCols: lHid, revealCol: lReveal, tableMinWidth: lMinW  } = useHideableColumns("logs", LOGS_COL_WIDTHS);
 
   const userFieldMap = {
     "Date de création": "dateCreation",
@@ -381,15 +401,15 @@ function UsersScreen({ initialTab = "liste", onOpenLog, onOpenUser, onCollapseSi
 
   return (
     <>
-      <div className="kap-card" style={{ overflow: "hidden", flexDirection: selectedUser ? "row" : undefined }}>
-        <div style={selectedUser ? { flex: 1, minWidth: 0, overflowX: "auto", display: "flex", flexDirection: "column" } : {}}>
+      <div className="kap-card" style={{ overflow: "hidden", flexDirection: (selectedUser || selectedLog) ? "row" : undefined }}>
+        <div style={(selectedUser || selectedLog) ? { flex: 1, minWidth: 0, overflowX: "auto", display: "flex", flexDirection: "column" } : {}}>
         {!isLogs &&
           <>
             <Toolbar wrap={!!selectedUser}>
               <RadioDropdown placeholder="Trier" options={["Date de création","Actif","Nom","Prénom","Email","Revendeur associé"]} value={sortBy} onChange={setSortBy} onSortChange={handleSortChange} width={100} showSearch={false} showRadio={false} sortMode={true} />
               <Input placeholder="Recherche par nom, prénom, e-mail" value={q} onChange={(v) => { setQ(v); setPage(1); }} width={360} />
-              <div className="grow" />
-              <Button variant="tertiary" icon="refresh-cw" onClick={handleReset}>Réinitialiser</Button>
+              {selectedUser && <div className="grow" />}
+              {selectedUser && <Button variant="tertiary" icon="refresh-cw" onClick={handleReset}>Réinitialiser</Button>}
               {selectedUser && <div style={{ flexBasis: "100%", height: 0 }} />}
               <RadioDropdown
                 placeholder="Revendeur"
@@ -401,19 +421,21 @@ function UsersScreen({ initialTab = "liste", onOpenLog, onOpenUser, onCollapseSi
               <RadioDropdown placeholder="Statut" options={["Actif","Inactif"]} value={statutFilter} onChange={setStatutFilter} width={140} showSearch={false} />
               <RadioDropdown placeholder="Type" options={["AUTH0","OKTA"]} value={typeFilter} onChange={setTypeFilter} width={140} showSearch={false} multiSelect={true} />
               <RadioDropdown placeholder="Rôle" options={["Administrateur","Manager","Support N1","Lecture seule","Support N2","Opérateur"]} value={roleFilter} onChange={setRoleFilter} width={150} showSearch={false} multiSelect={true} />
+              {!selectedUser && <div className="grow" />}
+              {!selectedUser && <Button variant="tertiary" icon="refresh-cw" onClick={handleReset}>Réinitialiser</Button>}
             </Toolbar>
             <TableBox>
-              <table className="kap-table">
+              <table ref={usersTableRef} className="kap-table" style={{ minWidth: uMinW }}>
                 <thead>
                   <tr>
-                    <th onClick={() => handleColSort("Actif")} style={{ cursor: "pointer", userSelect: "none" }}><SortHeader active={colActive("Actif")} dir={sortDir}>Actif</SortHeader></th>
-                    <th onClick={() => handleColSort("Nom")} style={{ cursor: "pointer", userSelect: "none" }}><SortHeader active={colActive("Nom")} dir={sortDir}>Nom</SortHeader></th>
-                    <th onClick={() => handleColSort("Prénom")} style={{ cursor: "pointer", userSelect: "none" }}><SortHeader active={colActive("Prénom")} dir={sortDir}>Prénom</SortHeader></th>
-                    <th onClick={() => handleColSort("Email")} style={{ cursor: "pointer", userSelect: "none" }}><SortHeader active={colActive("Email")} dir={sortDir}>Email</SortHeader></th>
-                    <th onClick={() => handleColSort("Type")} style={{ cursor: "pointer", userSelect: "none" }}><SortHeader active={colActive("Type")} dir={sortDir}>Type</SortHeader></th>
-                    <th onClick={() => handleColSort("Rôle")} style={{ cursor: "pointer", userSelect: "none" }}><SortHeader active={colActive("Rôle")} dir={sortDir}>Rôle</SortHeader></th>
-                    <th onClick={() => handleColSort("Revendeur associé")} style={{ cursor: "pointer", userSelect: "none" }}><SortHeader active={colActive("Revendeur associé")} dir={sortDir}>Revendeur associé</SortHeader></th>
-                    <th onClick={() => handleColSort("Date de création")} style={{ cursor: "pointer", userSelect: "none" }}><SortHeader active={colActive("Date de création")} dir={sortDir}>Date de création</SortHeader></th>
+                    {uHid.includes("Actif") ? <HiddenTh name="Actif" onReveal={() => uReveal("Actif")} /> : <th onClick={() => handleColSort("Actif")} style={{ cursor: "pointer", userSelect: "none", width: 80 }}><SortHeader active={colActive("Actif")} dir={sortDir}>Actif</SortHeader></th>}
+                    {uHid.includes("Nom") ? <HiddenTh name="Nom" onReveal={() => uReveal("Nom")} /> : <th onClick={() => handleColSort("Nom")} style={{ cursor: "pointer", userSelect: "none", minWidth: 72 }}><SortHeader active={colActive("Nom")} dir={sortDir}>Nom</SortHeader></th>}
+                    {uHid.includes("Prénom") ? <HiddenTh name="Prénom" onReveal={() => uReveal("Prénom")} /> : <th onClick={() => handleColSort("Prénom")} style={{ cursor: "pointer", userSelect: "none", minWidth: 92 }}><SortHeader active={colActive("Prénom")} dir={sortDir}>Prénom</SortHeader></th>}
+                    {uHid.includes("Email") ? <HiddenTh name="Email" onReveal={() => uReveal("Email")} /> : <th onClick={() => handleColSort("Email")} style={{ cursor: "pointer", userSelect: "none", minWidth: 82 }}><SortHeader active={colActive("Email")} dir={sortDir}>Email</SortHeader></th>}
+                    {uHid.includes("Type") ? <HiddenTh name="Type" onReveal={() => uReveal("Type")} /> : <th onClick={() => handleColSort("Type")} style={{ cursor: "pointer", userSelect: "none", width: 110 }}><SortHeader active={colActive("Type")} dir={sortDir}>Type</SortHeader></th>}
+                    {uHid.includes("Rôle") ? <HiddenTh name="Rôle" onReveal={() => uReveal("Rôle")} /> : <th onClick={() => handleColSort("Rôle")} style={{ cursor: "pointer", userSelect: "none", minWidth: 76 }}><SortHeader active={colActive("Rôle")} dir={sortDir}>Rôle</SortHeader></th>}
+                    {uHid.includes("Revendeur associé") ? <HiddenTh name="Revendeur associé" onReveal={() => uReveal("Revendeur associé")} /> : <th onClick={() => handleColSort("Revendeur associé")} style={{ cursor: "pointer", userSelect: "none", minWidth: 158 }}><SortHeader active={colActive("Revendeur associé")} dir={sortDir}>Revendeur associé</SortHeader></th>}
+                    {uHid.includes("Date de création") ? <HiddenTh name="Date de création" onReveal={() => uReveal("Date de création")} /> : <th onClick={() => handleColSort("Date de création")} style={{ cursor: "pointer", userSelect: "none", minWidth: 148 }}><SortHeader active={colActive("Date de création")} dir={sortDir}>Date de création</SortHeader></th>}
                     <th style={{ width: 60 }}></th>
                   </tr>
                 </thead>
@@ -423,18 +445,18 @@ function UsersScreen({ initialTab = "liste", onOpenLog, onOpenUser, onCollapseSi
                       className={selectedUser ? "is-clickable" + (selectedUser.id === u.id ? " is-selected" : "") : ""}
                       onClick={selectedUser ? () => setSelectedUser(u) : undefined}
                     >
-                      <td>{u.statut.label === "Actif" ? <Icon name="check-circle-2" size={18} style={{ color: "#2E7D32" }} /> : <Icon name="x-circle" size={18} style={{ color: "#D32F2F" }} />}</td>
-                      <td style={{ fontWeight: 600 }}>{u.nom}</td>
-                      <td>{u.prenom}</td>
-                      <td className="muted">{u.email}</td>
-                      <td><span className="kap-pill kap-pill--soft" style={u.type === "AUTH0" ? { "--bg": "#FFF3E0", "--fg": "#E65100" } : { "--bg": "#F5F5F5", "--fg": "#212121" }}>{u.type}</span></td>
-                      <td><RoleChip role={u.role} /></td>
-                      <td className="muted">{u.revendeur}</td>
-                      <td className="muted">{u.dateCreation}</td>
+                      {uHid.includes("Actif") ? <td style={{ width: 28, padding: 0 }} /> : <td>{u.statut.label === "Actif" ? <Icon name="check-circle-2" size={18} style={{ color: "#2E7D32" }} /> : <Icon name="x-circle" size={18} style={{ color: "#D32F2F" }} />}</td>}
+                      {uHid.includes("Nom") ? <td style={{ width: 28, padding: 0 }} /> : <td style={{ fontWeight: 600 }}>{u.nom}</td>}
+                      {uHid.includes("Prénom") ? <td style={{ width: 28, padding: 0 }} /> : <td>{u.prenom}</td>}
+                      {uHid.includes("Email") ? <td style={{ width: 28, padding: 0 }} /> : <td className="muted">{u.email}</td>}
+                      {uHid.includes("Type") ? <td style={{ width: 28, padding: 0 }} /> : <td><span className="kap-pill kap-pill--soft" style={u.type === "AUTH0" ? { "--bg": "#FFF3E0", "--fg": "#E65100" } : { "--bg": "#F5F5F5", "--fg": "#212121" }}>{u.type}</span></td>}
+                      {uHid.includes("Rôle") ? <td style={{ width: 28, padding: 0 }} /> : <td><RoleChip role={u.role} /></td>}
+                      {uHid.includes("Revendeur associé") ? <td style={{ width: 28, padding: 0 }} /> : <td className="muted">{u.revendeur}</td>}
+                      {uHid.includes("Date de création") ? <td style={{ width: 28, padding: 0 }} /> : <td className="muted">{u.dateCreation}</td>}
                       <td onClick={e => e.stopPropagation()}><RowMenu items={[
                         { label: "Consulter", icon: "eye", onClick: () => openDetail(u) },
                         { label: "Modifier", icon: "pencil", onClick: () => setEditUser(u) },
-                        { label: "Réinitialiser le mot de passe", icon: "key", danger: true, onClick: () => setResetUser(u) },
+                        { label: "Réinitialiser le mot de passe", icon: "key", danger: true, disabled: u.type === "OKTA", onClick: () => setResetUser(u) },
                       ]} /></td>
                     </tr>
                   ))}
@@ -445,44 +467,50 @@ function UsersScreen({ initialTab = "liste", onOpenLog, onOpenUser, onCollapseSi
           </>}
         {isLogs &&
           <>
-            <Toolbar wrap={!!selectedUser}>
+            <Toolbar wrap={!!selectedLog}>
               <RadioDropdown placeholder="Trier" options={["Date de création","Nom de l'utilisateur","Revendeur de l'utilisateur","Statut","Ressources","Durée"]} value={logSortBy} onChange={setLogSortBy} onSortChange={handleLogSortChange} width={100} showSearch={false} showRadio={false} sortMode={true} />
               <Input icon="search" placeholder="Statut, Email, Nom et Prénom" width={360} />
+              {selectedLog && <div className="grow" />}
+              {selectedLog && <Button variant="tertiary" icon="refresh-cw" onClick={handleLogReset}>Réinitialiser</Button>}
+              {selectedLog && <div style={{ flexBasis: "100%", height: 0 }} />}
               <RadioDropdown placeholder="Revendeur" options={["2IT SOLUTIONS","ABC TELECOMS","ADV","AXIUM SOLUTIONS","CIS VALLEY","GROUPE TELECOMS DE L'OUEST GTO","IPNEOS","KOESIO AQUITAINE","KOESIO AURA INFO (VD)","KOESIO AURA INFO (VDI)","KOESIO AURA TELECOM","KOESIO AUSTRALIA","KOESIO CENTRE EST","KOESIO CORPORATE IT","KOESIO EST","KOESIO GRAND EST","KOESIO IDF","KOESIO MANAGED SERVICES","KOESIO MEDITERRANNEE","KOESIO NETWORKS","KOESIO NORD OUEST","KOESIO OCCITANIE","KOESIO OCCITANIE BPA","KOESIO OUEST","KOESIO PACA","KOESIO PACA TELECOMS","KOESIO SUD ALLIANCE","KOESIO SUISSE","ONE OPERATEUR","Production","S-WAN IP"]} value={logRevendeur} onChange={setLogRevendeur} width={170} />
               <RadioDropdown placeholder="Client" options={CLIENT_NAMES} value={logClient} onChange={setLogClient} width={160} />
               <DateRangeDropdown placeholder="Date" value={logDate} onChange={setLogDate} width={160} />
               <RadioDropdown placeholder="Statut" options={["200","201","400","403","404","409","422","500","501","502"]} value={logStatut} onChange={setLogStatut} width={160} showSearch={false} multiSelect={true} />
               <RadioDropdown placeholder="Ressources" options={["configuration_ninja_conf","data_reference_client","dispatcher","eligibility","mobile","order","portability","ticket","unidentified resource","user"]} value={logRessources} onChange={setLogRessources} width={160} showSearch={false} multiSelect={true} />
-              <div className="grow" />
-              <Button variant="tertiary" icon="refresh-cw" onClick={handleLogReset}>Réinitialiser</Button>
+              {!selectedLog && <div className="grow" />}
+              {!selectedLog && <Button variant="tertiary" icon="refresh-cw" onClick={handleLogReset}>Réinitialiser</Button>}
             </Toolbar>
             <TableBox>
-              <table className="kap-table">
+              <table ref={logsTableRef} className="kap-table" style={{ minWidth: lMinW }}>
                 <thead>
                   <tr>
-                    <th>ID</th>
-                    <th onClick={() => handleLogColSort("Date de création")} style={{ cursor: "pointer", userSelect: "none" }}><SortHeader active={logColActive("Date de création")} dir={logSortDir}>Date</SortHeader></th>
-                    <th onClick={() => handleLogColSort("Nom de l'utilisateur")} style={{ cursor: "pointer", userSelect: "none" }}><SortHeader active={logColActive("Nom de l'utilisateur")} dir={logSortDir}>Nom de l'utilisateur</SortHeader></th>
-                    <th onClick={() => handleLogColSort("Revendeur de l'utilisateur")} style={{ cursor: "pointer", userSelect: "none" }}><SortHeader active={logColActive("Revendeur de l'utilisateur")} dir={logSortDir}>Revendeur de l'utilisateur</SortHeader></th>
-                    <th onClick={() => handleLogColSort("Statut")} style={{ cursor: "pointer", userSelect: "none" }}><SortHeader active={logColActive("Statut")} dir={logSortDir}>Statut</SortHeader></th>
-                    <th onClick={() => handleLogColSort("Ressources")} style={{ cursor: "pointer", userSelect: "none" }}><SortHeader active={logColActive("Ressources")} dir={logSortDir}>Ressource</SortHeader></th>
-                    <th>Description</th>
-                    <th onClick={() => handleLogColSort("Durée")} style={{ cursor: "pointer", userSelect: "none" }}><SortHeader active={logColActive("Durée")} dir={logSortDir}>Durée</SortHeader></th>
-                    <th style={{ width: 48 }}></th>
+                    {lHid.includes("ID") ? <HiddenTh name="ID" onReveal={() => lReveal("ID")} /> : <th style={{ width: 60 }}>ID</th>}
+                    {lHid.includes("Date") ? <HiddenTh name="Date" onReveal={() => lReveal("Date")} /> : <th onClick={() => handleLogColSort("Date de création")} style={{ cursor: "pointer", userSelect: "none", minWidth: 80 }}><SortHeader active={logColActive("Date de création")} dir={logSortDir}>Date</SortHeader></th>}
+                    {lHid.includes("Nom de l'utilisateur") ? <HiddenTh name="Nom de l'utilisateur" onReveal={() => lReveal("Nom de l'utilisateur")} /> : <th onClick={() => handleLogColSort("Nom de l'utilisateur")} style={{ cursor: "pointer", userSelect: "none", minWidth: 190 }}><SortHeader active={logColActive("Nom de l'utilisateur")} dir={logSortDir}>Nom de l'utilisateur</SortHeader></th>}
+                    {lHid.includes("Revendeur de l'utilisateur") ? <HiddenTh name="Revendeur de l'utilisateur" onReveal={() => lReveal("Revendeur de l'utilisateur")} /> : <th onClick={() => handleLogColSort("Revendeur de l'utilisateur")} style={{ cursor: "pointer", userSelect: "none", minWidth: 235 }}><SortHeader active={logColActive("Revendeur de l'utilisateur")} dir={logSortDir}>Revendeur de l'utilisateur</SortHeader></th>}
+                    {lHid.includes("Statut") ? <HiddenTh name="Statut" onReveal={() => lReveal("Statut")} /> : <th onClick={() => handleLogColSort("Statut")} style={{ cursor: "pointer", userSelect: "none", width: 90 }}><SortHeader active={logColActive("Statut")} dir={logSortDir}>Statut</SortHeader></th>}
+                    {lHid.includes("Ressource") ? <HiddenTh name="Ressource" onReveal={() => lReveal("Ressource")} /> : <th onClick={() => handleLogColSort("Ressources")} style={{ cursor: "pointer", userSelect: "none", minWidth: 115 }}><SortHeader active={logColActive("Ressources")} dir={logSortDir}>Ressource</SortHeader></th>}
+                    {lHid.includes("Description") ? <HiddenTh name="Description" onReveal={() => lReveal("Description")} /> : <th style={{ minWidth: 115 }}>Description</th>}
+                    {lHid.includes("Durée") ? <HiddenTh name="Durée" onReveal={() => lReveal("Durée")} /> : <th onClick={() => handleLogColSort("Durée")} style={{ cursor: "pointer", userSelect: "none", minWidth: 85 }}><SortHeader active={logColActive("Durée")} dir={logSortDir}>Durée</SortHeader></th>}
+                    <th style={{ width: 60 }}></th>
                   </tr>
                 </thead>
                 <tbody>
                   {logView.map(l => (
-                    <tr key={l.id}>
-                      <td className="mono muted">{l.id}</td>
-                      <td className="muted">{l.dateCreation}</td>
-                      <td>{l.nomUtilisateur}</td>
-                      <td className="muted">{l.user.revendeur}</td>
-                      <td><Tooltip text={({ 200:"OK — Requête traitée avec succès", 201:"Created — Ressource créée avec succès", 400:"Bad Request — Requête invalide", 403:"Forbidden — Accès refusé", 404:"Not Found — Ressource introuvable", 409:"Conflict — Conflit avec l'état actuel", 422:"Unprocessable Entity — Données non traitables", 500:"Internal Server Error — Erreur serveur interne", 501:"Not Implemented — Fonctionnalité non implémentée", 502:"Bad Gateway — Passerelle invalide" })[l.statut.code]}><HttpCode code={l.statut.code} kind={l.statut.kind} /></Tooltip></td>
-                      <td className="mono muted">{l.type}</td>
-                      <td className="muted" style={{ maxWidth: 280, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{l.description}</td>
-                      <td className="muted">{l.duree}</td>
-                      <td><IconButton icon="eye" onClick={() => onOpenLog(l)} ariaLabel="Voir le détail" /></td>
+                    <tr key={l.id}
+                      className={selectedLog ? "is-clickable" + (selectedLog.id === l.id ? " is-selected" : "") : ""}
+                      onClick={selectedLog ? () => setSelectedLog(l) : undefined}
+                    >
+                      {lHid.includes("ID") ? <td style={{ width: 28, padding: 0 }} /> : <td className="mono muted">{l.id}</td>}
+                      {lHid.includes("Date") ? <td style={{ width: 28, padding: 0 }} /> : <td className="muted">{l.dateCreation}</td>}
+                      {lHid.includes("Nom de l'utilisateur") ? <td style={{ width: 28, padding: 0 }} /> : <td>{l.nomUtilisateur}</td>}
+                      {lHid.includes("Revendeur de l'utilisateur") ? <td style={{ width: 28, padding: 0 }} /> : <td className="muted">{l.user.revendeur}</td>}
+                      {lHid.includes("Statut") ? <td style={{ width: 28, padding: 0 }} /> : <td><Tooltip text={({ 200:"OK — Requête traitée avec succès", 201:"Created — Ressource créée avec succès", 400:"Bad Request — Requête invalide", 403:"Forbidden — Accès refusé", 404:"Not Found — Ressource introuvable", 409:"Conflict — Conflit avec l'état actuel", 422:"Unprocessable Entity — Données non traitables", 500:"Internal Server Error — Erreur serveur interne", 501:"Not Implemented — Fonctionnalité non implémentée", 502:"Bad Gateway — Passerelle invalide" })[l.statut.code]}><HttpCode code={l.statut.code} kind={l.statut.kind} /></Tooltip></td>}
+                      {lHid.includes("Ressource") ? <td style={{ width: 28, padding: 0 }} /> : <td className="mono muted">{l.type}</td>}
+                      {lHid.includes("Description") ? <td style={{ width: 28, padding: 0 }} /> : <td className="muted">{l.description}</td>}
+                      {lHid.includes("Durée") ? <td style={{ width: 28, padding: 0 }} /> : <td className="muted">{l.duree}</td>}
+                      <td onClick={e => e.stopPropagation()}><Tooltip text="Voir le détail"><IconButton icon="eye" onClick={() => openLogDetail(l)} ariaLabel="Voir le détail" /></Tooltip></td>
                     </tr>
                   ))}
                 </tbody>
@@ -500,6 +528,11 @@ function UsersScreen({ initialTab = "liste", onOpenLog, onOpenUser, onCollapseSi
               onEdit={u => setEditUser(u)}
               onReset={u => setResetUser(u)}
             />
+          </div>
+        )}
+        {selectedLog && (
+          <div style={{ width: 600, flexShrink: 0, borderLeft: "1px solid var(--kap-divider)", display: "flex", flexDirection: "column" }}>
+            <LogDetailPanel log={selectedLog} onClose={() => setSelectedLog(null)} />
           </div>
         )}
       </div>
@@ -536,8 +569,6 @@ function UserDetailBody({ user }) {
   return (
     <>
       <DetailSection title="Informations">
-        <DetailRow label="Prénom">{user.prenom}</DetailRow>
-        <DetailRow label="Nom">{user.nom}</DetailRow>
         <DetailRow label="Adresse e-mail"><a className="kap-link">{user.email}</a></DetailRow>
         <DetailRow label="Type d'utilisateur">
           <span className="kap-pill kap-pill--soft" style={user.type === "AUTH0" ? { "--bg": "#FFF3E0", "--fg": "#E65100" } : { "--bg": "#F5F5F5", "--fg": "#212121" }}>{user.type}</span>
@@ -575,7 +606,12 @@ function UserDetailHeader({ user }) {
       </div>
       <div>
         <div style={{ fontFamily: "var(--kap-font-display)", fontWeight: 700, fontSize: 16 }}>{user.prenom} {user.nom}</div>
-        <div style={{ marginTop: 4 }}><DotStatus color={user.statut.color} label={user.statut.label} /></div>
+        <div style={{ marginTop: 4, display: "flex", alignItems: "center", gap: 6, fontFamily: "var(--kap-font-ui)", fontSize: 13, color: "var(--kap-fg-2)" }}>
+          {user.statut.label === "Actif"
+            ? <Icon name="check-circle-2" size={16} style={{ color: "#2E7D32" }} />
+            : <Icon name="x-circle" size={16} style={{ color: "#D32F2F" }} />}
+          {user.statut.label}
+        </div>
       </div>
     </div>
   );
@@ -586,17 +622,20 @@ function UserDetailPanel({ user, onClose, onEdit, onReset }) {
     <div style={{ display: "flex", flexDirection: "column", height: "100%" }}>
       <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "18px 20px", borderBottom: "1px solid var(--kap-divider)", flexShrink: 0 }}>
         <UserDetailHeader user={user} />
-        <button style={{ all: "unset", cursor: "pointer", padding: 6, borderRadius: 4, color: "var(--kap-fg-3)" }} onClick={onClose}>
-          <Icon name="x" size={20} />
-        </button>
+        <div style={{ display: "flex", alignItems: "center", gap: 20 }}>
+          <button className="kap-icon-btn-square" style={{ marginLeft: 4 }} onClick={() => onEdit && onEdit(user)} aria-label="Modifier">
+            <Icon name="pencil" size={20} />
+          </button>
+          <button className="kap-icon-btn-square" onClick={onClose} aria-label="Fermer">
+            <Icon name="x" size={20} />
+          </button>
+        </div>
       </div>
       <div className="kap-drawer-body" style={{ flex: 1, overflowY: "auto" }}>
+        <div style={{ padding: "12px 16px", borderBottom: "1px solid var(--kap-divider)" }}>
+          <Button variant="danger" icon="key" disabled={user.type === "OKTA"} onClick={() => onReset && onReset(user)}>Réinitialiser le mot de passe</Button>
+        </div>
         <UserDetailBody user={user} />
-      </div>
-      <div style={{ display: "flex", justifyContent: "flex-end", gap: 8, padding: "14px 16px", borderTop: "1px solid var(--kap-divider)", flexShrink: 0, flexWrap: "wrap" }}>
-        <Button variant="secondary" icon="key" onClick={() => onReset && onReset(user)}>Réinitialiser</Button>
-        <Button variant="danger" icon="ban">Désactiver</Button>
-        <Button variant="primary" icon="pencil" onClick={() => onEdit && onEdit(user)}>Modifier</Button>
       </div>
     </div>
   );
@@ -608,13 +647,79 @@ function UserDrawer({ user, onClose, onEdit, onReset }) {
       headerContent={<UserDetailHeader user={user} />}
       onClose={onClose}
       footer={<>
-        <Button variant="secondary" icon="key" onClick={() => onReset && onReset(user)}>Réinitialiser le mot de passe</Button>
-        <Button variant="danger" icon="ban">Désactiver</Button>
+        <Button variant="secondary" icon="key" disabled={user.type === "OKTA"} onClick={() => onReset && onReset(user)}>Réinitialiser le mot de passe</Button>
+
         <Button variant="primary" icon="pencil" onClick={() => onEdit && onEdit(user)}>Modifier</Button>
       </>}
     >
       <UserDetailBody user={user} />
     </Drawer>
+  );
+}
+
+function LogDetailPanel({ log, onClose }) {
+  const [tab, setTab] = useStateScA("requete");
+  const payload = JSON.stringify(SAMPLE_PAYLOAD, null, 2);
+  const response = JSON.stringify(SAMPLE_RESPONSE, null, 2);
+
+  return (
+    <div style={{ display: "flex", flexDirection: "column", height: "100%", overflow: "hidden" }}>
+      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "18px 20px", flexShrink: 0 }}>
+        <div style={{ fontFamily: "var(--kap-font-display)", fontWeight: 700, fontSize: 16, color: "var(--kap-fg-1)" }}>
+          Requête <span className="kap-mono" style={{ color: "var(--kap-fg-3)", fontWeight: 400, fontSize: 15 }}>#{log.id}</span>
+        </div>
+        <button style={{ all: "unset", cursor: "pointer", padding: 6, borderRadius: 4, color: "var(--kap-fg-3)" }} onClick={onClose} aria-label="Fermer">
+          <Icon name="x" size={20} />
+        </button>
+      </div>
+      <div style={{ background: "#fff", padding: "0 16px", borderTop: "1px solid var(--kap-divider)", flexShrink: 0 }}>
+        <div className="kap-tabs" style={{ padding: 0, borderRadius: 0 }}>
+          <div className={"tab" + (tab === "requete" ? " is-active" : "")} onClick={() => setTab("requete")}>Requête</div>
+          <div className={"tab" + (tab === "utilisateur" ? " is-active" : "")} onClick={() => setTab("utilisateur")}>Utilisateur</div>
+        </div>
+      </div>
+      <div style={{ flex: 1, overflowY: "auto", minHeight: 0 }}>
+        {tab === "requete" ? (
+          <React.Fragment>
+          <DetailSection>
+            <DetailRow label="Date de création">{log.dateCreation}</DetailRow>
+            <DetailRow label="URI"><span className="kap-mono">{log.uri}</span></DetailRow>
+            <DetailRow label="Méthode"><MethodTag method={log.methode} /></DetailRow>
+            <DetailRow label="Type de ressource">{log.type}</DetailRow>
+            <DetailRow label="Statut de la réponse"><HttpCode code={log.statut.code} kind={log.statut.kind} /></DetailRow>
+            <DetailRow label="Description"><span style={{ color: "var(--kap-fg-1)" }}>{log.description}</span></DetailRow>
+          </DetailSection>
+          <div className="kap-detail-section">
+            <div style={{ padding: "10px 16px", fontFamily: "var(--kap-font-ui)", fontSize: 13, fontWeight: 500, color: "var(--kap-fg-3)", borderBottom: "1px solid var(--kap-divider)" }}>Contenu de la requête</div>
+            <CodeBlock value={payload} />
+          </div>
+          <div className="kap-detail-section">
+            <div style={{ padding: "10px 16px", fontFamily: "var(--kap-font-ui)", fontSize: 13, fontWeight: 500, color: "var(--kap-fg-3)", borderBottom: "1px solid var(--kap-divider)" }}>Résultat de la requête</div>
+            <CodeBlock value={response} />
+          </div>
+          <DetailSection>
+            <DetailRow label="Adresse IP"><span className="kap-mono">{log.adresseIp}</span></DetailRow>
+            <DetailRow label="Agent utilisateur"><span className="kap-mono">{log.agentUtilisateur}</span></DetailRow>
+            <DetailRow label="Durée"><span className="kap-mono">{log.duree}</span></DetailRow>
+          </DetailSection>
+          </React.Fragment>
+        ) : (
+          <DetailSection title="Utilisateur">
+            <DetailRow label="Nom">{log.nomUtilisateur}</DetailRow>
+            {["MSM","KRAFTERY"].includes(log.nomUtilisateur)
+              ? <DetailRow label="Type d'utilisateur">API</DetailRow>
+              : <>
+                  <DetailRow label="Email"><a className="kap-link">{log.user.email}</a></DetailRow>
+                  <DetailRow label="Type d'utilisateur">{log.user.type}</DetailRow>
+                  <DetailRow label="Rôle">{log.user.role}</DetailRow>
+                  <DetailRow label="Filiale">{log.user.filiale}</DetailRow>
+                  <DetailRow label="Date de création">{log.user.dateCreation}</DetailRow>
+                </>
+            }
+          </DetailSection>
+        )}
+      </div>
+    </div>
   );
 }
 

@@ -52,9 +52,10 @@ const NAV = [
     { key: "adresse", label: "Adresse" },
   ]},
   { key: "administration", label: "Administration", icon: "settings",    subs: [
-    { key: "questionnaire",       label: "Questionnaire" },
-    { key: "regles-service",      label: "Règles de service" },
-    { key: "matrices-decision",   label: "Matrices de décision" },
+    { key: "questionnaire",        label: "Questionnaire" },
+    { key: "regles-service",       label: "Règles de service" },
+    { key: "matrices-decision",    label: "Matrices de décision" },
+    { key: "affichage-par-role",   label: "Affichage par rôle" },
   ]},
 ];
 
@@ -81,9 +82,12 @@ const SCREEN_CRUMBS = {
   profil:       [{ label: "Accueil", key: "accueil" }, { label: "Profil & paramètres" }],
 };
 
+const CURRENT_USER = { prenom: "Mathis", nom: "BOURGOIN", role: "Administrateur", revendeur: "KOESIO AQUITAINE" };
+
 function Sidebar({ activeScreen, activeSub, onNavigate, collapsed, onToggle, onLogout }) {
   const [flyout, setFlyout] = useStateSh(null); // { item, top }
   const flyoutTimer = React.useRef(null);
+  const [profileTip, setProfileTip] = useStateSh(null); // { top, left }
 
   function openFlyout(e, navItem) {
     if (!collapsed) return;
@@ -151,6 +155,8 @@ function Sidebar({ activeScreen, activeSub, onNavigate, collapsed, onToggle, onL
         <div
           className={"kap-side-item" + (activeScreen === "profil" ? " is-active" : "")}
           onClick={() => onNavigate("profil")}
+          onMouseEnter={(e) => { const r = e.currentTarget.getBoundingClientRect(); setProfileTip({ top: r.top + r.height / 2, left: r.right + 8 }); }}
+          onMouseLeave={() => setProfileTip(null)}
         >
           <span className="kap-icon material-symbols-outlined" style={{ fontSize: 20, width: 20, height: 20 }}>person</span>
           <span className="kap-side-label">Profil</span>
@@ -186,6 +192,24 @@ function Sidebar({ activeScreen, activeSub, onNavigate, collapsed, onToggle, onL
               {s.label}
             </div>
           ))}
+        </div>
+      )}
+
+      {profileTip && (
+        <div style={{
+          position: "fixed", left: profileTip.left, top: profileTip.top,
+          transform: "translateY(-50%)",
+          background: "#fff",
+          border: "1px solid var(--kap-border-2)", borderRadius: 8,
+          boxShadow: "0 8px 24px rgba(0,0,0,0.13)",
+          padding: "12px 16px",
+          zIndex: 9998, pointerEvents: "none",
+          fontFamily: "var(--kap-font-ui)", fontSize: 13, whiteSpace: "nowrap",
+          textAlign: "center",
+        }}>
+          <div style={{ fontWeight: 700, color: "var(--kap-fg-1)", marginBottom: 6 }}>{CURRENT_USER.prenom} {CURRENT_USER.nom}</div>
+          <span style={{ display: "inline-flex", alignItems: "center", padding: "2px 8px", borderRadius: 9999, background: "#F3E5F5", color: "#6A1B9A", fontSize: 11, fontFamily: "var(--kap-font-display)", fontWeight: 600 }}>{CURRENT_USER.role}</span>
+          <div style={{ marginTop: 6, color: "var(--kap-fg-3)", fontSize: 12 }}>{CURRENT_USER.revendeur}</div>
         </div>
       )}
     </aside>
@@ -236,4 +260,4 @@ function Shell({ active, activeSub, onNavigate, breadcrumb, collapsed, onToggleC
   );
 }
 
-Object.assign(window, { Shell, Sidebar, Topbar, TopbarActionsContext, SCREEN_CRUMBS, NAV, DEFAULT_SUB });
+Object.assign(window, { Shell, Sidebar, Topbar, TopbarActionsContext, SCREEN_CRUMBS, NAV, DEFAULT_SUB, CURRENT_USER });
