@@ -72,7 +72,7 @@ function App() {
   let body;
   switch (screen) {
     case "accueil":      body = <HomeScreen onNavigate={navigate} />; break;
-    case "utilisateurs": body = <UsersScreen initialTab={sub || "liste"} onOpenLog={setOpenLog} onOpenUser={setOpenUser} onCollapseSidebar={() => setCollapsed(true)} />; break;
+    case "utilisateurs": body = <UsersScreen initialTab={sub || "liste"} onOpenLog={setOpenLog} onOpenUser={setOpenUser} onCollapseSidebar={() => setCollapsed(true)} onExpandSidebar={() => setCollapsed(false)} />; break;
     case "referentiel":  body = <ReferentielScreen initialSub={sub || "revendeurs"} onOpenDetail={setDetail} />; break;
     case "mobiles":      body = <MobilesScreen   initialSub={sub || "abonnements"} onOpenDetail={setDetail} />; break;
     case "liens":        body = <LinksScreen     initialSub={sub || "abonnements"} onOpenDetail={setDetail} />; break;
@@ -118,7 +118,7 @@ function subLabel(screen, sub) {
     voix:         { espaces: "Espaces voix", trunk: "Trunk SIP & Centrex", "trunk-cmd": "Commandes Trunk SIP", portabilite: "Portabilité", "info-numero": "Informations de numéro", "numeros-rev": "Numéros revendeurs", numeros: "Numéros clients" },
     commandes:    { suivi: "Suivi de commandes", reporting: "Reporting" },
     technique:    { tickets: "Tickets", "tickets-archives": "Tickets archivés", configurations: "Configurations", supervision: "Supervision" },
-    administration: { questionnaire: "Questionnaire", "regles-service": "Règles de service", "matrices-decision": "Matrices de décision" },
+    administration: { questionnaire: "Questionnaire", "regles-service": "Règles de service", "matrices-decision": "Matrices de décision", "affichage-par-role": "Affichage par rôle" },
   };
   return (map[screen] && map[screen][sub]) || sub;
 }

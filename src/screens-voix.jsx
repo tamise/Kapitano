@@ -521,7 +521,7 @@ function PortabiliteTab({ onOpenDetail }) {
               <th onClick={() => handleColSort("Pilotée")} style={{ cursor: "pointer", userSelect: "none" }}><SortHeader active={colActive("Pilotée")} dir={sortDir}>Pilotée</SortHeader></th>
               <th onClick={() => handleColSort("Statut de la portabilité")} style={{ cursor: "pointer", userSelect: "none" }}><SortHeader active={colActive("Statut de la portabilité")} dir={sortDir}>Statut de la portabilité</SortHeader></th>
               <th onClick={() => handleColSort("Note")} style={{ cursor: "pointer", userSelect: "none" }}><SortHeader active={colActive("Note")} dir={sortDir}>Note</SortHeader></th>
-              <th style={{ width: 48 }}></th>
+              <th style={{ width: 60 }}></th>
             </tr>
           </thead>
           <tbody>

@@ -402,7 +402,7 @@ function UsersScreen({ initialTab = "liste", onOpenLog, onOpenUser, onCollapseSi
   return (
     <>
       <div className="kap-card" style={{ overflow: "hidden", flexDirection: (selectedUser || selectedLog) ? "row" : undefined }}>
-        <div style={(selectedUser || selectedLog) ? { flex: 1, minWidth: 0, overflowX: "auto", display: "flex", flexDirection: "column" } : {}}>
+        <div style={{ display: "flex", flexDirection: "column", flex: 1, minHeight: 0, ...((selectedUser || selectedLog) ? { minWidth: 0, overflowX: "auto" } : {}) }}>
         {!isLogs &&
           <>
             <Toolbar wrap={!!selectedUser}>

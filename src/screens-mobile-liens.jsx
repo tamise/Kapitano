@@ -580,7 +580,7 @@ function DispatcherScreen() {
                   <th onClick={() => handleColSort("Revendeur")} style={{ cursor: "pointer", userSelect: "none" }}><SortHeader active={colActive("Revendeur")} dir={sortDir}>Revendeur</SortHeader></th>
                   <th onClick={() => handleColSort("Client")} style={{ cursor: "pointer", userSelect: "none" }}><SortHeader active={colActive("Client")} dir={sortDir}>Client</SortHeader></th>
                   <th onClick={() => handleColSort("Lignes")} style={{ textAlign:"right", cursor: "pointer", userSelect: "none" }}><SortHeader active={colActive("Lignes")} dir={sortDir}>Lignes</SortHeader></th>
-                  <th style={{ width:48 }}></th>
+                  <th style={{ width: 60 }}></th>
                 </tr>
               </thead>
               <tbody>
@@ -605,27 +605,52 @@ function DispatcherScreen() {
           </TableBox>
         )}
 
-        {/* Dashboard */}
+        {/* Dashboard — vue Kanban */}
         {tab === "dashboard" && (
-          <div style={{ display: "grid", gridTemplateColumns: "repeat(6, 1fr)", gap: 16, padding: 16, overflowY: "auto", flex: 1 }}>
-            {DISPATCHER_STATS.map(s => (
-              <div key={s.key} onClick={() => setTab(s.key)} style={{ background: "#fff", borderRadius: 10, boxShadow: "var(--kap-shadow-card)", cursor: "pointer", overflow: "hidden", display: "flex", flexDirection: "column", border: "1px solid var(--kap-border-1)" }}>
-                <div style={{ padding: "16px 16px 8px", flex: 1, display: "flex", flexDirection: "column", gap: 8 }}>
-                  <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-                    <span style={{ background: "var(--kap-primary)", color: "#fff", borderRadius: 8, minWidth: 36, height: 36, display: "flex", alignItems: "center", justifyContent: "center", fontFamily: "var(--kap-font-display)", fontWeight: 700, fontSize: 17, padding: "0 8px" }}>{dispCounts[s.key] ? dispCounts[s.key].total : 0}</span>
-                    <span style={{ fontFamily: "var(--kap-font-ui)", fontSize: 13, fontWeight: 600, color: "var(--kap-fg-dark)" }}>{s.label}</span>
-                  </div>
-                  <div style={{ flex: 1, display: "flex", alignItems: "center", justifyContent: "center", padding: "16px 0" }}>
-                    <Icon name={s.icon} size={64} style={{ color: "#D8CFF0" }} />
+          <div style={{ display: "flex", flex: 1, minHeight: 0, gap: 12, padding: 16, overflowX: "auto" }}>
+            {DISPATCHER_STATS.map(s => {
+              const colOrders = filteredAll.filter(o => o._tab === s.key);
+              return (
+                <div key={s.key} style={{ flex: 1, minWidth: 200, display: "flex", flexDirection: "column" }}>
+                  {/* Colonne/carte d'étape pleine hauteur */}
+                  <div style={{ flex: 1, minHeight: 0, background: "#fff", borderRadius: 10, boxShadow: "var(--kap-shadow-card)", border: "1px solid var(--kap-border-1)", display: "flex", flexDirection: "column", overflow: "hidden", position: "relative" }}>
+                    {/* Icône de fond — visible uniquement si colonne vide */}
+                    {colOrders.length === 0 && (
+                      <div style={{ position: "absolute", top: "50%", left: "50%", transform: "translate(-50%, -50%)", pointerEvents: "none", zIndex: 0 }}>
+                        <Icon name={s.icon} size={72} style={{ color: "#D8CFF0" }} />
+                      </div>
+                    )}
+                    {/* En-tête fixe */}
+                    <div style={{ padding: "14px 14px 10px", display: "flex", alignItems: "center", gap: 10, flexShrink: 0, borderBottom: "1px solid var(--kap-divider)", position: "relative", zIndex: 1, background: "#fff" }}>
+                      <span className="kap-kanban-badge" onClick={() => setTab(s.key)}>{dispCounts[s.key] ? dispCounts[s.key].total : 0}</span>
+                      <span style={{ fontFamily: "var(--kap-font-ui)", fontSize: 13, fontWeight: 600, color: "var(--kap-fg-dark)", lineHeight: 1.3 }}>{s.label}</span>
+                    </div>
+                    {/* Barre d'alertes fixe */}
+                    <div style={{ background: dispCounts[s.key] && dispCounts[s.key].alerte > 0 ? "#FFF3E0" : "#F5F5F5", padding: "6px 12px", display: "flex", alignItems: "center", gap: 6, fontFamily: "var(--kap-font-ui)", fontSize: 12, color: dispCounts[s.key] && dispCounts[s.key].alerte > 0 ? "#ED6C02" : "#9E9E9E", flexShrink: 0, position: "relative", zIndex: 1 }}>
+                      {dispCounts[s.key] && dispCounts[s.key].alerte > 0 && <Icon name="alert-triangle" size={13} />}
+                      <span style={{ fontWeight: 700 }}>{dispCounts[s.key] ? dispCounts[s.key].alerte : 0}</span>
+                      <span>En alerte</span>
+                    </div>
+                    {/* Zone scrollable — cartes commandes */}
+                    <div style={{ flex: 1, minHeight: 0, overflowY: "auto", padding: "8px 10px 10px", display: "flex", flexDirection: "column", gap: 10, position: "relative", zIndex: 1 }}>
+                      {colOrders.map((o, i) => (
+                        <div key={i} style={{ background: "#fff", borderRadius: 8 }}>
+                          <div style={{ fontFamily: "var(--kap-font-ui)", fontSize: 11, color: "var(--kap-fg-3)", marginBottom: 3, paddingLeft: 2 }}>{o.dateEtape}</div>
+                          <div className="kap-kanban-card" onClick={() => setTab(s.key)}>
+                            <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: 6 }}>
+                              <span style={{ fontFamily: "var(--kap-font-ui)", fontWeight: 600, fontSize: 13, color: "var(--kap-fg-dark)", lineHeight: 1.3 }}>{o.client}</span>
+                              {o.alerte && <Icon name="alert-triangle" size={14} style={{ color: "#ED6C02", flexShrink: 0, marginTop: 1 }} />}
+                            </div>
+                            <div className="mono muted" style={{ fontSize: 11, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{o.id}</div>
+                            <div style={{ fontFamily: "var(--kap-font-ui)", fontSize: 12, color: "var(--kap-fg-3)" }}>{o.lignes} ligne{o.lignes > 1 ? "s" : ""}</div>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
                   </div>
                 </div>
-                <div style={{ background: dispCounts[s.key] && dispCounts[s.key].alerte > 0 ? "#FFF3E0" : "#F5F5F5", padding: "8px 14px", display: "flex", alignItems: "center", gap: 6, fontFamily: "var(--kap-font-ui)", fontSize: 13, color: dispCounts[s.key] && dispCounts[s.key].alerte > 0 ? "#ED6C02" : "#9E9E9E" }}>
-                  {dispCounts[s.key] && dispCounts[s.key].alerte > 0 && <Icon name="alert-triangle" size={14} />}
-                  <span style={{ fontWeight: 700 }}>{dispCounts[s.key] ? dispCounts[s.key].alerte : 0}</span>
-                  <span>En alerte</span>
-                </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
         )}
       </div>
@@ -963,14 +988,15 @@ function SeuilsConsommationScreen() {
         </div>
 
         {/* Panneau droit — tableau des seuils */}
-        <div style={{ width: 420, flexShrink: 0, display: "flex", flexDirection: "column" }}>
-          <div style={{ fontFamily: "var(--kap-font-display)", fontWeight: 700, fontSize: 16, padding: "16px 20px 8px" }}>Seuils de consommation</div>
-          <table className="kap-table">
+        <div style={{ width: 420, flexShrink: 0, display: "flex", flexDirection: "column", minHeight: 0, overflow: "hidden" }}>
+          <div style={{ fontFamily: "var(--kap-font-display)", fontWeight: 700, fontSize: 16, padding: "16px 20px 8px", flexShrink: 0 }}>Seuils de consommation</div>
+          <div style={{ flex: 1, minHeight: 0, overflowY: "auto" }}>
+          <table className="kap-table" style={{ minWidth: 0, tableLayout: "auto" }}>
             <thead>
               <tr>
-                <th>Seuil (%)</th>
+                <th style={{ whiteSpace: "nowrap" }}>Seuil (%)</th>
                 <th>Niveau d'action</th>
-                <th style={{ textAlign: "right" }}>Actif</th>
+                <th style={{ whiteSpace: "nowrap", textAlign: "right" }}>Actif</th>
               </tr>
             </thead>
             <tbody>
@@ -987,6 +1013,7 @@ function SeuilsConsommationScreen() {
               ))}
             </tbody>
           </table>
+          </div>
         </div>
         </div>
       </div>

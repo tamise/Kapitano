@@ -352,7 +352,7 @@ button { font-family: inherit; }
 .kap-btn--danger:hover { background: #fdf2f2; }
 .kap-btn--ghost { background: transparent; color: var(--kap-fg-dark); }
 .kap-btn--ghost:hover { background: rgba(0,0,0,.06); }
-.kap-btn[disabled] { opacity: .45; cursor: not-allowed; }
+.kap-btn[disabled] { opacity: .45; cursor: not-allowed; pointer-events: none; }
 .kap-btn--sm { height: 30px; padding: 0 10px; font-size: 11px; }
 .kap-btn--lg { height: 44px; padding: 0 18px; font-size: 13px; }
 
@@ -441,11 +441,17 @@ button { font-family: inherit; }
   flex: 1;
   min-height: 0;
 }
+* { scrollbar-color: var(--kap-border-2) transparent; scrollbar-width: thin; }
+::-webkit-scrollbar { width: 7px; height: 7px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--kap-border-2); border-radius: 4px; }
+::-webkit-scrollbar-thumb:hover { background: var(--kap-fg-muted); }
+::-webkit-scrollbar-corner { background: transparent; }
 
 /* Toolbar et pagination ne rétrécissent pas */
 .kap-toolbar      { flex-shrink: 0; }
 .kap-pagination   { flex-shrink: 0; }
-.kap-table { width: 100%; border-collapse: collapse; }
+.kap-table { width: 100%; border-collapse: collapse; table-layout: fixed; min-width: 999px; }
 .kap-table th, .kap-table td {
   text-align: left;
   font-family: var(--kap-font-ui);
@@ -454,6 +460,13 @@ button { font-family: inherit; }
   border-bottom: 1px solid var(--kap-divider);
   vertical-align: middle;
   white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.kap-table thead {
+  position: sticky;
+  top: 0;
+  z-index: 4;
 }
 .kap-table th {
   font-weight: 700;
@@ -463,8 +476,6 @@ button { font-family: inherit; }
   letter-spacing: 0.2px;
   text-transform: none;
   user-select: none;
-  position: sticky; top: 0;
-  z-index: 1;
 }
 .kap-table th .kap-sort-arrow {
   width: 14px; height: 14px;
@@ -473,11 +484,21 @@ button { font-family: inherit; }
   margin-left: 4px;
 }
 .kap-table td { color: var(--kap-fg-1); }
+.kap-table th:last-child,
+.kap-table td:last-child {
+  position: sticky;
+  right: 0;
+  overflow: visible;
+}
+.kap-table th:last-child { background: #CAD4F5; z-index: 5; }
+.kap-table td:last-child { background: #fff; z-index: 3; }
 .kap-table td.muted { color: var(--kap-fg-3); }
 .kap-table td.mono { font-family: var(--kap-font-mono); font-size: 12px; }
 .kap-table tr.is-clickable { cursor: pointer; }
 .kap-table tbody tr:hover td { background: #FBFAFD; }
+.kap-table tbody tr:hover td:last-child { background: #FBFAFD; }
 .kap-table tr.is-selected td { background: rgba(126,65,163,.06); }
+.kap-table tr.is-selected td:last-child { background: #F7F4F9; }
 
 .kap-table .kap-checkbox { display: inline-flex; vertical-align: middle; }
 
@@ -1025,3 +1046,37 @@ button { font-family: inherit; }
 }
 
 .kap-tab-panel-body { background: #fff; border-radius: 0 0 10px 10px; overflow: hidden; }
+
+.kap-kanban-badge {
+  background: var(--kap-primary);
+  color: #fff;
+  border-radius: 8px;
+  min-width: 34px;
+  height: 34px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--kap-font-display);
+  font-weight: 700;
+  font-size: 16px;
+  padding: 0 8px;
+  flex-shrink: 0;
+  cursor: pointer;
+  transition: background 120ms;
+}
+.kap-kanban-badge:hover { background: var(--kap-primary-dark); }
+
+.kap-kanban-card {
+  background: #F8F7FC;
+  border-radius: 8px;
+  padding: 10px 12px;
+  border: 1px solid var(--kap-border-1);
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  cursor: pointer;
+  transition: background 120ms, box-shadow 120ms;
+}
+.kap-kanban-card:hover {
+  background: #EDE8F5;
+}

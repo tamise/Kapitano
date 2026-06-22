@@ -141,6 +141,20 @@ const USERS = Array.from({ length: 32 }).map((_, i) => {
   };
 });
 
+USERS.unshift({
+  id: 100099,
+  prenom: "Mathis",
+  nom: "BOURGOIN",
+  email: "mathis.bourgoin@koesio.com",
+  type: "OKTA",
+  filiale: "Koesio Aquitaine",
+  statut: { label: "Actif", color: "#2E7D32" },
+  dateCreation: "14/10/2025 - 12:13:45",
+  dateModification: "14/10/2025 - 12:13:45",
+  role: "Administrateur",
+  revendeur: "KOESIO AQUITAINE",
+});
+
 // ──────────────────────────────────────────────────────────────────
 // LOGS (request log)
 // ──────────────────────────────────────────────────────────────────
